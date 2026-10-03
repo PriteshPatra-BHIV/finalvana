@@ -1,0 +1,27 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "rewrites": [
+    {
+      "source": "/proxy/g1/:path*",
+      "destination": "http://163.128.209.18:8013/:path*"
+    },
+    {
+      "source": "/proxy/g2/:path*",
+      "destination": "https://niyantran.blackholeinfiverse.com/:path*"
+    },
+    {
+      "source": "/proxy/g4/:path*",
+      "destination": "http://163.128.209.18:8010/:path*"
+    }
+  ],
+  "headers": [
+    {
+      "source": "/proxy/(.*)",
+      "headers": [
+        { "key": "Access-Control-Allow-Origin", "value": "*" },
+        { "key": "Access-Control-Allow-Methods", "value": "GET, POST, OPTIONS" },
+        { "key": "Access-Control-Allow-Headers", "value": "Content-Type, Authorization, X-Requested-With" }
+      ]
+    }
+  ]
+}

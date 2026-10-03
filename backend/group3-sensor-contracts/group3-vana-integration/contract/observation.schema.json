@@ -1,0 +1,392 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://bhiv.local/vana/group3/observation.schema.json",
+  "title": "VANA Group 3 Field Observation",
+  "description": "The frozen 13-field field observation contract produced by Group 3 (Field & Edge Systems) for ingestion into the Group 1 canonical VANA record. Version 1.2. Frozen 2026-08-13 (V1.0); hardened 2026-08-17 after Manya Shukla's adversarial review (V1.1); altitude and waypoint_id added 2026-08-17 per Suraj Surve's Physical-World Closure Plan (V1.2). All additions are OPTIONAL and therefore non-breaking - every V1.0/V1.1 observation still validates. Source: Thane Creek Mapping Plan (Suraj Surve, Group 3 Lead) and Field Mission SOP revision 2026-08-13 (Arya Barge).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "observation_id",
+    "device_id",
+    "timestamp",
+    "latitude",
+    "longitude",
+    "observation_type",
+    "measurement",
+    "accuracy",
+    "calibration_status",
+    "raw_artifact_reference",
+    "quality_status",
+    "processing_status",
+    "provenance"
+  ],
+  "properties": {
+    "observation_id": {
+      "type": "string",
+      "description": "Composite identity per the Group 3 Lead's mission plan: Survey + Zone + Flight + Sensor + Observation sequence. The identity of an observation is the whole tuple INCLUDING timestamp and coordinates - do not treat the OBS### fragment as unique on its own.",
+      "pattern": "^[A-Z0-9]+-Z[0-9]{1,2}-F[0-9]{1,3}-[A-Z0-9]+-OBS[0-9]{3,}$",
+      "examples": [
+        "TC-Z03-F02-IMX500-OBS001",
+        "TC-Z03-F02-LIDAR-OBS001"
+      ]
+    },
+    "survey_id": {
+      "type": "string",
+      "description": "Survey. 'TC' = Thane Creek.",
+      "examples": [
+        "TC"
+      ],
+      "minLength": 1,
+      "pattern": "^\\S(.*\\S)?$"
+    },
+    "zone_id": {
+      "type": "string",
+      "pattern": "^Z[0-9]{1,2}$",
+      "description": "One of the eight mapped zones Z1-Z8.",
+      "examples": [
+        "Z03"
+      ]
+    },
+    "flight_id": {
+      "type": "string",
+      "pattern": "^F[0-9]{1,3}$",
+      "description": "Flight within the survey.",
+      "examples": [
+        "F02"
+      ]
+    },
+    "sensor_id": {
+      "type": "string",
+      "description": "Capturing sensor.",
+      "examples": [
+        "IMX500",
+        "LIDAR",
+        "OAKD"
+      ],
+      "minLength": 1,
+      "pattern": "^\\S(.*\\S)?$"
+    },
+    "observation_seq": {
+      "type": "string",
+      "pattern": "^OBS[0-9]{3,}$",
+      "description": "Sequence within the flight. NOT globally unique on its own.",
+      "examples": [
+        "OBS001"
+      ]
+    },
+    "device_id": {
+      "type": "string",
+      "description": "Stable identifier of the physical capturing device, issued by the Group 3 device register and intended for registration in the existing Capability Registry under capability_type 'edge_robotics'.",
+      "examples": [
+        "G3-LIDAR-001"
+      ],
+      "minLength": 1,
+      "pattern": "^\\S(.*\\S)?$"
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Time of capture, ISO-8601 UTC. MANDATORY. If the clock cannot be trusted the observation must carry quality_status UNCERTAIN - a time is never invented. VALIDATION NOTE (added 2026-08-17 after Manya's adversarial review): format 'date-time' is ANNOTATION-ONLY in JSON Schema unless the consumer enables a format checker. Without one, '2026-13-45T99:99:99Z' and '2026-02-30T10:00:00Z' both pass. The pattern below rejects wrong shapes and missing timezones on its own; consumers MUST ALSO enable format checking (jsonschema: Draft202012Validator(schema, format_checker=FormatChecker())) to reject impossible dates. A validator without it is weaker than this contract claims.",
+      "examples": [
+        "2026-08-13T09:14:22Z"
+      ],
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d+)?(Z|[+-]\\d{2}:\\d{2})$"
+    },
+    "latitude": {
+      "type": [
+        "number",
+        "null"
+      ],
+      "minimum": -90,
+      "maximum": 90,
+      "description": "Decimal degrees, WGS84 / EPSG:4326. MANDATORY. Null is permitted ONLY when no fix was obtained, and then quality_status MUST be UNCERTAIN. A coordinate is never invented."
+    },
+    "longitude": {
+      "type": [
+        "number",
+        "null"
+      ],
+      "minimum": -180,
+      "maximum": 180,
+      "description": "Decimal degrees, WGS84 / EPSG:4326. Same rule as latitude."
+    },
+    "observation_type": {
+      "type": "string",
+      "enum": [
+        "aerial",
+        "ground",
+        "sensor",
+        "site_evidence"
+      ]
+    },
+    "measurement": {
+      "type": [
+        "number",
+        "string"
+      ],
+      "description": "The observed value, or a description where the observation is an image or other artifact."
+    },
+    "parameter": {
+      "type": "string",
+      "description": "What was measured. Optional but strongly preferred where a numeric measurement exists.",
+      "examples": [
+        "canopy_height",
+        "mangrove_extent",
+        "surface_elevation"
+      ]
+    },
+    "unit": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "Unit for numeric measurements. Null for image or descriptive observations.",
+      "examples": [
+        "m",
+        "m2",
+        null
+      ]
+    },
+    "accuracy": {
+      "oneOf": [
+        {
+          "type": "number"
+        },
+        {
+          "type": "string",
+          "const": "NOT VERIFIED"
+        }
+      ],
+      "description": "Known accuracy, otherwise the literal string 'NOT VERIFIED'. NOT null, and never a plausible-looking estimate. As of 2026-08-13 no Group 3 sensor has a stated accuracy figure, so every observation currently carries 'NOT VERIFIED'."
+    },
+    "calibration_status": {
+      "type": "string",
+      "enum": [
+        "CALIBRATED",
+        "NOT_CALIBRATED",
+        "NOT VERIFIED"
+      ],
+      "description": "As of 2026-08-13 no Group 3 device holds a calibration record, so every observation currently carries 'NOT VERIFIED'."
+    },
+    "raw_artifact_reference": {
+      "type": "object",
+      "description": "Pointer to the preserved original. The raw file itself is NOT sent to the canonical store - the record holds the reference. Raw data survives; derived values travel alongside originals, never replace them.",
+      "required": [
+        "path",
+        "artifact_type"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "path": {
+          "type": "string",
+          "description": "Path or URI within the mission package.",
+          "minLength": 1,
+          "pattern": "^\\S(.*\\S)?$"
+        },
+        "checksum_sha256": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "pattern": "^[a-f0-9]{64}$",
+          "description": "Computed at capture where the edge device supports it."
+        },
+        "artifact_type": {
+          "type": "string",
+          "enum": [
+            "image",
+            "video",
+            "point_cloud",
+            "sensor_reading",
+            "flight_log",
+            "other"
+          ]
+        }
+      }
+    },
+    "quality_status": {
+      "type": "string",
+      "enum": [
+        "RAW",
+        "CAPTURED",
+        "VALIDATED",
+        "REJECTED",
+        "UNCERTAIN",
+        "INGESTED"
+      ],
+      "description": "The field QA verdict - the field that makes an observation trustworthy. STATE OWNERSHIP, supplied by Manya Shukla (Group 3 Observation/Data Quality) 2026-08-17: RAW - set by the field/device capture layer when the observation is first created from the source. CAPTURED - set by the field acquisition/ingestion process once the observation and capture metadata are received and recorded. VALIDATED - set by the observation validation/QA layer after all mandatory schema, type, reference and metadata checks pass. REJECTED - set by the validation/QA layer when a mandatory validation rule fails and the observation cannot become canonical. UNCERTAIN - set by the QA/observation processing layer when the observation is structurally usable but its quality/confidence remains unresolved. INGESTED - set by the downstream ingestion/canonicalization layer once the observation is accepted into the canonical store. This enum matches Group 1 schema v0.4 observation.quality_status CHECK constraint character for character."
+    },
+    "processing_status": {
+      "type": "string",
+      "description": "Stage in the processing chain.",
+      "examples": [
+        "raw",
+        "point_cloud",
+        "chm_derived",
+        "orthomosaic",
+        "qa_passed"
+      ],
+      "minLength": 1,
+      "pattern": "^\\S(.*\\S)?$"
+    },
+    "provenance": {
+      "type": "object",
+      "description": "Physical device -> operator -> mission -> raw artifact. Answers: what device produced this, when, where, and which original artifact supports it?",
+      "required": [
+        "device_id",
+        "mission_id",
+        "captured_at",
+        "raw_artifact"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "device_id": {
+          "type": "string"
+        },
+        "operator": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Named field operator."
+        },
+        "mission_id": {
+          "type": "string",
+          "examples": [
+            "TC-Z03-F02"
+          ]
+        },
+        "captured_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "raw_artifact": {
+          "type": "string"
+        },
+        "qa_record": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    },
+    "tidal_state": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "PROPOSED, not yet agreed. Thane Creek is intertidal and mudflat extent, shoreline position and water boundary are all survey targets - two surveys at different tidal states can show large apparent change with no ecological change. Included so Group 1 can decide whether the canonical model has a home for it.",
+      "examples": [
+        "high",
+        "low",
+        "rising",
+        "falling",
+        null
+      ]
+    },
+    "trace_id": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "Distributed trace identifier. CANONICAL FORMAT: 'VANA-<12 lowercase hex>', e.g. VANA-3a9fd87b337d. Source: Group 1 VANA MasterDB Observation API v1.0.0 handoff (Raj Prajapati, 2026-08-14, target commit 92a37b337df1fb1d4b8565ada47656d182771cdf), which returns trace_id in every ingestion, replay, conflict and duplicate response. This is the VANA-aligned convention and supersedes the earlier provisional 'trace-vana-<16 hex>' form observed in a Group 4 governed execution on 2026-08-13. NOT PRODUCER-SUPPLIED: Group 3 emits null and MUST NOT invent a value — it receives the trace back from the ingestion response. Karan Barda's 2026-08-14 ruling stands on ownership (the producer does not mint traces); this entry fixes only the FORMAT. The field remains nullable and deliberately absent from the required list, because an observation is valid before it has been ingested. The pattern below is enforced so that a non-conforming trace cannot be silently recorded, while null continues to pass.",
+      "pattern": "^VANA-[0-9a-f]{12}$",
+      "examples": [
+        "VANA-3a9fd87b337d",
+        null
+      ]
+    },
+    "idempotency_key": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "Derived from observation_id. Group 3 enforces idempotency on its own side using the replay.idempotency_key field already present in the TANTRA execution envelope, rather than assuming the store deduplicates. Re-submitting the same observation must not create a second canonical record."
+    },
+    "altitude": {
+      "type": [
+        "number",
+        "null"
+      ],
+      "description": "Altitude above ground level in metres at capture. ADDED V1.2 on Suraj's Physical-World Closure Plan (2026-08-17). Required in spirit for RGB work: without altitude there is no ground sample distance, so any extent or area derived from a nadir frame is unscaled. Null ONLY when the platform reports no altitude - never estimated. Optional in the contract because existing observations predate it.",
+      "examples": [
+        200,
+        null
+      ]
+    },
+    "waypoint_id": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "Flight waypoint at which the observation was captured. ADDED V1.2 on Suraj's Physical-World Closure Plan (2026-08-17). Necessary for the quarterly repeat-flight method: without it, two surveys of the same zone cannot be compared point-for-point. Null where the platform does not report waypoints.",
+      "examples": [
+        "WP-07",
+        null
+      ]
+    }
+  },
+  "allOf": [
+    {
+      "$comment": "Location rule: if either coordinate is absent, the observation cannot claim to be VALIDATED.",
+      "if": {
+        "anyOf": [
+          {
+            "properties": {
+              "latitude": {
+                "type": "null"
+              }
+            },
+            "required": [
+              "latitude"
+            ]
+          },
+          {
+            "properties": {
+              "longitude": {
+                "type": "null"
+              }
+            },
+            "required": [
+              "longitude"
+            ]
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "quality_status": {
+            "const": "UNCERTAIN"
+          }
+        },
+        "$comment": "Location and time are mandatory. A missing position marks the observation UNCERTAIN - it is never defaulted and never invented."
+      }
+    },
+    {
+      "$comment": "Unit rule: a numeric measurement requires a unit.",
+      "if": {
+        "properties": {
+          "measurement": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "measurement"
+        ]
+      },
+      "then": {
+        "required": [
+          "unit"
+        ],
+        "properties": {
+          "unit": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  ],
+  "$comment": "Group 3 field observation contract V1.0, frozen 2026-08-13. ALIGNMENT: Group 1 canonical schema v0.1 — observation_id, numeric measurement, unit and mission grouping via dataset map cleanly; device_id, raw_artifact_reference, quality_status, accuracy and calibration_status have no column in v0.1; observation_date is DATE so time-of-day is lost; there is no per-observation coordinate. Group 1 consolidation pending. Group 4 conventions — trace format provisional per the live runtime; idempotency uses replay.idempotency_key from the TANTRA execution envelope. This contract is what Group 3 EMITS; it is not a description of the canonical store.",
+  "version": "1.2"
+}

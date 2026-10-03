@@ -1,0 +1,36 @@
+SVACS LIVE PROBE — captured 2026-08-17T11:18:10Z
+repo   : https://github.com/BHIV-Engineering-Exchange/bhiv-SVACS
+HEAD   : 9700270 2026-08-01 11:50:58 +0530 VJY123VJY — Fix Render quick prediction timeout
+host   : https://bhiv-svacs.onrender.com  (from render.yaml, service name bhiv-svacs)
+auth   : NONE — no api_key/authorization/bearer/jwt/token found anywhere in backend/app
+
+GET /                {"message":"BHIV Vision Intelligence Runtime is running","version":"1.0.0"} [http=200]
+GET /health          {"status":"ONLINE","service":"BHIV Vision Intelligence Runtime","models_loaded":{"yolo":false,"efficientnet":false,"easyocr":false},"ingestion_rate":18.4,"processing_latency_ms":12.0,"uptime_seconds":3600,"error_count_60s":0,"ws_connected":true,"last_telemetry_utc":"2026-08-17T11:18:13.250227+00:00"} [http=200]
+GET /vessels         [] [http=200]
+GET /alerts          [] [http=200]
+GET /signals         [] [http=200]
+GET /perception      [] [http=200]
+GET /bucket/status   {"sync_percent":1.0,"stages_synced":["signal","perception","intelligence","state"],"last_sync_utc":"2026-08-17T11:18:16.310175+00:00","pending_writes":0,"failed_writes":0} [http=200]
+
+ROUTES DECLARED IN backend/app/main.py:
+  88:@app.get("/")
+  96:@app.post("/intelligence/image")
+  314:@app.post(f"{settings.API_V1_STR}/analyze", response_model=VisionAnalysisResponse)
+  341:@app.post(f"{settings.API_V1_STR}/batch-analyze", response_model=List[VisionAnalysisResponse])
+  360:@app.get("/health")
+  385:@app.get("/signals")
+  390:@app.get("/perception")
+  395:@app.get("/intelligence")
+  400:@app.get("/state-events")
+  405:@app.get("/vessels")
+  410:@app.get("/alerts")
+  415:@app.get("/bucket/status")
+  426:@app.get("/stage-metrics")
+  477:@app.get("/events-over-time")
+  518:@app.get("/validation-breakdown")
+  528:@app.get("/trace/{trace_id}")
+
+SEARCHED FOR AND NOT FOUND (Karan Day-1 Finding 6 claims):
+  POST /api/v1/telemetry/ingest   -> 0 files
+  ws://.../ws/insightflow         -> 0 files
+  trace_id generation             -> 217:        trace_id = str(uuid.uuid4())

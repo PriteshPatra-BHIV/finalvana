@@ -1,0 +1,691 @@
+{
+  "info": {
+    "name": "Blackhole Workflow API - Day 1 Enhanced",
+    "description": "Complete API collection with Live Attendance, Geofencing, and Alert System",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_postman_id": "blackhole-workflow-day1",
+    "version": "1.0.0"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{authToken}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:5001/api",
+      "type": "string"
+    },
+    {
+      "key": "authToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "userId",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "1. Authentication",
+      "item": [
+        {
+          "name": "Register",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"John Doe\",\n  \"email\": \"john@example.com\",\n  \"password\": \"<your_password>\",\n  \"department\": \"Engineering\",\n  \"role\": \"Employee\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/register",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "register"]
+            }
+          }
+        },
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const response = pm.response.json();",
+                  "if (response.token) {",
+                  "    pm.environment.set('authToken', response.token);",
+                  "    pm.environment.set('userId', response.user._id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"john@example.com\",\n  \"password\": \"<your_password>\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "login"]
+            }
+          }
+        },
+        {
+          "name": "Get Current User",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/auth/me",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "me"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "2. Live Attendance (NEW - Day 1)",
+      "item": [
+        {
+          "name": "Start Live Tracking",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"latitude\": 19.160122,\n  \"longitude\": 72.839720,\n  \"accuracy\": 10,\n  \"deviceId\": \"device-123\",\n  \"deviceFingerprint\": \"fp-abc-xyz\",\n  \"platform\": \"iOS\",\n  \"browser\": \"Safari\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/attendance/live/start/{{userId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["attendance", "live", "start", "{{userId}}"]
+            }
+          }
+        },
+        {
+          "name": "Update Live Location",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"latitude\": 19.160500,\n  \"longitude\": 72.839900,\n  \"accuracy\": 15,\n  \"altitude\": 20,\n  \"speed\": 0,\n  \"heading\": 0,\n  \"batteryLevel\": 85,\n  \"networkType\": \"wifi\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/attendance/live/update/{{userId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["attendance", "live", "update", "{{userId}}"]
+            }
+          }
+        },
+        {
+          "name": "Stop Live Tracking",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/attendance/live/stop/{{userId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["attendance", "live", "stop", "{{userId}}"]
+            }
+          }
+        },
+        {
+          "name": "Get Tracking Status",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/attendance/live/status/{{userId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["attendance", "live", "status", "{{userId}}"]
+            }
+          }
+        },
+        {
+          "name": "Get Location History",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/attendance/live/history/{{userId}}?limit=100",
+              "host": ["{{baseUrl}}"],
+              "path": ["attendance", "live", "history", "{{userId}}"],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "100"
+                },
+                {
+                  "key": "date",
+                  "value": "2025-12-01",
+                  "disabled": true
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Check Geofence",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"latitude\": 19.160122,\n  \"longitude\": 72.839720,\n  \"userId\": \"{{userId}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/attendance/live/geofence/check",
+              "host": ["{{baseUrl}}"],
+              "path": ["attendance", "live", "geofence", "check"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "3. Attendance (Standard)",
+      "item": [
+        {
+          "name": "Start Day",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"latitude\": 19.160122,\n  \"longitude\": 72.839720,\n  \"address\": \"Office Location\",\n  \"accuracy\": 10,\n  \"workFromHome\": false\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/attendance/start-day/{{userId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["attendance", "start-day", "{{userId}}"]
+            }
+          }
+        },
+        {
+          "name": "End Day",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"latitude\": 19.160122,\n  \"longitude\": 72.839720,\n  \"address\": \"Office Location\",\n  \"accuracy\": 10\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/attendance/end-day/{{userId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["attendance", "end-day", "{{userId}}"]
+            }
+          }
+        },
+        {
+          "name": "Get Today's Attendance",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/attendance/today/{{userId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["attendance", "today", "{{userId}}"]
+            }
+          }
+        },
+        {
+          "name": "Get User Attendance",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/attendance/user/{{userId}}?startDate=2025-12-01&endDate=2025-12-31",
+              "host": ["{{baseUrl}}"],
+              "path": ["attendance", "user", "{{userId}}"],
+              "query": [
+                {
+                  "key": "startDate",
+                  "value": "2025-12-01"
+                },
+                {
+                  "key": "endDate",
+                  "value": "2025-12-31"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "4. Alerts (Enhanced - Day 1)",
+      "item": [
+        {
+          "name": "Get All Alerts",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/alerts?limit=50&offset=0&resolved=false",
+              "host": ["{{baseUrl}}"],
+              "path": ["alerts"],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "50"
+                },
+                {
+                  "key": "offset",
+                  "value": "0"
+                },
+                {
+                  "key": "resolved",
+                  "value": "false"
+                },
+                {
+                  "key": "severity",
+                  "value": "High",
+                  "disabled": true
+                },
+                {
+                  "key": "type",
+                  "value": "Location",
+                  "disabled": true
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Location Alerts",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/alerts/location/{{userId}}?limit=20",
+              "host": ["{{baseUrl}}"],
+              "path": ["alerts", "location", "{{userId}}"],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "20"
+                },
+                {
+                  "key": "resolved",
+                  "value": "false",
+                  "disabled": true
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Create Alert (Admin)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"employeeId\": \"{{userId}}\",\n  \"type\": \"Location\",\n  \"severity\": \"High\",\n  \"title\": \"Test Alert\",\n  \"description\": \"This is a test alert\",\n  \"metadata\": {\n    \"reason\": \"Manual trigger\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/alerts/create",
+              "host": ["{{baseUrl}}"],
+              "path": ["alerts", "create"]
+            }
+          }
+        },
+        {
+          "name": "Acknowledge Alert",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"notes\": \"Issue resolved, user was at authorized location\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/alerts/:alertId/acknowledge",
+              "host": ["{{baseUrl}}"],
+              "path": ["alerts", ":alertId", "acknowledge"],
+              "variable": [
+                {
+                  "key": "alertId",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Trigger Alert (Admin)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"employeeId\": \"{{userId}}\",\n  \"alertType\": \"geofence_exit\",\n  \"data\": {\n    \"location\": {\n      \"latitude\": 19.165000,\n      \"longitude\": 72.845000\n    },\n    \"distance\": 800\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/alerts/trigger",
+              "host": ["{{baseUrl}}"],
+              "path": ["alerts", "trigger"]
+            }
+          }
+        },
+        {
+          "name": "Get Alert Statistics (Admin)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/alerts/admin/stats?startDate=2025-12-01&endDate=2025-12-31",
+              "host": ["{{baseUrl}}"],
+              "path": ["alerts", "admin", "stats"],
+              "query": [
+                {
+                  "key": "startDate",
+                  "value": "2025-12-01"
+                },
+                {
+                  "key": "endDate",
+                  "value": "2025-12-31"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "5. Tasks",
+      "item": [
+        {
+          "name": "Get All Tasks",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/tasks",
+              "host": ["{{baseUrl}}"],
+              "path": ["tasks"]
+            }
+          }
+        },
+        {
+          "name": "Create Task",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Complete API Documentation\",\n  \"description\": \"Document all new endpoints\",\n  \"assignee\": \"{{userId}}\",\n  \"dueDate\": \"2025-12-15\",\n  \"priority\": \"High\",\n  \"department\": \"Engineering\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/tasks",
+              "host": ["{{baseUrl}}"],
+              "path": ["tasks"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "6. Salary",
+      "item": [
+        {
+          "name": "Get User Salary",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/salary/{{userId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["salary", "{{userId}}"]
+            }
+          }
+        },
+        {
+          "name": "Set Base Salary (Admin)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"baseSalary\": 60000,\n  \"currency\": \"USD\",\n  \"salaryType\": \"Monthly\",\n  \"joiningDate\": \"2025-01-01\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/salary/set/{{userId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["salary", "set", "{{userId}}"]
+            }
+          }
+        },
+        {
+          "name": "Calculate Salary",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"month\": 12,\n  \"year\": 2025\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/salary/calculate/{{userId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["salary", "calculate", "{{userId}}"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "7. EMS (Email Management)",
+      "item": [
+        {
+          "name": "Get EMS Stats",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/ems/stats",
+              "host": ["{{baseUrl}}"],
+              "path": ["ems", "stats"]
+            }
+          }
+        },
+        {
+          "name": "Send Task Assignment Email",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"taskId\": \"\",\n  \"assigneeId\": \"{{userId}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/ems/send-task-assignment",
+              "host": ["{{baseUrl}}"],
+              "path": ["ems", "send-task-assignment"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "8. Procurement",
+      "item": [
+        {
+          "name": "Run Analysis",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/procurement/run-analysis",
+              "host": ["{{baseUrl}}"],
+              "path": ["procurement", "run-analysis"]
+            }
+          }
+        },
+        {
+          "name": "Get Report",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/procurement/report",
+              "host": ["{{baseUrl}}"],
+              "path": ["procurement", "report"]
+            }
+          }
+        },
+        {
+          "name": "Get Available Employees",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/procurement/available-employees?minScore=50",
+              "host": ["{{baseUrl}}"],
+              "path": ["procurement", "available-employees"],
+              "query": [
+                {
+                  "key": "minScore",
+                  "value": "50"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "9. Dashboard",
+      "item": [
+        {
+          "name": "Get Dashboard Stats",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/dashboard/stats",
+              "host": ["{{baseUrl}}"],
+              "path": ["dashboard", "stats"]
+            }
+          }
+        },
+        {
+          "name": "Get User Stats",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/dashboard/user-stats/{{userId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["dashboard", "user-stats", "{{userId}}"]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

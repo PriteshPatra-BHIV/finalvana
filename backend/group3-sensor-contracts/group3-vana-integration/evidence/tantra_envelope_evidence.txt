@@ -1,0 +1,23 @@
+Group 3 -> Group 4 handoff emitted -> group3_to_group4_handoff.json
+
+TANTRA execution envelope - format CONFIRMED by Karan Barda, 2026-08-14
+
+  RUNTIME-OWNED (null by his instruction, NOT by omission):
+    [runtime] execution_id   null
+    [runtime] trace_id       null
+    [runtime] tenant_id      null
+    [runtime] lineage_hash   null
+
+  PRODUCER-OWNED (Group 3 populates):
+    [group3 ] replay.idempotency_key TC-Z03-F02-LIDAR-OBS001
+    [group3 ] replay.sequence 1
+    [group3 ] payload        observation TC-Z03-F02-LIDAR-OBS001
+
+  payload_sha256 : a1c0df229e27d574a327d61776bae5752bece2c034306549980f3c3588272304
+  is_synthetic   : True
+
+  RESULT: handoff format CLOSED. Group 3 emits this shape from here on.
+
+  STILL OPEN: does the runtime RETURN the trace_id to the producer?
+  Without it Group 3 cannot correlate its submission to the governed
+  execution, and end-to-end identity survival stays unproven from our side.

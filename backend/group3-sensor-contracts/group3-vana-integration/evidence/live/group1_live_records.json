@@ -1,0 +1,202 @@
+{
+  "_captured_at": "2026-08-19T11:39:52.238765+00:00",
+  "_host": "REDACTED - Group 1's API has no authentication and this repository is destined to be public. The host is supplied at run time via --base-url or VANA_API_BASE_URL. Records below were retrieved from Group 1's deployed PostgreSQL 16 + PostGIS 3.4 instance on 2026-08-19.",
+  "_classification": "LIVE - Group 1 deployed PostgreSQL 16 + PostGIS 3.4",
+  "health": {
+    "status": "healthy",
+    "service": "VANA MasterDB Observation API",
+    "version": "1.0.0"
+  },
+  "TC-Z03-F02-LIDAR-OBS001": {
+    "trace_id": "VANA-3fc12a81909d",
+    "observation_id": "TC-Z03-F02-LIDAR-OBS001",
+    "status": "RETRIEVED",
+    "observation": {
+      "observation_id": "TC-Z03-F02-LIDAR-OBS001",
+      "dataset_id": "DS-GROUP3-TC-Z03-F02",
+      "geo_id": "GEO-53675e636907d076866516affbc285cc",
+      "observed_at": "2026-08-13 09:14:22+00:00",
+      "capture_method": "aerial",
+      "species": null,
+      "observation_type": "canopy_height",
+      "quality_status": "VALIDATED",
+      "confidence": null,
+      "is_synthetic": false,
+      "geo_location": {
+        "place_name": "Group 3 observation location",
+        "latitude": 19.1288,
+        "longitude": 72.9421,
+        "altitude_m": null,
+        "crs": "EPSG:4326"
+      },
+      "field_observation_meta": {
+        "device_id": "G3-LIDAR-001",
+        "operator": "<named field operator>",
+        "mission_id": "TC-Z03-F02",
+        "accuracy": null,
+        "accuracy_unit": null,
+        "accuracy_status": "NOT_VERIFIED",
+        "calibration_status": "NOT_VERIFIED",
+        "gnss_status": null,
+        "position_accuracy_m": null,
+        "processing_status": "chm_derived",
+        "notes": null
+      },
+      "measurements": [
+        {
+          "measurement_id": "MEAS-4e832a718b483b2323e9dedf348472ed",
+          "metric_name": "canopy_height",
+          "data_type": "NUMERIC",
+          "value": 4.7,
+          "value_text": null,
+          "unit": "m",
+          "method": "aerial",
+          "provenance": {
+            "provenance_id": "PROV-5fc011feefc21de643dda02ccbd1f68f",
+            "source_id": "SRC-GROUP3-SYNTHETIC",
+            "run_id": "RUN-a081ed1b4219c36e35d6d5d756520a63",
+            "derivation_note": "Group 3 V2.1 observation ingested through consumer-facing API."
+          }
+        }
+      ],
+      "raw_artifacts": [
+        {
+          "artifact_id": "ART-061f7c326c746613ec2a9d36f914fb02",
+          "artifact_type": "point_cloud",
+          "storage_ref": "TC-Z03-F02/drone/pointcloud_F02_001.las",
+          "content_hash": "f7254999689ae5b530a0006d0fb6765df0317973504e8c5d1b393bfa5826cf9d",
+          "hash_algorithm": "sha256",
+          "captured_at": "2026-08-13 09:14:22+00:00"
+        }
+      ]
+    }
+  },
+  "TC-Z03-F02-LIDAR-OBS009": {
+    "trace_id": "VANA-55cb6816f08f",
+    "observation_id": "TC-Z03-F02-LIDAR-OBS009",
+    "status": "RETRIEVED",
+    "observation": {
+      "observation_id": "TC-Z03-F02-LIDAR-OBS009",
+      "dataset_id": "DS-GROUP3-TC-Z03-F02",
+      "geo_id": "GEO-1fca5194c54acc14df3b5ab757dd9a50",
+      "observed_at": "2026-08-13 09:14:22+00:00",
+      "capture_method": "aerial",
+      "species": null,
+      "observation_type": "canopy_height",
+      "quality_status": "VALIDATED",
+      "confidence": null,
+      "is_synthetic": true,
+      "geo_location": {
+        "place_name": "Group 3 observation location",
+        "latitude": 19.1288,
+        "longitude": 72.9421,
+        "altitude_m": null,
+        "crs": "EPSG:4326"
+      },
+      "field_observation_meta": {
+        "device_id": "G3-LIDAR-001",
+        "operator": "<named field operator>",
+        "mission_id": "TC-Z03-F02",
+        "accuracy": null,
+        "accuracy_unit": null,
+        "accuracy_status": "NOT_VERIFIED",
+        "calibration_status": "NOT_VERIFIED",
+        "gnss_status": null,
+        "position_accuracy_m": null,
+        "processing_status": "chm_derived",
+        "notes": null
+      },
+      "measurements": [
+        {
+          "measurement_id": "MEAS-eaf3bddfe16ffd41119131554bf0775c",
+          "metric_name": "canopy_height",
+          "data_type": "NUMERIC",
+          "value": 4.7,
+          "value_text": null,
+          "unit": "m",
+          "method": "aerial",
+          "provenance": {
+            "provenance_id": "PROV-ed8af29a816b34e828311356376d23ab",
+            "source_id": "SRC-GROUP3-SYNTHETIC",
+            "run_id": "RUN-02aef7b0c35c7623d73557cabb601e51",
+            "derivation_note": "Group 3 V2.1 observation ingested through consumer-facing API."
+          }
+        }
+      ],
+      "raw_artifacts": [
+        {
+          "artifact_id": "ART-988256141304c9cc53d55ffac3f8ce5a",
+          "artifact_type": "point_cloud",
+          "storage_ref": "TC-Z03-F02/drone/pointcloud_F02_001.las",
+          "content_hash": "f7254999689ae5b530a0006d0fb6765df0317973504e8c5d1b393bfa5826cf9d",
+          "hash_algorithm": "sha256",
+          "captured_at": "2026-08-13 09:14:22+00:00"
+        }
+      ]
+    }
+  },
+  "TC-Z03-F02-ACCEPTANCE-OBS1787138092": {
+    "trace_id": "VANA-e8c971fe7552",
+    "observation_id": "TC-Z03-F02-ACCEPTANCE-OBS1787138092",
+    "status": "RETRIEVED",
+    "observation": {
+      "observation_id": "TC-Z03-F02-ACCEPTANCE-OBS1787138092",
+      "dataset_id": "DS-GROUP3-TC-Z03-F02",
+      "geo_id": "GEO-a04402d7c118681649410ea3cb1ad75c",
+      "observed_at": "2026-08-19 16:44:00+00:00",
+      "capture_method": "sensor",
+      "species": null,
+      "observation_type": "mangrove_canopy_density",
+      "quality_status": "VALIDATED",
+      "confidence": null,
+      "is_synthetic": true,
+      "geo_location": {
+        "place_name": "Group 3 observation location",
+        "latitude": 19.0456,
+        "longitude": 72.8891,
+        "altitude_m": 45.2,
+        "crs": "EPSG:4326"
+      },
+      "field_observation_meta": {
+        "device_id": "G3-LIVE-SENSOR-900",
+        "operator": null,
+        "mission_id": "TC-Z03-F02",
+        "accuracy": "0.05",
+        "accuracy_unit": "%",
+        "accuracy_status": "SPECIFIED",
+        "calibration_status": "CALIBRATED",
+        "gnss_status": "FIX",
+        "position_accuracy_m": 0.25,
+        "processing_status": "raw",
+        "notes": null
+      },
+      "measurements": [
+        {
+          "measurement_id": "MEAS-3ebfaed9213718783b8a77f1f20dcbf0",
+          "metric_name": "mangrove_canopy_density",
+          "data_type": "NUMERIC",
+          "value": 85.5,
+          "value_text": null,
+          "unit": "%",
+          "method": null,
+          "provenance": {
+            "provenance_id": "PROV-9e1271fcd89dd588f0950801762c89c6",
+            "source_id": "SRC-GROUP3-SYNTHETIC",
+            "run_id": "RUN-03d7a44a9d3645a7067300e6292a75f4",
+            "derivation_note": "Group 3 V2.1 observation ingested through consumer-facing API."
+          }
+        }
+      ],
+      "raw_artifacts": [
+        {
+          "artifact_id": "ART-a560193f34033e5894645864871184b0",
+          "artifact_type": "sensor_reading",
+          "storage_ref": "live_data/sensor_readings_900.raw",
+          "content_hash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "hash_algorithm": "sha256",
+          "captured_at": "2026-08-19 16:44:00+00:00"
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,66 @@
+{
+  "_README": "Live probe of the only two AIAIC sources that are BOTH verified_live AND keyless network calls. Captured to answer whether they are genuinely accessible at runtime, rather than asserting it.",
+  "_probed_at": "2026-08-22T10:41:52.136298+00:00",
+  "_location": {
+    "latitude": 19.1288,
+    "longitude": 72.9421,
+    "name": "Thane Creek"
+  },
+  "_classification": "LIVE - real external third-party APIs, no key, no Group 3 hardware",
+  "_honesty": "Neither source is Group 3 hardware evidence. Neither is satellite imagery. AIAIC does hold ISRO AWiFS/OCM2 rasters, but they are annual offline snapshots, not a live feed. Any observation built from these must carry the external source identity and attribution, and must NOT be classified PHYSICAL.",
+  "sources": [
+    {
+      "source_id": "open_meteo_weather",
+      "status": "LIVE",
+      "http": 200,
+      "latency_ms": 905,
+      "bytes": 461,
+      "url": "https://api.open-meteo.com/v1/forecast?latitude=19.1288&longitude=72.9421&current=temperature_2m,relative_humidity_2m,precipitation,wind_speed_10m&timezone=UTC",
+      "observed_at_utc": "2026-08-22T10:30",
+      "values": {
+        "temperature_2m": 27.0,
+        "relative_humidity_2m": 85,
+        "precipitation": 0.1,
+        "wind_speed_10m": 9.2
+      },
+      "units": {
+        "time": "iso8601",
+        "interval": "seconds",
+        "temperature_2m": "°C",
+        "relative_humidity_2m": "%",
+        "precipitation": "mm",
+        "wind_speed_10m": "km/h"
+      },
+      "elevation_m": 4.0,
+      "kind": "live weather API - forecast model output, updated continuously",
+      "attribution": "Weather data by Open-Meteo.com (CC-BY 4.0), aggregating national weather services. Non-commercial free tier."
+    },
+    {
+      "source_id": "nasa_power_weather",
+      "status": "LIVE",
+      "http": 200,
+      "latency_ms": 1463,
+      "bytes": 1034,
+      "url": "https://power.larc.nasa.gov/api/temporal/daily/point?parameters=T2M,PRECTOTCORR,RH2M&community=AG&longitude=72.9421&latitude=19.1288&start=20260812&end=20260819&format=JSON",
+      "latest": {
+        "T2M": {
+          "date": "20260819",
+          "value": 26.32,
+          "days_returned": 8
+        },
+        "PRECTOTCORR": {
+          "date": "20260819",
+          "value": 4.12,
+          "days_returned": 8
+        },
+        "RH2M": {
+          "date": "20260819",
+          "value": 91.44,
+          "days_returned": 8
+        }
+      },
+      "kind": "satellite- and model-DERIVED observational agroclimatology, 2-3 day latency. NOT satellite imagery and NOT a forecast.",
+      "attribution": "These data were obtained from the NASA Langley Research Center POWER Project (power.larc.nasa.gov). Free and open; cite the NASA POWER Project."
+    }
+  ]
+}

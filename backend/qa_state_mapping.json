@@ -1,0 +1,27 @@
+{
+  "quality_status_allowed_by_frozen_contract": [
+    "RAW",
+    "CAPTURED",
+    "VALIDATED",
+    "REJECTED",
+    "UNCERTAIN",
+    "INGESTED"
+  ],
+  "additional_verification_state": {
+    "NOT VERIFIED": "Used where evidence/capability has not actually been verified, including current calibration/accuracy values and hardware readiness. It is not a quality_status enum value in the frozen observation schema."
+  },
+  "states": {
+    "RAW": "Original/raw observation state before QA promotion.",
+    "CAPTURED": "Observation captured/registered but not yet fully validated.",
+    "VALIDATED": "Observation passed the applicable validation/QA checks.",
+    "UNCERTAIN": "Observation is retained but has unresolved uncertainty, such as unavailable GNSS position; it must not be promoted as fully validated.",
+    "REJECTED": "Observation failed a required validation rule and must not be promoted to the canonical record.",
+    "NOT VERIFIED": "Evidence or capability has not been verified; do not manufacture confidence."
+  },
+  "current_fixture": {
+    "quality_status": "VALIDATED",
+    "calibration_status": "NOT VERIFIED",
+    "accuracy": "NOT VERIFIED",
+    "hardware_verified": false
+  }
+}

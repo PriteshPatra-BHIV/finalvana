@@ -1,0 +1,20 @@
+{
+  "_what": "One clean POST + GET, no mutation, per Sanskar's instruction 2026-08-29",
+  "run_at_utc": "2026-08-29T07:11:16.334262+00:00",
+  "ingest_path_used": "/observations",
+  "ingest_path_resolution": "discovered from /openapi.json",
+  "observation_id": "MU-Z01-EXT-OPENMETEO-OBS001",
+  "latitude": 19.043,
+  "longitude": 72.853,
+  "idempotency_key": "IK-MU-Z01-EXT-OPENMETEO-OBS001",
+  "post_status": 500,
+  "post_response": "Internal Server Error",
+  "get_status": 404,
+  "canonical_record_id": null,
+  "get_response": {
+    "trace_id": "VANA-e58217f2fe67",
+    "status": "NOT_FOUND",
+    "message": "Observation was not found.",
+    "errors": []
+  }
+}

@@ -1,0 +1,828 @@
+{
+  "_README": "Group 3's INDEPENDENT read-only verification of Group 1's reported six-region closure. GET only; nothing was written to Group 1.",
+  "_host": "REDACTED - supplied at run time",
+  "_verified_at": "2026-09-01T09:04:36.212322+00:00",
+  "_source_of_reported_ids": "Sanskar, Group 1, message of 2026-09-01",
+  "_claim_under_test": "'We did not modify the observation IDs or source measurements during ingestion.'",
+  "verified": 0,
+  "total": 6,
+  "verdict": "6 FAILED",
+  "regions": [
+    {
+      "region": "Thane Creek",
+      "survey_id": "TC",
+      "observation_id": "TC-Z03-EXT-OPENMETEO-OBS001",
+      "http_status": 200,
+      "canonical_record_id_reported_by_group1": "CR-b4615a27-7ab1-4bde-a078-a56fa0f2414c",
+      "checks": {
+        "http_200": true,
+        "canonical_matches_report": true,
+        "observation_id_verbatim": true,
+        "measurement_survived": false,
+        "unit_survived": true,
+        "observation_timestamp_survived": false,
+        "observation_type_survived": true,
+        "sensor_id_survived": false,
+        "device_id_survived": true,
+        "survey_id_survived": false,
+        "zone_id_survived": false,
+        "is_synthetic_survived": true,
+        "capture_method_survived": true,
+        "synthetic_state_survived": true,
+        "data_state_survived": true,
+        "latitude_survived": true,
+        "longitude_survived": true,
+        "provenance_is_group3_source": true,
+        "source_sha256_survived": true
+      },
+      "notes": [
+        "measurement: sent 0.1, stored None",
+        "observation_timestamp: sent '2026-08-25T11:00:00Z', stored '2026-08-25 11:00:00+00:00'",
+        "sensor_id: sent 'OPENMETEO', stored None",
+        "survey_id: sent 'TC', stored None",
+        "zone_id: sent 'Z03', stored None"
+      ],
+      "verdict": "FAILED",
+      "raw_response": {
+        "trace_id": "VANA-9cc7fef1d140",
+        "observation_id": "TC-Z03-EXT-OPENMETEO-OBS001",
+        "status": "RETRIEVED",
+        "observation": {
+          "observation_id": "TC-Z03-EXT-OPENMETEO-OBS001",
+          "canonical_record_id": "CR-b4615a27-7ab1-4bde-a078-a56fa0f2414c",
+          "dataset_id": "DS-GROUP3-TC-Z03-F02",
+          "geo_id": "GEO-6bc544e77bfbddb53ff918dfe08cd8f2",
+          "observed_at": "2026-08-25 11:00:00+00:00",
+          "observation_timestamp": "2026-08-25 11:00:00+00:00",
+          "timestamp": "2026-08-25 11:00:00+00:00",
+          "contract_version": "2.2",
+          "schema_version": "2.2",
+          "provenance_reference": "open-meteo:8d26e68328ac160f",
+          "source_timestamp": "2026-08-25 11:00:00+00:00",
+          "capture_method": "external_api",
+          "device_id": "G3-EXT-OPENMETEO-01",
+          "species": null,
+          "observation_type": "precipitation",
+          "quality_status": "CAPTURED",
+          "quality_state": "CAPTURED",
+          "data_state": "CAPTURED",
+          "confidence": null,
+          "is_synthetic": true,
+          "synthetic_state": "CONTROLLED",
+          "location": {
+            "latitude": 19.1288,
+            "longitude": 72.9421,
+            "altitude_m": 4.0,
+            "gnss_status": "NOT_VERIFIED",
+            "position_accuracy_m": null
+          },
+          "latitude": 19.1288,
+          "longitude": 72.9421,
+          "altitude_m": 4.0,
+          "gnss_status": "NOT_VERIFIED",
+          "position_accuracy_m": null,
+          "calibration_status": "NOT_VERIFIED",
+          "calibration_state": "NOT_VERIFIED",
+          "raw_artifact": "https://api.open-meteo.com/v1/forecast?latitude=19.1288&longitude=72.9421&current=temperature_2m,relative_humidity_2m,precipitation,wind_speed_10m&timezone=UTC",
+          "raw_artifact_integrity": {
+            "checksum_sha256": "8d26e68328ac160f7b69f1a24ccb2de4972ff9fc60af11093c246903a7c52502",
+            "hash_algorithm": "sha256",
+            "artifact_type": "sensor_reading"
+          },
+          "raw_artifact_reference": {
+            "path": "https://api.open-meteo.com/v1/forecast?latitude=19.1288&longitude=72.9421&current=temperature_2m,relative_humidity_2m,precipitation,wind_speed_10m&timezone=UTC",
+            "checksum_sha256": "8d26e68328ac160f7b69f1a24ccb2de4972ff9fc60af11093c246903a7c52502",
+            "artifact_type": "sensor_reading"
+          },
+          "geo_location": {
+            "place_name": "Group 3 observation location",
+            "latitude": 19.1288,
+            "longitude": 72.9421,
+            "altitude_m": 4.0,
+            "crs": "EPSG:4326"
+          },
+          "field_observation_meta": {
+            "device_id": "G3-EXT-OPENMETEO-01",
+            "operator": "Open-Meteo.com (external data provider)",
+            "mission_id": "TC-Z03-EXT",
+            "accuracy": null,
+            "accuracy_unit": null,
+            "accuracy_status": "NOT_VERIFIED",
+            "calibration_status": "NOT_VERIFIED",
+            "gnss_status": "NOT_VERIFIED",
+            "position_accuracy_m": null,
+            "processing_status": "raw",
+            "notes": null
+          },
+          "measurements": [
+            {
+              "measurement_id": "MEAS-911005a8fb8b32be73e02f0edb148679",
+              "metric_name": "precipitation",
+              "data_type": "NUMERIC",
+              "value": 0.1,
+              "value_text": null,
+              "unit": "mm",
+              "method": "precipitation",
+              "provenance": {
+                "provenance_id": "PROV-c52cbcea7c25195d7752eaed72048d50",
+                "source_id": "SRC-GROUP3-FIELD-EDGE",
+                "run_id": "RUN-60868ee535029f52b471608ccaa2bc38",
+                "derivation_note": "Group 3 V2.2 observation ingested through consumer-facing API."
+              }
+            }
+          ],
+          "raw_artifacts": [
+            {
+              "artifact_id": "ART-414b5e9c187be8ff01e353ec6f7221e3",
+              "artifact_type": "sensor_reading",
+              "storage_ref": "https://api.open-meteo.com/v1/forecast?latitude=19.1288&longitude=72.9421&current=temperature_2m,relative_humidity_2m,precipitation,wind_speed_10m&timezone=UTC",
+              "content_hash": "8d26e68328ac160f7b69f1a24ccb2de4972ff9fc60af11093c246903a7c52502",
+              "hash_algorithm": "sha256",
+              "captured_at": "2026-08-25 11:00:00+00:00"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "region": "Mumbai",
+      "survey_id": "MU",
+      "observation_id": "MU-Z01-EXT-OPENMETEO-OBS001",
+      "http_status": 200,
+      "canonical_record_id_reported_by_group1": "CR-d13c51cb-c9c7-42fc-b303-1dabc3e52b7b",
+      "checks": {
+        "http_200": true,
+        "canonical_matches_report": true,
+        "observation_id_verbatim": true,
+        "measurement_survived": false,
+        "unit_survived": true,
+        "observation_timestamp_survived": false,
+        "observation_type_survived": true,
+        "sensor_id_survived": false,
+        "device_id_survived": true,
+        "survey_id_survived": false,
+        "zone_id_survived": false,
+        "is_synthetic_survived": true,
+        "capture_method_survived": true,
+        "synthetic_state_survived": true,
+        "data_state_survived": true,
+        "latitude_survived": true,
+        "longitude_survived": true,
+        "provenance_is_group3_source": true,
+        "source_sha256_survived": true
+      },
+      "notes": [
+        "measurement: sent 0.1, stored None",
+        "observation_timestamp: sent '2026-08-28T14:45:00Z', stored '2026-08-28 14:45:00+00:00'",
+        "sensor_id: sent 'OPENMETEO', stored None",
+        "survey_id: sent 'MU', stored None",
+        "zone_id: sent 'Z01', stored None"
+      ],
+      "verdict": "FAILED",
+      "raw_response": {
+        "trace_id": "VANA-5d81af886a29",
+        "observation_id": "MU-Z01-EXT-OPENMETEO-OBS001",
+        "status": "RETRIEVED",
+        "observation": {
+          "observation_id": "MU-Z01-EXT-OPENMETEO-OBS001",
+          "canonical_record_id": "CR-d13c51cb-c9c7-42fc-b303-1dabc3e52b7b",
+          "dataset_id": "DS-GROUP3-FIELD-EDGE-MU-Z01-EXT",
+          "geo_id": "GEO-263022dc7dd1c661ddd1e29d524b518a",
+          "observed_at": "2026-08-28 14:45:00+00:00",
+          "observation_timestamp": "2026-08-28 14:45:00+00:00",
+          "timestamp": "2026-08-28 14:45:00+00:00",
+          "contract_version": "2.2",
+          "schema_version": "2.2",
+          "provenance_reference": "open-meteo:09e338bdf9fe1181",
+          "source_timestamp": "2026-08-28 14:45:00+00:00",
+          "capture_method": "external_api",
+          "device_id": "G3-EXT-OPENMETEO-01",
+          "species": null,
+          "observation_type": "precipitation",
+          "quality_status": "CAPTURED",
+          "quality_state": "CAPTURED",
+          "data_state": "CAPTURED",
+          "confidence": null,
+          "is_synthetic": true,
+          "synthetic_state": "CONTROLLED",
+          "location": {
+            "latitude": 19.043,
+            "longitude": 72.853,
+            "altitude_m": 10.0,
+            "gnss_status": "NOT_VERIFIED",
+            "position_accuracy_m": null
+          },
+          "latitude": 19.043,
+          "longitude": 72.853,
+          "altitude_m": 10.0,
+          "gnss_status": "NOT_VERIFIED",
+          "position_accuracy_m": null,
+          "calibration_status": "NOT_VERIFIED",
+          "calibration_state": "NOT_VERIFIED",
+          "raw_artifact": "https://api.open-meteo.com/v1/forecast?latitude=19.043&longitude=72.853&current=temperature_2m,relative_humidity_2m,precipitation,wind_speed_10m&timezone=UTC",
+          "raw_artifact_integrity": {
+            "checksum_sha256": "09e338bdf9fe1181bcecd9b815c31bea40a88cad10dca1bee5aaf638b5dc94c0",
+            "hash_algorithm": "sha256",
+            "artifact_type": "sensor_reading"
+          },
+          "raw_artifact_reference": {
+            "path": "https://api.open-meteo.com/v1/forecast?latitude=19.043&longitude=72.853&current=temperature_2m,relative_humidity_2m,precipitation,wind_speed_10m&timezone=UTC",
+            "checksum_sha256": "09e338bdf9fe1181bcecd9b815c31bea40a88cad10dca1bee5aaf638b5dc94c0",
+            "artifact_type": "sensor_reading"
+          },
+          "geo_location": {
+            "place_name": "Group 3 observation location",
+            "latitude": 19.043,
+            "longitude": 72.853,
+            "altitude_m": 10.0,
+            "crs": "EPSG:4326"
+          },
+          "field_observation_meta": {
+            "device_id": "G3-EXT-OPENMETEO-01",
+            "operator": "Open-Meteo.com (external data provider)",
+            "mission_id": "MU-Z01-EXT",
+            "accuracy": null,
+            "accuracy_unit": null,
+            "accuracy_status": "NOT_VERIFIED",
+            "calibration_status": "NOT_VERIFIED",
+            "gnss_status": "NOT_VERIFIED",
+            "position_accuracy_m": null,
+            "processing_status": "raw",
+            "notes": null
+          },
+          "measurements": [
+            {
+              "measurement_id": "MEAS-9a758241726c85cae3b0a4a24345eb08",
+              "metric_name": "precipitation",
+              "data_type": "NUMERIC",
+              "value": 0.1,
+              "value_text": null,
+              "unit": "mm",
+              "method": "precipitation",
+              "provenance": {
+                "provenance_id": "PROV-c0c505b867619fffd424279bd6827c8d",
+                "source_id": "SRC-GROUP3-FIELD-EDGE",
+                "run_id": "RUN-4a0bd7d1cd2c2d5a12db50faf2271ca8",
+                "derivation_note": "Group 3 V2.2 observation ingested through consumer-facing API."
+              }
+            }
+          ],
+          "raw_artifacts": [
+            {
+              "artifact_id": "ART-8a4dbadb5d56fb2310808cf45187a8e6",
+              "artifact_type": "sensor_reading",
+              "storage_ref": "https://api.open-meteo.com/v1/forecast?latitude=19.043&longitude=72.853&current=temperature_2m,relative_humidity_2m,precipitation,wind_speed_10m&timezone=UTC",
+              "content_hash": "09e338bdf9fe1181bcecd9b815c31bea40a88cad10dca1bee5aaf638b5dc94c0",
+              "hash_algorithm": "sha256",
+              "captured_at": "2026-08-28 14:45:00+00:00"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "region": "Navi Mumbai",
+      "survey_id": "NM",
+      "observation_id": "NM-Z01-EXT-OPENMETEO-OBS001",
+      "http_status": 200,
+      "canonical_record_id_reported_by_group1": "CR-331d3f3d-ec51-45e0-b632-45d6c91fd50c",
+      "checks": {
+        "http_200": true,
+        "canonical_matches_report": true,
+        "observation_id_verbatim": true,
+        "measurement_survived": false,
+        "unit_survived": true,
+        "observation_timestamp_survived": false,
+        "observation_type_survived": true,
+        "sensor_id_survived": false,
+        "device_id_survived": true,
+        "survey_id_survived": false,
+        "zone_id_survived": false,
+        "is_synthetic_survived": true,
+        "capture_method_survived": true,
+        "synthetic_state_survived": true,
+        "data_state_survived": true,
+        "latitude_survived": true,
+        "longitude_survived": true,
+        "provenance_is_group3_source": true,
+        "source_sha256_survived": true
+      },
+      "notes": [
+        "measurement: sent 0.1, stored None",
+        "observation_timestamp: sent '2026-08-28T14:45:00Z', stored '2026-08-28 14:45:00+00:00'",
+        "sensor_id: sent 'OPENMETEO', stored None",
+        "survey_id: sent 'NM', stored None",
+        "zone_id: sent 'Z01', stored None"
+      ],
+      "verdict": "FAILED",
+      "raw_response": {
+        "trace_id": "VANA-1353f20794e8",
+        "observation_id": "NM-Z01-EXT-OPENMETEO-OBS001",
+        "status": "RETRIEVED",
+        "observation": {
+          "observation_id": "NM-Z01-EXT-OPENMETEO-OBS001",
+          "canonical_record_id": "CR-331d3f3d-ec51-45e0-b632-45d6c91fd50c",
+          "dataset_id": "DS-GROUP3-FIELD-EDGE-NM-Z01-EXT",
+          "geo_id": "GEO-1515544087f32ebf4ac6a05e47ab478e",
+          "observed_at": "2026-08-28 14:45:00+00:00",
+          "observation_timestamp": "2026-08-28 14:45:00+00:00",
+          "timestamp": "2026-08-28 14:45:00+00:00",
+          "contract_version": "2.2",
+          "schema_version": "2.2",
+          "provenance_reference": "open-meteo:526c84fa8deab6b7",
+          "source_timestamp": "2026-08-28 14:45:00+00:00",
+          "capture_method": "external_api",
+          "device_id": "G3-EXT-OPENMETEO-01",
+          "species": null,
+          "observation_type": "precipitation",
+          "quality_status": "CAPTURED",
+          "quality_state": "CAPTURED",
+          "data_state": "CAPTURED",
+          "confidence": null,
+          "is_synthetic": true,
+          "synthetic_state": "CONTROLLED",
+          "location": {
+            "latitude": 19.022,
+            "longitude": 73.011,
+            "altitude_m": 2.0,
+            "gnss_status": "NOT_VERIFIED",
+            "position_accuracy_m": null
+          },
+          "latitude": 19.022,
+          "longitude": 73.011,
+          "altitude_m": 2.0,
+          "gnss_status": "NOT_VERIFIED",
+          "position_accuracy_m": null,
+          "calibration_status": "NOT_VERIFIED",
+          "calibration_state": "NOT_VERIFIED",
+          "raw_artifact": "https://api.open-meteo.com/v1/forecast?latitude=19.022&longitude=73.011&current=temperature_2m,relative_humidity_2m,precipitation,wind_speed_10m&timezone=UTC",
+          "raw_artifact_integrity": {
+            "checksum_sha256": "526c84fa8deab6b7b292dbfe83801c4c23afd009e465855e0c243625e1a3cdf7",
+            "hash_algorithm": "sha256",
+            "artifact_type": "sensor_reading"
+          },
+          "raw_artifact_reference": {
+            "path": "https://api.open-meteo.com/v1/forecast?latitude=19.022&longitude=73.011&current=temperature_2m,relative_humidity_2m,precipitation,wind_speed_10m&timezone=UTC",
+            "checksum_sha256": "526c84fa8deab6b7b292dbfe83801c4c23afd009e465855e0c243625e1a3cdf7",
+            "artifact_type": "sensor_reading"
+          },
+          "geo_location": {
+            "place_name": "Group 3 observation location",
+            "latitude": 19.022,
+            "longitude": 73.011,
+            "altitude_m": 2.0,
+            "crs": "EPSG:4326"
+          },
+          "field_observation_meta": {
+            "device_id": "G3-EXT-OPENMETEO-01",
+            "operator": "Open-Meteo.com (external data provider)",
+            "mission_id": "NM-Z01-EXT",
+            "accuracy": null,
+            "accuracy_unit": null,
+            "accuracy_status": "NOT_VERIFIED",
+            "calibration_status": "NOT_VERIFIED",
+            "gnss_status": "NOT_VERIFIED",
+            "position_accuracy_m": null,
+            "processing_status": "raw",
+            "notes": null
+          },
+          "measurements": [
+            {
+              "measurement_id": "MEAS-ad134597f11904127bbb7a005d45af87",
+              "metric_name": "precipitation",
+              "data_type": "NUMERIC",
+              "value": 0.1,
+              "value_text": null,
+              "unit": "mm",
+              "method": "precipitation",
+              "provenance": {
+                "provenance_id": "PROV-201581a922b74f4c9e047776be009b38",
+                "source_id": "SRC-GROUP3-FIELD-EDGE",
+                "run_id": "RUN-3d9d22c9fe923842761a9381412c705d",
+                "derivation_note": "Group 3 V2.2 observation ingested through consumer-facing API."
+              }
+            }
+          ],
+          "raw_artifacts": [
+            {
+              "artifact_id": "ART-dde40a1ed6914eb07d52b13af10e67b5",
+              "artifact_type": "sensor_reading",
+              "storage_ref": "https://api.open-meteo.com/v1/forecast?latitude=19.022&longitude=73.011&current=temperature_2m,relative_humidity_2m,precipitation,wind_speed_10m&timezone=UTC",
+              "content_hash": "526c84fa8deab6b7b292dbfe83801c4c23afd009e465855e0c243625e1a3cdf7",
+              "hash_algorithm": "sha256",
+              "captured_at": "2026-08-28 14:45:00+00:00"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "region": "Vasai",
+      "survey_id": "VS",
+      "observation_id": "VS-Z01-EXT-OPENMETEO-OBS001",
+      "http_status": 200,
+      "canonical_record_id_reported_by_group1": "CR-1ee091b3-ad16-4086-a88b-860affe142e8",
+      "checks": {
+        "http_200": true,
+        "canonical_matches_report": true,
+        "observation_id_verbatim": true,
+        "measurement_survived": false,
+        "unit_survived": true,
+        "observation_timestamp_survived": false,
+        "observation_type_survived": true,
+        "sensor_id_survived": false,
+        "device_id_survived": true,
+        "survey_id_survived": false,
+        "zone_id_survived": false,
+        "is_synthetic_survived": true,
+        "capture_method_survived": true,
+        "synthetic_state_survived": true,
+        "data_state_survived": true,
+        "latitude_survived": true,
+        "longitude_survived": true,
+        "provenance_is_group3_source": true,
+        "source_sha256_survived": true
+      },
+      "notes": [
+        "measurement: sent 0.0, stored None",
+        "observation_timestamp: sent '2026-08-28T14:45:00Z', stored '2026-08-28 14:45:00+00:00'",
+        "sensor_id: sent 'OPENMETEO', stored None",
+        "survey_id: sent 'VS', stored None",
+        "zone_id: sent 'Z01', stored None"
+      ],
+      "verdict": "FAILED",
+      "raw_response": {
+        "trace_id": "VANA-6757f01f337a",
+        "observation_id": "VS-Z01-EXT-OPENMETEO-OBS001",
+        "status": "RETRIEVED",
+        "observation": {
+          "observation_id": "VS-Z01-EXT-OPENMETEO-OBS001",
+          "canonical_record_id": "CR-1ee091b3-ad16-4086-a88b-860affe142e8",
+          "dataset_id": "DS-GROUP3-FIELD-EDGE-VS-Z01-EXT",
+          "geo_id": "GEO-738e06ba16bf87b833297921e273ec4c",
+          "observed_at": "2026-08-28 14:45:00+00:00",
+          "observation_timestamp": "2026-08-28 14:45:00+00:00",
+          "timestamp": "2026-08-28 14:45:00+00:00",
+          "contract_version": "2.2",
+          "schema_version": "2.2",
+          "provenance_reference": "open-meteo:eebcc3c2c23e0c4e",
+          "source_timestamp": "2026-08-28 14:45:00+00:00",
+          "capture_method": "external_api",
+          "device_id": "G3-EXT-OPENMETEO-01",
+          "species": null,
+          "observation_type": "precipitation",
+          "quality_status": "CAPTURED",
+          "quality_state": "CAPTURED",
+          "data_state": "CAPTURED",
+          "confidence": null,
+          "is_synthetic": true,
+          "synthetic_state": "CONTROLLED",
+          "location": {
+            "latitude": 19.349,
+            "longitude": 72.812,
+            "altitude_m": 12.0,
+            "gnss_status": "NOT_VERIFIED",
+            "position_accuracy_m": null
+          },
+          "latitude": 19.349,
+          "longitude": 72.812,
+          "altitude_m": 12.0,
+          "gnss_status": "NOT_VERIFIED",
+          "position_accuracy_m": null,
+          "calibration_status": "NOT_VERIFIED",
+          "calibration_state": "NOT_VERIFIED",
+          "raw_artifact": "https://api.open-meteo.com/v1/forecast?latitude=19.349&longitude=72.812&current=temperature_2m,relative_humidity_2m,precipitation,wind_speed_10m&timezone=UTC",
+          "raw_artifact_integrity": {
+            "checksum_sha256": "eebcc3c2c23e0c4ec5b4a8f952a61b6b0abb8c00db94794e0e8f7391a9d63ba8",
+            "hash_algorithm": "sha256",
+            "artifact_type": "sensor_reading"
+          },
+          "raw_artifact_reference": {
+            "path": "https://api.open-meteo.com/v1/forecast?latitude=19.349&longitude=72.812&current=temperature_2m,relative_humidity_2m,precipitation,wind_speed_10m&timezone=UTC",
+            "checksum_sha256": "eebcc3c2c23e0c4ec5b4a8f952a61b6b0abb8c00db94794e0e8f7391a9d63ba8",
+            "artifact_type": "sensor_reading"
+          },
+          "geo_location": {
+            "place_name": "Group 3 observation location",
+            "latitude": 19.349,
+            "longitude": 72.812,
+            "altitude_m": 12.0,
+            "crs": "EPSG:4326"
+          },
+          "field_observation_meta": {
+            "device_id": "G3-EXT-OPENMETEO-01",
+            "operator": "Open-Meteo.com (external data provider)",
+            "mission_id": "VS-Z01-EXT",
+            "accuracy": null,
+            "accuracy_unit": null,
+            "accuracy_status": "NOT_VERIFIED",
+            "calibration_status": "NOT_VERIFIED",
+            "gnss_status": "NOT_VERIFIED",
+            "position_accuracy_m": null,
+            "processing_status": "raw",
+            "notes": null
+          },
+          "measurements": [
+            {
+              "measurement_id": "MEAS-b38207144d615fe8b0b98a598046b675",
+              "metric_name": "precipitation",
+              "data_type": "NUMERIC",
+              "value": 0.0,
+              "value_text": null,
+              "unit": "mm",
+              "method": "precipitation",
+              "provenance": {
+                "provenance_id": "PROV-59dc1a92bd1424145b65bf5603c9f09f",
+                "source_id": "SRC-GROUP3-FIELD-EDGE",
+                "run_id": "RUN-2d0cdf08227fdf30413f58e45f94957c",
+                "derivation_note": "Group 3 V2.2 observation ingested through consumer-facing API."
+              }
+            }
+          ],
+          "raw_artifacts": [
+            {
+              "artifact_id": "ART-dc86e088045f57918f6f85171a72dc92",
+              "artifact_type": "sensor_reading",
+              "storage_ref": "https://api.open-meteo.com/v1/forecast?latitude=19.349&longitude=72.812&current=temperature_2m,relative_humidity_2m,precipitation,wind_speed_10m&timezone=UTC",
+              "content_hash": "eebcc3c2c23e0c4ec5b4a8f952a61b6b0abb8c00db94794e0e8f7391a9d63ba8",
+              "hash_algorithm": "sha256",
+              "captured_at": "2026-08-28 14:45:00+00:00"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "region": "Thane",
+      "survey_id": "THN",
+      "observation_id": "THN-Z01-EXT-OPENMETEO-OBS001",
+      "http_status": 200,
+      "canonical_record_id_reported_by_group1": "CR-03125aaf-6d7e-4f7b-b4f1-97c7e6712755",
+      "checks": {
+        "http_200": true,
+        "canonical_matches_report": true,
+        "observation_id_verbatim": true,
+        "measurement_survived": false,
+        "unit_survived": true,
+        "observation_timestamp_survived": false,
+        "observation_type_survived": true,
+        "sensor_id_survived": false,
+        "device_id_survived": true,
+        "survey_id_survived": false,
+        "zone_id_survived": false,
+        "is_synthetic_survived": true,
+        "capture_method_survived": true,
+        "synthetic_state_survived": true,
+        "data_state_survived": true,
+        "latitude_survived": true,
+        "longitude_survived": true,
+        "provenance_is_group3_source": true,
+        "source_sha256_survived": true
+      },
+      "notes": [
+        "measurement: sent 0.0, stored None",
+        "observation_timestamp: sent '2026-08-28T14:45:00Z', stored '2026-08-28 14:45:00+00:00'",
+        "sensor_id: sent 'OPENMETEO', stored None",
+        "survey_id: sent 'THN', stored None",
+        "zone_id: sent 'Z01', stored None"
+      ],
+      "verdict": "FAILED",
+      "raw_response": {
+        "trace_id": "VANA-02850de941f8",
+        "observation_id": "THN-Z01-EXT-OPENMETEO-OBS001",
+        "status": "RETRIEVED",
+        "observation": {
+          "observation_id": "THN-Z01-EXT-OPENMETEO-OBS001",
+          "canonical_record_id": "CR-03125aaf-6d7e-4f7b-b4f1-97c7e6712755",
+          "dataset_id": "DS-GROUP3-FIELD-EDGE-THN-Z01-EXT",
+          "geo_id": "GEO-c290fd398e20badb03399b4810c87f69",
+          "observed_at": "2026-08-28 14:45:00+00:00",
+          "observation_timestamp": "2026-08-28 14:45:00+00:00",
+          "timestamp": "2026-08-28 14:45:00+00:00",
+          "contract_version": "2.2",
+          "schema_version": "2.2",
+          "provenance_reference": "open-meteo:5492ece45919ec02",
+          "source_timestamp": "2026-08-28 14:45:00+00:00",
+          "capture_method": "external_api",
+          "device_id": "G3-EXT-OPENMETEO-01",
+          "species": null,
+          "observation_type": "precipitation",
+          "quality_status": "CAPTURED",
+          "quality_state": "CAPTURED",
+          "data_state": "CAPTURED",
+          "confidence": null,
+          "is_synthetic": true,
+          "synthetic_state": "CONTROLLED",
+          "location": {
+            "latitude": 19.222,
+            "longitude": 72.956,
+            "altitude_m": 47.0,
+            "gnss_status": "NOT_VERIFIED",
+            "position_accuracy_m": null
+          },
+          "latitude": 19.222,
+          "longitude": 72.956,
+          "altitude_m": 47.0,
+          "gnss_status": "NOT_VERIFIED",
+          "position_accuracy_m": null,
+          "calibration_status": "NOT_VERIFIED",
+          "calibration_state": "NOT_VERIFIED",
+          "raw_artifact": "https://api.open-meteo.com/v1/forecast?latitude=19.222&longitude=72.956&current=temperature_2m,relative_humidity_2m,precipitation,wind_speed_10m&timezone=UTC",
+          "raw_artifact_integrity": {
+            "checksum_sha256": "5492ece45919ec02c2c577bdd16d58304105a80542772de2457c2a9640a06af9",
+            "hash_algorithm": "sha256",
+            "artifact_type": "sensor_reading"
+          },
+          "raw_artifact_reference": {
+            "path": "https://api.open-meteo.com/v1/forecast?latitude=19.222&longitude=72.956&current=temperature_2m,relative_humidity_2m,precipitation,wind_speed_10m&timezone=UTC",
+            "checksum_sha256": "5492ece45919ec02c2c577bdd16d58304105a80542772de2457c2a9640a06af9",
+            "artifact_type": "sensor_reading"
+          },
+          "geo_location": {
+            "place_name": "Group 3 observation location",
+            "latitude": 19.222,
+            "longitude": 72.956,
+            "altitude_m": 47.0,
+            "crs": "EPSG:4326"
+          },
+          "field_observation_meta": {
+            "device_id": "G3-EXT-OPENMETEO-01",
+            "operator": "Open-Meteo.com (external data provider)",
+            "mission_id": "THN-Z01-EXT",
+            "accuracy": null,
+            "accuracy_unit": null,
+            "accuracy_status": "NOT_VERIFIED",
+            "calibration_status": "NOT_VERIFIED",
+            "gnss_status": "NOT_VERIFIED",
+            "position_accuracy_m": null,
+            "processing_status": "raw",
+            "notes": null
+          },
+          "measurements": [
+            {
+              "measurement_id": "MEAS-1443452b68f2b7abec8362ffb133e4a5",
+              "metric_name": "precipitation",
+              "data_type": "NUMERIC",
+              "value": 0.0,
+              "value_text": null,
+              "unit": "mm",
+              "method": "precipitation",
+              "provenance": {
+                "provenance_id": "PROV-502e99c8abc57356e371e5f441bf0742",
+                "source_id": "SRC-GROUP3-FIELD-EDGE",
+                "run_id": "RUN-7ca61ab92430d370e3e577781c1129d9",
+                "derivation_note": "Group 3 V2.2 observation ingested through consumer-facing API."
+              }
+            }
+          ],
+          "raw_artifacts": [
+            {
+              "artifact_id": "ART-4a1912eca7e9731ccfba8f367a4f4e04",
+              "artifact_type": "sensor_reading",
+              "storage_ref": "https://api.open-meteo.com/v1/forecast?latitude=19.222&longitude=72.956&current=temperature_2m,relative_humidity_2m,precipitation,wind_speed_10m&timezone=UTC",
+              "content_hash": "5492ece45919ec02c2c577bdd16d58304105a80542772de2457c2a9640a06af9",
+              "hash_algorithm": "sha256",
+              "captured_at": "2026-08-28 14:45:00+00:00"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "region": "Maval",
+      "survey_id": "MV",
+      "observation_id": "MV-Z01-EXT-OPENMETEO-OBS001",
+      "http_status": 200,
+      "canonical_record_id_reported_by_group1": "CR-f9782ddc-3a77-4df7-ba52-81a365ac165d",
+      "checks": {
+        "http_200": true,
+        "canonical_matches_report": true,
+        "observation_id_verbatim": true,
+        "measurement_survived": false,
+        "unit_survived": true,
+        "observation_timestamp_survived": false,
+        "observation_type_survived": true,
+        "sensor_id_survived": false,
+        "device_id_survived": true,
+        "survey_id_survived": false,
+        "zone_id_survived": false,
+        "is_synthetic_survived": true,
+        "capture_method_survived": true,
+        "synthetic_state_survived": true,
+        "data_state_survived": true,
+        "latitude_survived": true,
+        "longitude_survived": true,
+        "provenance_is_group3_source": true,
+        "source_sha256_survived": true
+      },
+      "notes": [
+        "measurement: sent 0.2, stored None",
+        "observation_timestamp: sent '2026-08-28T14:45:00Z', stored '2026-08-28 14:45:00+00:00'",
+        "sensor_id: sent 'OPENMETEO', stored None",
+        "survey_id: sent 'MV', stored None",
+        "zone_id: sent 'Z01', stored None"
+      ],
+      "verdict": "FAILED",
+      "raw_response": {
+        "trace_id": "VANA-15cab5bb4b4d",
+        "observation_id": "MV-Z01-EXT-OPENMETEO-OBS001",
+        "status": "RETRIEVED",
+        "observation": {
+          "observation_id": "MV-Z01-EXT-OPENMETEO-OBS001",
+          "canonical_record_id": "CR-f9782ddc-3a77-4df7-ba52-81a365ac165d",
+          "dataset_id": "DS-GROUP3-FIELD-EDGE-MV-Z01-EXT",
+          "geo_id": "GEO-663d662e70e1f770a90d8c44da8de3f0",
+          "observed_at": "2026-08-28 14:45:00+00:00",
+          "observation_timestamp": "2026-08-28 14:45:00+00:00",
+          "timestamp": "2026-08-28 14:45:00+00:00",
+          "contract_version": "2.2",
+          "schema_version": "2.2",
+          "provenance_reference": "open-meteo:8bb80c24fe28b598",
+          "source_timestamp": "2026-08-28 14:45:00+00:00",
+          "capture_method": "external_api",
+          "device_id": "G3-EXT-OPENMETEO-01",
+          "species": null,
+          "observation_type": "precipitation",
+          "quality_status": "CAPTURED",
+          "quality_state": "CAPTURED",
+          "data_state": "CAPTURED",
+          "confidence": null,
+          "is_synthetic": true,
+          "synthetic_state": "CONTROLLED",
+          "location": {
+            "latitude": 18.718,
+            "longitude": 73.473,
+            "altitude_m": 766.0,
+            "gnss_status": "NOT_VERIFIED",
+            "position_accuracy_m": null
+          },
+          "latitude": 18.718,
+          "longitude": 73.473,
+          "altitude_m": 766.0,
+          "gnss_status": "NOT_VERIFIED",
+          "position_accuracy_m": null,
+          "calibration_status": "NOT_VERIFIED",
+          "calibration_state": "NOT_VERIFIED",
+          "raw_artifact": "https://api.open-meteo.com/v1/forecast?latitude=18.718&longitude=73.473&current=temperature_2m,relative_humidity_2m,precipitation,wind_speed_10m&timezone=UTC",
+          "raw_artifact_integrity": {
+            "checksum_sha256": "8bb80c24fe28b598dd15db831dc815688404bb7e457439e3c5501d502d4658cd",
+            "hash_algorithm": "sha256",
+            "artifact_type": "sensor_reading"
+          },
+          "raw_artifact_reference": {
+            "path": "https://api.open-meteo.com/v1/forecast?latitude=18.718&longitude=73.473&current=temperature_2m,relative_humidity_2m,precipitation,wind_speed_10m&timezone=UTC",
+            "checksum_sha256": "8bb80c24fe28b598dd15db831dc815688404bb7e457439e3c5501d502d4658cd",
+            "artifact_type": "sensor_reading"
+          },
+          "geo_location": {
+            "place_name": "Group 3 observation location",
+            "latitude": 18.718,
+            "longitude": 73.473,
+            "altitude_m": 766.0,
+            "crs": "EPSG:4326"
+          },
+          "field_observation_meta": {
+            "device_id": "G3-EXT-OPENMETEO-01",
+            "operator": "Open-Meteo.com (external data provider)",
+            "mission_id": "MV-Z01-EXT",
+            "accuracy": null,
+            "accuracy_unit": null,
+            "accuracy_status": "NOT_VERIFIED",
+            "calibration_status": "NOT_VERIFIED",
+            "gnss_status": "NOT_VERIFIED",
+            "position_accuracy_m": null,
+            "processing_status": "raw",
+            "notes": null
+          },
+          "measurements": [
+            {
+              "measurement_id": "MEAS-fa49766b14a1597fdbebb65d089574c9",
+              "metric_name": "precipitation",
+              "data_type": "NUMERIC",
+              "value": 0.2,
+              "value_text": null,
+              "unit": "mm",
+              "method": "precipitation",
+              "provenance": {
+                "provenance_id": "PROV-3fb8976505fc8baab9800a896df01dfc",
+                "source_id": "SRC-GROUP3-FIELD-EDGE",
+                "run_id": "RUN-0cc0b53f1e627ecefdc4dffef94c4e66",
+                "derivation_note": "Group 3 V2.2 observation ingested through consumer-facing API."
+              }
+            }
+          ],
+          "raw_artifacts": [
+            {
+              "artifact_id": "ART-662c2e963ffd34458d747340e3d5341f",
+              "artifact_type": "sensor_reading",
+              "storage_ref": "https://api.open-meteo.com/v1/forecast?latitude=18.718&longitude=73.473&current=temperature_2m,relative_humidity_2m,precipitation,wind_speed_10m&timezone=UTC",
+              "content_hash": "8bb80c24fe28b598dd15db831dc815688404bb7e457439e3c5501d502d4658cd",
+              "hash_algorithm": "sha256",
+              "captured_at": "2026-08-28 14:45:00+00:00"
+            }
+          ]
+        }
+      }
+    }
+  ]
+}

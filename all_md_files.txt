@@ -1,0 +1,252 @@
+﻿C:\Users\PRITESH\Desktop\vana\backend\manya-validation\BOM Quadruped robot.md
+C:\Users\PRITESH\Desktop\vana\backend\manya-validation\GROUP3_DAY1_EOD_REPORT_FINAL.md
+C:\Users\PRITESH\Desktop\vana\backend\manya-validation\VANA_REUSABLE_CAPABILITY_MAP_HEMANTH.md
+C:\Users\PRITESH\Desktop\vana\backend\manya-validation\group3-vana-integration\docs\GROUP3_RUNTIME_INTEGRATION_REPORT.md
+C:\Users\PRITESH\Desktop\vana\backend\manya-validation\group3-vana-integration\docs\KNOWN_GAPS.md
+C:\Users\PRITESH\Desktop\vana\backend\manya-validation\group3-vana-integration\evidence_packet\review_packet.md
+C:\Users\PRITESH\Desktop\vana\backend\manya-validation\group3-vana-integration\evidence_packet\SIX_REGION_VERIFICATION_RESULT.md
+C:\Users\PRITESH\Desktop\vana\backend\manya-validation\group3-vana-integration\evidence_packet\samachar\INGESTION_RESULT.md
+C:\Users\PRITESH\Desktop\vana\backend\manya-validation\group3-vana-integration\G2G4 integration evidence package\FINAL_GROUP2_GROUP4_CLOSURE_REPORT.md
+C:\Users\PRITESH\Desktop\vana\backend\manya-validation\group3-vana-integration\G2G4 integration evidence package\GROUP2_PRATIK_EOD_INTEGRATION_EVIDENCE.md
+C:\Users\PRITESH\Desktop\vana\backend\manya-validation\group3-vana-integration\GIS_GEOGRAPHY_CLOSURE_PACKAGE (1)\GIS_GEOGRAPHY_CLOSURE.md
+C:\Users\PRITESH\Desktop\vana\backend\manya-validation\group3-vana-integration\GIS_GEOGRAPHY_CLOSURE_PACKAGE (1)\GIS_GEOGRAPHY_DECISION_TABLE.md
+C:\Users\PRITESH\Desktop\vana\backend\manya-validation\group3-vana-integration\integration\README_roundtrip.md
+C:\Users\PRITESH\Desktop\vana\backend\masterdb\DATA_DICTIONARY.md
+C:\Users\PRITESH\Desktop\vana\backend\masterdb\DEPLOYMENT.md
+C:\Users\PRITESH\Desktop\vana\backend\masterdb\docs\API_CONTRACT.md
+C:\Users\PRITESH\Desktop\vana\backend\masterdb\docs\FSI_ISFR_2023_ARCHITECTURE_PROPOSAL.md
+C:\Users\PRITESH\Desktop\vana\backend\pravah-vana-components\VANA_PYTHON_CORE\VANA_CONTROL_CENTER_ASSESSMENT.md
+C:\Users\PRITESH\Desktop\vana\backend\pravah-vana-components\VANA_PYTHON_CORE\docs\handover\VANA_COMPLETE_HANDOVER.md
+C:\Users\PRITESH\Desktop\vana\backend\pravah-vana-components\VANA_PYTHON_CORE\docs\handover\VANA_CONTROL_CENTER_ASSESSMENT.md
+C:\Users\PRITESH\Desktop\vana\backend\pravah-vana-components\VANA_PYTHON_CORE\docs\handover\VANA_CONTROL_CENTER_HANDOFF.md
+C:\Users\PRITESH\Desktop\vana\backend\pravah-vana-components\VANA_PYTHON_CORE\docs\handover\VANA_CURRENT_STATUS.md
+C:\Users\PRITESH\Desktop\vana\backend\pravah-vana-components\VANA_PYTHON_CORE\docs\handover\VANA_ENDPOINT_CONTRACT.md
+C:\Users\PRITESH\Desktop\vana\backend\pravah-vana-components\VANA_PYTHON_CORE\docs\handover\VANA_GROUP3_GROUP1_HANDOFF.md
+C:\Users\PRITESH\Desktop\vana\backend\pravah-vana-components\VANA_PYTHON_CORE\docs\handover\VANA_GROUP4_HANDOFF.md
+C:\Users\PRITESH\Desktop\vana\backend\pravah-vana-components\VANA_PYTHON_CORE\docs\handover\VANA_KNOWN_GAPS.md
+C:\Users\PRITESH\Desktop\vana\backend\pravah-vana-components\VANA_PYTHON_CORE\docs\handover\VANA_RUNTIME_EVIDENCE.md
+C:\Users\PRITESH\Desktop\vana\backend\pravah-vana-components\VANA_PYTHON_CORE\docs\handover\VANA_VERIFICATION_RUNBOOK.md
+C:\Users\PRITESH\Desktop\vana\backend\vana-legacy\Ansh\ANSH_GROUP2_CLOSURE_REPORT.md
+C:\Users\PRITESH\Desktop\vana\backend\vana-legacy\Ansh\ANSH_GROUP2_OVERSIGHT_SPRINT_DIRECTIVE.md
+C:\Users\PRITESH\Desktop\vana\backend\vana-legacy\Ansh\GROUP2_CONTEXT_VALIDATION.md
+C:\Users\PRITESH\Desktop\vana\backend\vana-legacy\Ansh\Hardening And Vana Verification Report.md
+C:\Users\PRITESH\Desktop\vana\backend\vana-legacy\Ansh\Plant_Intelligence_SCIENTIFIC_VALIDATION.md
+C:\Users\PRITESH\Desktop\vana\backend\vana-legacy\Ansh\SCIENTIFIC_VALIDATION.md
+C:\Users\PRITESH\Desktop\vana\backend\vana-legacy\Kaushal\GROUP2_CORRELATION.md
+C:\Users\PRITESH\Desktop\vana\backend\vana-legacy\Kaushal\GROUP2_FINAL_E2E_VERIFICATION.md
+C:\Users\PRITESH\Desktop\vana\backend\vana-legacy\Kaushal\integration_test_report.md
+C:\Users\PRITESH\Desktop\vana\backend\vana-legacy\Kaushal\KAUSHAL_FILE_MANIFEST.md
+C:\Users\PRITESH\Desktop\vana\backend\vana-legacy\Kaushal\TEMPORAL_APPLICABILITY_RULING.md
+C:\Users\PRITESH\Desktop\vana\backend\vana-legacy\Kaushal\thane_creek_gis_dataset.md
+C:\Users\PRITESH\Desktop\vana\backend\vana-legacy\Sakshi\CONTEXT_SCHEMA_MAPPING.md
+C:\Users\PRITESH\Desktop\vana\backend\vana-legacy\Sakshi\COORDINATION_STATUS_EOD (1).md
+C:\Users\PRITESH\Desktop\vana\backend\vana-legacy\Sakshi\COORDINATION_STATUS_EOD.md
+C:\Users\PRITESH\Desktop\vana\backend\vana-legacy\Sakshi\CROSS_GROUP_DEPENDENCY_CLOSURE.md
+C:\Users\PRITESH\Desktop\vana\backend\vana-legacy\Sakshi\GROUP2_CONTEXT_CONTRACT.md
+C:\Users\PRITESH\Desktop\vana\backend\vana-legacy\Sakshi\PROVENANCE_PRESERVATION_PROOF.md
+C:\Users\PRITESH\Desktop\vana\backend\vana-legacy\Sakshi\PROVENANCE_PRESERVATION_TEST.md
+C:\Users\PRITESH\Desktop\vana\backend\vana-legacy\Sakshi\README_EOD_SUBMISSION.md
+C:\Users\PRITESH\Desktop\vana\backend\vana-legacy\Sakshi\SANSKAR_INPUT_OUTPUT_MAPPING.md
+C:\Users\PRITESH\Desktop\vana\backend\vana-legacy\Sakshi\SANSKAR_SEMANTIC_MAPPING.md
+C:\Users\PRITESH\Desktop\vana\backend\vana-legacy\Vijay\kaushal_packet\GROUP1_TO_GROUP2_RUNTIME.md
+C:\Users\PRITESH\Desktop\vana\backend\vana-legacy\Vijay\kaushal_packet\GROUP2_CONTEXT_CONTRACT (1).md
+C:\Users\PRITESH\Desktop\vana\backend\vana-legacy\Vijay\kaushal_packet\KAUSHLENDRA_TECHNICAL_REVIEW_INSTRUCTIONS.md
+C:\Users\PRITESH\Desktop\vana\backend\workflow-blackhole\AI_TASK_INGESTION_CERTIFICATION_TASK.md
+C:\Users\PRITESH\Desktop\vana\backend\workflow-blackhole\AUTO_END_DAY_FIX.md
+C:\Users\PRITESH\Desktop\vana\backend\workflow-blackhole\AUTO_END_DAY_WORKFLOW_FIX.md
+C:\Users\PRITESH\Desktop\vana\backend\workflow-blackhole\BHIV_INFRA_READINESS.md
+C:\Users\PRITESH\Desktop\vana\backend\workflow-blackhole\BIOMETRIC_ATTENDANCE_SALARY_SYSTEM.md
+C:\Users\PRITESH\Desktop\vana\backend\workflow-blackhole\BIOMETRIC_DOCUMENTATION_INDEX.md
+C:\Users\PRITESH\Desktop\vana\backend\workflow-blackhole\BIOMETRIC_IMPLEMENTATION_GUIDE.md
+C:\Users\PRITESH\Desktop\vana\backend\workflow-blackhole\BIOMETRIC_QUICK_START.md
+C:\Users\PRITESH\Desktop\vana\backend\workflow-blackhole\BIOMETRIC_README.md
+C:\Users\PRITESH\Desktop\vana\backend\workflow-blackhole\BIOMETRIC_SYSTEM_README.md
+C:\Users\PRITESH\Desktop\vana\backend\workflow-blackhole\BIOMETRIC_WORKFLOW_DIAGRAM.md
+C:\Users\PRITESH\Desktop\vana\backend\workflow-blackhole\CHANGES_DEMONSTRATION.md
+C:\Users\PRITESH\Desktop\vana\backend\workflow-blackhole\CODE_HIGHLIGHTS.md
+C:\Users\PRITESH\Desktop\vana\backend\workflow-blackhole\CODE_PACKET.md
+C:\Users\PRITESH\Desktop\vana\backend\workflow-blackhole\COMPLETE_CHANGES_SHOWCASE.md
+C:\Users\PRITESH\Desktop\vana\backend\workflow-blackhole\COST_COMPARISON_REPORT.md
+C:\Users\PRITESH\Desktop\vana\backend\workflow-blackhole\DELIVERY_COMPLETE.md
+C:\Users\PRITESH\Desktop\vana\backend\workflow-blackhole\DEMO_EMS_FUNCTIONALITY.md
+C:\Users\PRITESH\Desktop\vana\backend\workflow-blackhole\DEPLOYMENT_DEMO_PROOF.md
+C:\Users\PRITESH\Desktop\vana\backend\workflow-blackhole\DEPLOYMENT_EXECUTION_LOG.md
+C:\Users\PRITESH\Desktop\vana\backend\workflow-blackhole\DEPLOYMENT_FIX_GUIDE.md
+C:\Users\PRITESH\Desktop\vana\backend\workflow-blackhole\DESIGN_SYSTEM_PROMPT.md
+C:\Users\PRITESH\Desktop\vana\backend\workflow-blackhole\EMPLOYEE_AGENT_SUMMARY.md
+C:\Users\PRITESH\Desktop\vana\backend\workflow-blackhole\EMPLOYEE_MONITORING_FIX_SUMMARY.md
+C:\Users\PRITESH\Desktop\vana\backend\workflow-blackhole\FAILURE_RECOVERY_REPORT.md
+C:\Users\PRITESH\Desktop\vana\backend\workflow-blackhole\FRONTEND_INTEGRATION_GUIDE.md
+C:\Users\PRITESH\Desktop\vana\backend\workflow-blackhole\FRONTEND_UPDATES_SUMMARY.md
+C:\Users\PRITESH\Desktop\vana\backend\workflow-blackhole\GROUP2_RUNTIME_INTEGRATION.md
+C:\Users\PRITESH\Desktop\vana\backend\workflow-blackhole\HANDOVER_CENTRAL_DEPOSITORY.md
+C:\Users\PRITESH\Desktop\vana\backend\workflow-blackhole\HOLIDAY_HOURS_EXCLUSION.md
+C:\Users\PRITESH\Desktop\vana\backend\workflow-blackhole\HOURLY_SALARY_SYSTEM.md
+C:\Users\PRITESH\Desktop\vana\backend\workflow-blackhole\IMPLEMENTATION_COMPLETE.md
+C:\Users\PRITESH\Desktop\vana\backend\workflow-blackhole\IMPLEMENTATION_DELIVERY_SUMMARY.md
+C:\Users\PRITESH\Desktop\vana\backend\workflow-blackhole\IMPLEMENTATION_SUMMARY.md
+C:\Users\PRITESH\Desktop\vana\backend\workflow-blackhole\IMPLEMENTATION_SUMMARY_HOURLY_SALARY.md
+C:\Users\PRITESH\Desktop\vana\backend\workflow-blackhole\INTEGRATION_EXAMPLES.md
+C:\Users\PRITESH\Desktop\vana\backend\workflow-blackhole\INTERVIEW_PROJECT_SUMMARY.md
+C:\Users\PRITESH\Desktop\vana\backend\workflow-blackhole\INTERVIEW_QUICK_REFERENCE.md
+C:\Users\PRITESH\Desktop\vana\backend\workflow-blackhole\LOCATION_MAP_IMPLEMENTATION.md
+C:\Users\PRITESH\Desktop\vana\backend\workflow-blackhole\LOGIN_SIGNUP_TROUBLESHOOTING.md
+C:\Users\PRITESH\Desktop\vana\backend\workflow-blackhole\MIDNIGHT_SPAN_LOGIC.md
+C:\Users\PRITESH\Desktop\vana\backend\workflow-blackhole\MONITORING_DEPLOYMENT.md
+C:\Users\PRITESH\Desktop\vana\backend\workflow-blackhole\NEW_SALARY_SYSTEM_ACCESS.md
+C:\Users\PRITESH\Desktop\vana\backend\workflow-blackhole\NEW_SALARY_SYSTEM_IMPLEMENTATION.md
+C:\Users\PRITESH\Desktop\vana\backend\workflow-blackhole\niyantran_report.md
+C:\Users\PRITESH\Desktop\vana\backend\workflow-blackhole\NIYANTRAN_RUNTIME_STATUS_REPORT.md
+C:\Users\PRITESH\Desktop\vana\backend\workflow-blackhole\PERFORMANCE_BOTTLENECK_ANALYSIS.md
+C:\Users\PRITESH\Desktop\vana\backend\workflow-blackhole\PHASE2_FINAL_CERTIFICATION.md
+C:\Users\PRITESH\Desktop\vana\backend\workflow-blackhole\QUICK_REFERENCE_FRONTEND.md
+C:\Users\PRITESH\Desktop\vana\backend\workflow-blackhole\QUICK_TEST_GUIDE.md
+C:\Users\PRITESH\Desktop\vana\backend\workflow-blackhole\REAL_TRACKING_IMPLEMENTATION.md
+C:\Users\PRITESH\Desktop\vana\backend\workflow-blackhole\REVIEW_PACKET.md
+C:\Users\PRITESH\Desktop\vana\backend\workflow-blackhole\ROLLOUT_PLAN.md
+C:\Users\PRITESH\Desktop\vana\backend\workflow-blackhole\RUNTIME_VALIDATION_REPORT.md
+C:\Users\PRITESH\Desktop\vana\backend\workflow-blackhole\SALARY_DISCREPANCY_FIX.md
+C:\Users\PRITESH\Desktop\vana\backend\workflow-blackhole\SALARY_SYSTEM_REAL_DATA_FLOW.md
+C:\Users\PRITESH\Desktop\vana\backend\workflow-blackhole\SAMACHAR_PROCESSING_MANIFEST.md
+C:\Users\PRITESH\Desktop\vana\backend\workflow-blackhole\SAMPLE_SETU_TASK_PACKET.md
+C:\Users\PRITESH\Desktop\vana\backend\workflow-blackhole\SECURITY_BASELINE.md
+C:\Users\PRITESH\Desktop\vana\backend\workflow-blackhole\SETU_DEPLOYMENT_AUDIT.md
+C:\Users\PRITESH\Desktop\vana\backend\workflow-blackhole\SETU_SELF_HOSTING_BLUEPRINT.md
+C:\Users\PRITESH\Desktop\vana\backend\workflow-blackhole\SHAKTI_NIYANTRAN_API_INVENTORY.md
+C:\Users\PRITESH\Desktop\vana\backend\workflow-blackhole\SIMPLE_AUTO_END_DAY_RULES.md
+C:\Users\PRITESH\Desktop\vana\backend\workflow-blackhole\SUBMISSION_REVIEW_PACKET.md
+C:\Users\PRITESH\Desktop\vana\backend\workflow-blackhole\SYSTEM_ARCHITECTURE_VISUAL.md
+C:\Users\PRITESH\Desktop\vana\backend\workflow-blackhole\UPDATED_REVIEW_FIXES.md
+C:\Users\PRITESH\Desktop\vana\backend\workflow-blackhole\VERIFICATION_REPORT.md
+C:\Users\PRITESH\Desktop\vana\backend\workflow-blackhole\VISUAL_COMPARISON.md
+C:\Users\PRITESH\Desktop\vana\backend\workflow-blackhole\WORKFLOW_TREE_DIAGRAM.md
+C:\Users\PRITESH\Desktop\vana\backend\workflow-blackhole\YOTTA_COST_VALIDATION.md
+C:\Users\PRITESH\Desktop\vana\backend\workflow-blackhole\YOTTA_DEPLOYMENT_GUIDE.md
+C:\Users\PRITESH\Desktop\vana\backend\workflow-blackhole\YOTTA_READINESS_DECISION.md
+C:\Users\PRITESH\Desktop\vana\backend\workflow-blackhole\YOTTA_SECURITY_HARDENING.md
+C:\Users\PRITESH\Desktop\vana\backend\workflow-blackhole\backup automation\BACKUP_INSTRUCTIONS.md
+C:\Users\PRITESH\Desktop\vana\backend\workflow-blackhole\docs\AI_SCORING.md
+C:\Users\PRITESH\Desktop\vana\backend\workflow-blackhole\docs\AUDIT_LOG.md
+C:\Users\PRITESH\Desktop\vana\backend\workflow-blackhole\docs\GDPR.md
+C:\Users\PRITESH\Desktop\vana\backend\workflow-blackhole\docs\OPTIMIZATION_REPORT.md
+C:\Users\PRITESH\Desktop\vana\backend\workflow-blackhole\docs\VM_PRODUCTION_SUPPORT.md
+C:\Users\PRITESH\Desktop\vana\backend\workflow-blackhole\employee-agent\ARCHITECTURE.md
+C:\Users\PRITESH\Desktop\vana\backend\workflow-blackhole\employee-agent\BACKEND_INTEGRATION.md
+C:\Users\PRITESH\Desktop\vana\backend\workflow-blackhole\employee-agent\DEPLOYMENT_CHECKLIST.md
+C:\Users\PRITESH\Desktop\vana\backend\workflow-blackhole\employee-agent\DOCUMENTATION_INDEX.md
+C:\Users\PRITESH\Desktop\vana\backend\workflow-blackhole\employee-agent\IMPLEMENTATION_NOTES.md
+C:\Users\PRITESH\Desktop\vana\backend\workflow-blackhole\employee-agent\INTEGRATION_COMPLETE.md
+C:\Users\PRITESH\Desktop\vana\backend\workflow-blackhole\employee-agent\QUICK_START.md
+C:\Users\PRITESH\Desktop\vana\backend\workflow-blackhole\employee-agent\TESTING_GUIDE.md
+C:\Users\PRITESH\Desktop\vana\backend\workflow-blackhole\employee-agent\TROUBLESHOOTING.md
+C:\Users\PRITESH\Desktop\vana\backend\workflow-blackhole\evidence_packet\review_packet.md
+C:\Users\PRITESH\Desktop\vana\backend\workflow-blackhole\handover\00_HANDOVER_PLAN.md
+C:\Users\PRITESH\Desktop\vana\backend\workflow-blackhole\handover\01_EXECUTIVE_OVERVIEW.md
+C:\Users\PRITESH\Desktop\vana\backend\workflow-blackhole\handover\02_ARCHITECTURE_GUIDE.md
+C:\Users\PRITESH\Desktop\vana\backend\workflow-blackhole\handover\03_SOURCE_CODE_WALKTHROUGH.md
+C:\Users\PRITESH\Desktop\vana\backend\workflow-blackhole\handover\04_DEPLOYMENT_GUIDE.md
+C:\Users\PRITESH\Desktop\vana\backend\workflow-blackhole\handover\05_DATABASE_GUIDE.md
+C:\Users\PRITESH\Desktop\vana\backend\workflow-blackhole\handover\06_API_DOCUMENTATION.md
+C:\Users\PRITESH\Desktop\vana\backend\workflow-blackhole\handover\07_KNOWN_ISSUES_REGISTER.md
+C:\Users\PRITESH\Desktop\vana\backend\workflow-blackhole\handover\08_OPERATIONS_RUNBOOK.md
+C:\Users\PRITESH\Desktop\vana\backend\workflow-blackhole\handover\09_DEPENDENCY_MAP.md
+C:\Users\PRITESH\Desktop\vana\backend\workflow-blackhole\handover\10_REPOSITORY_INVENTORY.md
+C:\Users\PRITESH\Desktop\vana\backend\workflow-blackhole\handover\11_CREDENTIALS_CONFIGURATION_REGISTER.md
+C:\Users\PRITESH\Desktop\vana\backend\workflow-blackhole\handover\12_REVIEW_PACKET.md
+C:\Users\PRITESH\Desktop\vana\backend\workflow-blackhole\handover\13_EVIDENCE_PACKET.md
+C:\Users\PRITESH\Desktop\vana\backend\workflow-blackhole\handover\14_EXECUTIVE_ASSESSMENT.md
+C:\Users\PRITESH\Desktop\vana\backend\workflow-blackhole\handover\CODE_PACKET.md
+C:\Users\PRITESH\Desktop\vana\backend\workflow-blackhole\handover\INTEGRATION_VALIDATION_REPORT.md
+C:\Users\PRITESH\Desktop\vana\backend\workflow-blackhole\handover\REVIEW_PACKET.md
+C:\Users\PRITESH\Desktop\vana\backend\workflow-blackhole\handover\RUNTIME_DEPENDENCY_MATRIX.md
+C:\Users\PRITESH\Desktop\vana\backend\workflow-blackhole\handover\TANTRA_RUNTIME_CONVERGENCE_CERTIFICATION_REPORT.md
+C:\Users\PRITESH\Desktop\vana\backend\workflow-blackhole\Niyantran Full TANTRA Ecosystem Integration And Production VM Convergence\ARCHITECTURE.md
+C:\Users\PRITESH\Desktop\vana\backend\workflow-blackhole\Niyantran Full TANTRA Ecosystem Integration And Production VM Convergence\DEPLOYMENT_NOTES.md
+C:\Users\PRITESH\Desktop\vana\backend\workflow-blackhole\Niyantran Full TANTRA Ecosystem Integration And Production VM Convergence\REVIEW_PACKET.md
+C:\Users\PRITESH\Desktop\vana\backend\workflow-blackhole\Niyantran Full TANTRA Ecosystem Integration And Production VM Convergence\ROLLBACK.md
+C:\Users\PRITESH\Desktop\vana\backend\workflow-blackhole\Niyantran Full TANTRA Ecosystem Integration And Production VM Convergence\CODE_PACKET\CODE_INDEX.md
+C:\Users\PRITESH\Desktop\vana\backend\workflow-blackhole\Niyantran Full TANTRA Ecosystem Integration And Production VM Convergence\diagrams\event-flow-diagram.md
+C:\Users\PRITESH\Desktop\vana\backend\workflow-blackhole\Niyantran Full TANTRA Ecosystem Integration And Production VM Convergence\diagrams\integration-diagram.md
+C:\Users\PRITESH\Desktop\vana\backend\workflow-blackhole\Niyantran Full TANTRA Ecosystem Integration And Production VM Convergence\diagrams\runtime-dependency-diagram.md
+C:\Users\PRITESH\Desktop\vana\backend\workflow-blackhole\Niyantran Full TANTRA Ecosystem Integration And Production VM Convergence\diagrams\service-communication-map.md
+C:\Users\PRITESH\Desktop\vana\backend\workflow-blackhole\Niyantran VM Production Support (Niyantran)\ALAY_RUNBOOK.md
+C:\Users\PRITESH\Desktop\vana\backend\workflow-blackhole\Niyantran VM Production Support (Niyantran)\Niyantran VM Production Support (Niyantran).md
+C:\Users\PRITESH\Desktop\vana\backend\workflow-blackhole\Niyantran VM Production Support (Niyantran)\VM_PRODUCTION_SUPPORT_PACKET.md
+C:\Users\PRITESH\Desktop\vana\backend\workflow-blackhole\node_modules\@date-fns\tz\CHANGELOG.md
+C:\Users\PRITESH\Desktop\vana\backend\workflow-blackhole\node_modules\@date-fns\tz\LICENSE.md
+C:\Users\PRITESH\Desktop\vana\backend\workflow-blackhole\node_modules\axios\CHANGELOG.md
+C:\Users\PRITESH\Desktop\vana\backend\workflow-blackhole\node_modules\axios\MIGRATION_GUIDE.md
+C:\Users\PRITESH\Desktop\vana\backend\workflow-blackhole\node_modules\call-bind-apply-helpers\CHANGELOG.md
+C:\Users\PRITESH\Desktop\vana\backend\workflow-blackhole\node_modules\date-fns\CHANGELOG.md
+C:\Users\PRITESH\Desktop\vana\backend\workflow-blackhole\node_modules\date-fns\LICENSE.md
+C:\Users\PRITESH\Desktop\vana\backend\workflow-blackhole\node_modules\date-fns\SECURITY.md
+C:\Users\PRITESH\Desktop\vana\backend\workflow-blackhole\node_modules\date-fns\docs\cdn.md
+C:\Users\PRITESH\Desktop\vana\backend\workflow-blackhole\node_modules\date-fns\docs\fp.md
+C:\Users\PRITESH\Desktop\vana\backend\workflow-blackhole\node_modules\date-fns\docs\gettingStarted.md
+C:\Users\PRITESH\Desktop\vana\backend\workflow-blackhole\node_modules\date-fns\docs\i18n.md
+C:\Users\PRITESH\Desktop\vana\backend\workflow-blackhole\node_modules\date-fns\docs\i18nContributionGuide.md
+C:\Users\PRITESH\Desktop\vana\backend\workflow-blackhole\node_modules\date-fns\docs\release.md
+C:\Users\PRITESH\Desktop\vana\backend\workflow-blackhole\node_modules\date-fns\docs\timeZones.md
+C:\Users\PRITESH\Desktop\vana\backend\workflow-blackhole\node_modules\date-fns\docs\unicodeTokens.md
+C:\Users\PRITESH\Desktop\vana\backend\workflow-blackhole\node_modules\date-fns\docs\webpack.md
+C:\Users\PRITESH\Desktop\vana\backend\workflow-blackhole\node_modules\dotenv\CHANGELOG.md
+C:\Users\PRITESH\Desktop\vana\backend\workflow-blackhole\node_modules\dotenv\README-es.md
+C:\Users\PRITESH\Desktop\vana\backend\workflow-blackhole\node_modules\dotenv\SECURITY.md
+C:\Users\PRITESH\Desktop\vana\backend\workflow-blackhole\node_modules\dunder-proto\CHANGELOG.md
+C:\Users\PRITESH\Desktop\vana\backend\workflow-blackhole\node_modules\es-define-property\CHANGELOG.md
+C:\Users\PRITESH\Desktop\vana\backend\workflow-blackhole\node_modules\es-errors\CHANGELOG.md
+C:\Users\PRITESH\Desktop\vana\backend\workflow-blackhole\node_modules\es-object-atoms\CHANGELOG.md
+C:\Users\PRITESH\Desktop\vana\backend\workflow-blackhole\node_modules\es-set-tostringtag\CHANGELOG.md
+C:\Users\PRITESH\Desktop\vana\backend\workflow-blackhole\node_modules\form-data\CHANGELOG.md
+C:\Users\PRITESH\Desktop\vana\backend\workflow-blackhole\node_modules\function-bind\CHANGELOG.md
+C:\Users\PRITESH\Desktop\vana\backend\workflow-blackhole\node_modules\function-bind\.github\SECURITY.md
+C:\Users\PRITESH\Desktop\vana\backend\workflow-blackhole\node_modules\get-intrinsic\CHANGELOG.md
+C:\Users\PRITESH\Desktop\vana\backend\workflow-blackhole\node_modules\get-proto\CHANGELOG.md
+C:\Users\PRITESH\Desktop\vana\backend\workflow-blackhole\node_modules\gopd\CHANGELOG.md
+C:\Users\PRITESH\Desktop\vana\backend\workflow-blackhole\node_modules\has-symbols\CHANGELOG.md
+C:\Users\PRITESH\Desktop\vana\backend\workflow-blackhole\node_modules\has-tostringtag\CHANGELOG.md
+C:\Users\PRITESH\Desktop\vana\backend\workflow-blackhole\node_modules\hasown\CHANGELOG.md
+C:\Users\PRITESH\Desktop\vana\backend\workflow-blackhole\node_modules\js-tokens\CHANGELOG.md
+C:\Users\PRITESH\Desktop\vana\backend\workflow-blackhole\node_modules\math-intrinsics\CHANGELOG.md
+C:\Users\PRITESH\Desktop\vana\backend\workflow-blackhole\node_modules\mime-db\HISTORY.md
+C:\Users\PRITESH\Desktop\vana\backend\workflow-blackhole\node_modules\mime-types\HISTORY.md
+C:\Users\PRITESH\Desktop\vana\backend\workflow-blackhole\node_modules\react-day-picker\node_modules\date-fns\CHANGELOG.md
+C:\Users\PRITESH\Desktop\vana\backend\workflow-blackhole\node_modules\react-day-picker\node_modules\date-fns\LICENSE.md
+C:\Users\PRITESH\Desktop\vana\backend\workflow-blackhole\node_modules\react-day-picker\node_modules\date-fns\SECURITY.md
+C:\Users\PRITESH\Desktop\vana\backend\workflow-blackhole\node_modules\react-day-picker\node_modules\date-fns\docs\cdn.md
+C:\Users\PRITESH\Desktop\vana\backend\workflow-blackhole\node_modules\react-day-picker\node_modules\date-fns\docs\fp.md
+C:\Users\PRITESH\Desktop\vana\backend\workflow-blackhole\node_modules\react-day-picker\node_modules\date-fns\docs\gettingStarted.md
+C:\Users\PRITESH\Desktop\vana\backend\workflow-blackhole\node_modules\react-day-picker\node_modules\date-fns\docs\i18n.md
+C:\Users\PRITESH\Desktop\vana\backend\workflow-blackhole\node_modules\react-day-picker\node_modules\date-fns\docs\i18nContributionGuide.md
+C:\Users\PRITESH\Desktop\vana\backend\workflow-blackhole\node_modules\react-day-picker\node_modules\date-fns\docs\release.md
+C:\Users\PRITESH\Desktop\vana\backend\workflow-blackhole\node_modules\react-day-picker\node_modules\date-fns\docs\timeZones.md
+C:\Users\PRITESH\Desktop\vana\backend\workflow-blackhole\node_modules\react-day-picker\node_modules\date-fns\docs\unicodeTokens.md
+C:\Users\PRITESH\Desktop\vana\backend\workflow-blackhole\node_modules\react-day-picker\node_modules\date-fns\docs\webpack.md
+C:\Users\PRITESH\Desktop\vana\backend\workflow-blackhole\node_modules\react-day-picker\website\docs\development\code-of-conduct.md
+C:\Users\PRITESH\Desktop\vana\backend\workflow-blackhole\node_modules\react-day-picker\website\docs\development\contributing.md
+C:\Users\PRITESH\Desktop\vana\backend\workflow-blackhole\node_modules\react-day-picker\website\docs\development\source.md
+C:\Users\PRITESH\Desktop\vana\backend\workflow-blackhole\proofs\DEPLOYMENT_PROOF_PACKET.md
+C:\Users\PRITESH\Desktop\vana\backend\workflow-blackhole\review_packets\02_CODE_PACKET.md
+C:\Users\PRITESH\Desktop\vana\backend\workflow-blackhole\review_packets\02_REVIEW_PACKET.md
+C:\Users\PRITESH\Desktop\vana\backend\workflow-blackhole\review_packets\ATLAS_SECURITY_EVALUATION.md
+C:\Users\PRITESH\Desktop\vana\backend\workflow-blackhole\review_packets\REVIEW_PACKET.md
+C:\Users\PRITESH\Desktop\vana\backend\workflow-blackhole\review_packets\VM_PRODUCTION_SUPPORT_PACKET.md
+C:\Users\PRITESH\Desktop\vana\backend\workflow-blackhole\review_packets\CODE_PACKET\CODE_INDEX.md
+C:\Users\PRITESH\Desktop\vana\backend\workflow-blackhole\secrets isolation\SECRETS_INSTRUCTIONS.md
+C:\Users\PRITESH\Desktop\vana\backend\workflow-blackhole\server\CLOUDINARY_INTEGRATION.md
+C:\Users\PRITESH\Desktop\vana\backend\workflow-blackhole\server\DEPLOYMENT.md
+C:\Users\PRITESH\Desktop\vana\backend\workflow-blackhole\server\EMAIL_SETUP_GUIDE.md
+C:\Users\PRITESH\Desktop\vana\backend\workflow-blackhole\server\scripts\BRIGHT_CONNECTION_CERTIFICATION.md
+C:\Users\PRITESH\Desktop\vana\backend\workflow-blackhole\server\scripts\BRIGHT_CONNECTION_PHASE5_EVIDENCE.md
+C:\Users\PRITESH\Desktop\vana\backend\workflow-blackhole\server\scripts\BRIGHT_CONNECTION_PRODUCTION_READINESS.md
+C:\Users\PRITESH\Desktop\vana\backend\workflow-blackhole\server\scripts\TANTRA_RUNTIME_CONVERGENCE_CERTIFICATION_REPORT.md
+C:\Users\PRITESH\Desktop\vana\backend\workflow-blackhole\server\services\signal_spec.md
+C:\Users\PRITESH\Desktop\vana\backend\workflow-blackhole\TANTRA Integration And Ecosystem Convergence for Niyantran\ARCHITECTURE.md
+C:\Users\PRITESH\Desktop\vana\backend\workflow-blackhole\TANTRA Integration And Ecosystem Convergence for Niyantran\DEPLOYMENT.md
+C:\Users\PRITESH\Desktop\vana\backend\workflow-blackhole\TANTRA Integration And Ecosystem Convergence for Niyantran\IMPLEMENTATION.md
+C:\Users\PRITESH\Desktop\vana\backend\workflow-blackhole\TANTRA Integration And Ecosystem Convergence for Niyantran\INTEGRATION.md
+C:\Users\PRITESH\Desktop\vana\backend\workflow-blackhole\TANTRA Integration And Ecosystem Convergence for Niyantran\observability_validation.md
+C:\Users\PRITESH\Desktop\vana\backend\workflow-blackhole\TANTRA Integration And Ecosystem Convergence for Niyantran\replay_validation.md
+C:\Users\PRITESH\Desktop\vana\backend\workflow-blackhole\TANTRA Integration And Ecosystem Convergence for Niyantran\TANTRA Integration And Ecosystem Convergence for Niyantran.md
+C:\Users\PRITESH\Desktop\vana\backend\workflow-blackhole\TANTRA Integration And Ecosystem Convergence for Niyantran\CODE_PACKET\CODE_INDEX.md
+C:\Users\PRITESH\Desktop\vana\frontend\lineage-dashboard\INTEGRATION_SUMMARY.md

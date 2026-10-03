@@ -1,0 +1,69 @@
+{
+  "_README": "TRUTHFUL V2.2 observation built from a LIVE Open-Meteo call. Uses the approved EXT non-flight identity and external_api capture method. NOT YET EMITTED: Arya's written sign-off is still outstanding, and Nupur reviews the MDU scope question tomorrow.",
+  "_built_at": "2026-08-25T11:04:16.609849+00:00",
+  "_source_url": "https://api.open-meteo.com/v1/forecast?latitude=19.1288&longitude=72.9421&current=temperature_2m,relative_humidity_2m,precipitation,wind_speed_10m&timezone=UTC",
+  "_attribution": "Weather data by Open-Meteo.com, CC-BY 4.0, non-commercial free tier. Open-Meteo aggregates national weather services.",
+  "_schema_valid": true,
+  "_semantic_clean": true,
+  "_open_questions": [
+    "observation_id scheme - flight_id 'WX' and sensor_id 'OPENMETEO' are placeholders; a weather API has no flight and no Group 3 sensor.",
+    "synthetic_state for real external third-party data - Arya's ruling.",
+    "device_id 'G3-EXT-OPENMETEO-01' is a Group 3 label for an external provider, not a Group 3 device. Confirm this is acceptable or supply a convention."
+  ],
+  "observation": {
+    "contract_version": "2.2",
+    "schema_version": "2.2",
+    "observation_id": "TC-Z03-EXT-OPENMETEO-OBS001",
+    "source_identity": "group3-field-edge",
+    "survey_id": "TC",
+    "zone_id": "Z03",
+    "flight_id": "EXT",
+    "sensor_id": "OPENMETEO",
+    "observation_seq": "OBS001",
+    "mission_id": "TC-Z03-EXT",
+    "parent_reference": null,
+    "observation_timestamp": "2026-08-25T11:00:00Z",
+    "source_timestamp": "2026-08-25T11:00:00Z",
+    "ingestion_timestamp": null,
+    "data_state": "CAPTURED",
+    "synthetic_state": "CONTROLLED",
+    "is_synthetic": true,
+    "calibration_state": "NOT_VERIFIED",
+    "quality_state": "CAPTURED",
+    "location": {
+      "latitude": 19.1288,
+      "longitude": 72.9421,
+      "altitude_m": 4.0,
+      "gnss_status": "NOT_VERIFIED",
+      "position_accuracy_m": null
+    },
+    "waypoint_id": null,
+    "device_id": "G3-EXT-OPENMETEO-01",
+    "observation_type": "precipitation",
+    "capture_method": "external_api",
+    "measurement": 0.1,
+    "unit": "mm",
+    "accuracy": "NOT_VERIFIED",
+    "processing_status": "raw",
+    "raw_artifact": "https://api.open-meteo.com/v1/forecast?latitude=19.1288&longitude=72.9421&current=temperature_2m,relative_humidity_2m,precipitation,wind_speed_10m&timezone=UTC",
+    "raw_artifact_integrity": {
+      "checksum_sha256": "8d26e68328ac160f7b69f1a24ccb2de4972ff9fc60af11093c246903a7c52502",
+      "hash_algorithm": "sha256",
+      "artifact_type": "sensor_reading"
+    },
+    "integrity_reference": null,
+    "provenance_reference": "open-meteo:8d26e68328ac160f",
+    "provenance": {
+      "device_id": "G3-EXT-OPENMETEO-01",
+      "mission_id": "TC-Z03-EXT",
+      "captured_at": "2026-08-25T11:00:00Z",
+      "raw_artifact": "https://api.open-meteo.com/v1/forecast?latitude=19.1288&longitude=72.9421&current=temperature_2m,relative_humidity_2m,precipitation,wind_speed_10m&timezone=UTC",
+      "operator": "Open-Meteo.com (external data provider)",
+      "qa_record": null
+    },
+    "tidal_state": null,
+    "trace_id": null,
+    "idempotency_key": "IK-TC-Z03-EXT-OPENMETEO-OBS001",
+    "hardware_verified": false
+  }
+}

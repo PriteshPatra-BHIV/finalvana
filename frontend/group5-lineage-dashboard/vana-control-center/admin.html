@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VANA — Administration Control Plane</title>
+  <meta name="description" content="VANA Environmental Governance System — Administrator Control Plane for system health, access control, geospatial configuration, governance policies, and audit log.">
+  <meta name="robots" content="noindex, nofollow">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <!-- Base design tokens from operational dashboard -->
+  <link rel="stylesheet" href="styles.css">
+  <!-- Admin-specific layout and components -->
+  <link rel="stylesheet" href="admin.css">
+</head>
+<body style="margin:0;padding:0">
+
+<div class="admin-app" id="adminApp">
+
+  <!-- DEV MODE BANNER — visible when using role simulator -->
+  <div class="dev-mode-banner" id="devModeBanner">
+    <div class="dev-mode-banner-left">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+        <line x1="12" y1="9" x2="12" y2="13"></line>
+        <line x1="12" y1="17" x2="12.01" y2="17"></line>
+      </svg>
+      DEV MODE — Role Simulator Active · No real authentication enforced · sessionStorage only
+    </div>
+    <div class="dev-role-switcher">
+      <span>Simulate role:</span>
+      <select class="dev-role-select" id="devRoleSelect" onchange="adminSetDevRole(this.value)">
+        <option value="viewer">Viewer</option>
+        <option value="operator">Operator</option>
+        <option value="analyst">Analyst</option>
+        <option value="administrator" selected>Administrator</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- TOP HEADER -->
+  <header class="admin-top-header">
+    <div class="admin-header-left">
+      <a href="index.html" class="admin-back-btn" title="Return to Operational Dashboard">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="15 18 9 12 15 6"></polyline>
+        </svg>
+        Dashboard
+      </a>
+      <div class="admin-header-divider"></div>
+      <div class="admin-header-title">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--brand)">
+          <path d="M12 2L3 7v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V7l-9-5z"/>
+        </svg>
+        <div>
+          <div class="admin-header-title-text">VANA — Administration Control Plane</div>
+          <div class="admin-header-title-sub">Government of Maharashtra · Dept of Environment &amp; Forest · System Administration</div>
+        </div>
+      </div>
+    </div>
+    <div class="admin-header-right">
+      <div class="admin-role-badge" id="adminRoleBadge">—</div>
+      <div id="adminUserLabel" style="font-size:11px;color:var(--text-secondary)"></div>
+    </div>
+  </header>
+
+  <!-- BODY: SIDEBAR + CONTENT -->
+  <div class="admin-body">
+
+    <!-- LEFT ADMIN NAVIGATION -->
+    <nav class="admin-sidebar" id="adminSidebar">
+
+      <!-- SYSTEM -->
+      <div class="admin-nav-group">
+        <div class="admin-nav-group-label">System</div>
+        <button class="admin-nav-item active" id="nav-system-health" onclick="adminNav('system-health', this)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
+          System Health
+        </button>
+        <button class="admin-nav-item" id="nav-system-services" onclick="adminNav('system-services', this)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+          Backend Services
+        </button>
+        <button class="admin-nav-item" id="nav-system-config" onclick="adminNav('system-config', this)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+          Configuration
+        </button>
+      </div>
+
+      <!-- ACCESS CONTROL -->
+      <div class="admin-nav-group">
+        <div class="admin-nav-group-label">Access Control</div>
+        <button class="admin-nav-item" id="nav-access-users" onclick="adminNav('access-users', this)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          Users
+        </button>
+        <button class="admin-nav-item" id="nav-access-roles" onclick="adminNav('access-roles', this)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L3 7v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V7l-9-5z"/></svg>
+          Roles
+        </button>
+        <button class="admin-nav-item" id="nav-access-permissions" onclick="adminNav('access-permissions', this)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          Permissions
+        </button>
+      </div>
+
+      <!-- GEOSPATIAL -->
+      <div class="admin-nav-group">
+        <div class="admin-nav-group-label">Geospatial</div>
+        <button class="admin-nav-item" id="nav-geo-zones" onclick="adminNav('geo-zones', this)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/></svg>
+          Monitoring Zones
+        </button>
+        <button class="admin-nav-item" id="nav-geo-layers" onclick="adminNav('geo-layers', this)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>
+          Map Layers
+        </button>
+        <button class="admin-nav-item" id="nav-geo-config" onclick="adminNav('geo-config', this)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+          Geographic Config
+        </button>
+      </div>
+
+      <!-- GOVERNANCE -->
+      <div class="admin-nav-group">
+        <div class="admin-nav-group-label">Governance</div>
+        <button class="admin-nav-item" id="nav-gov-policies" onclick="adminNav('gov-policies', this)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+          Governance Policies
+        </button>
+        <button class="admin-nav-item" id="nav-gov-failclosed" onclick="adminNav('gov-failclosed', this)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/></svg>
+          Fail-Closed Rules
+        </button>
+        <button class="admin-nav-item" id="nav-gov-evidence" onclick="adminNav('gov-evidence', this)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
+          Evidence Configuration
+        </button>
+      </div>
+
+      <!-- OPERATIONS -->
+      <div class="admin-nav-group">
+        <div class="admin-nav-group-label">Operations</div>
+        <button class="admin-nav-item" id="nav-ops-alerts" onclick="adminNav('ops-alerts', this)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+          Alerts
+        </button>
+        <button class="admin-nav-item" id="nav-ops-alertrules" onclick="adminNav('ops-alertrules', this)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+          Alert Rules
+        </button>
+        <button class="admin-nav-item" id="nav-ops-notifications" onclick="adminNav('ops-notifications', this)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 16 12 14 15 10 15 8 12 2 12"/><path d="M5.45 5.11L2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/></svg>
+          Notification Rules
+        </button>
+      </div>
+
+      <!-- AUDIT -->
+      <div class="admin-nav-group">
+        <div class="admin-nav-group-label">Audit</div>
+        <button class="admin-nav-item" id="nav-audit-activity" onclick="adminNav('audit-activity', this)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+          Administrative Activity
+        </button>
+      </div>
+
+    </nav>
+
+    <!-- ADMIN CONTENT AREA -->
+    <main class="admin-content" id="adminContent">
+
+      <!-- SYSTEM: Health -->
+      <div class="admin-section active" id="section-system-health">
+        <!-- Populated by admin.js -->
+      </div>
+
+      <!-- SYSTEM: Backend Services -->
+      <div class="admin-section" id="section-system-services">
+      </div>
+
+      <!-- SYSTEM: Configuration -->
+      <div class="admin-section" id="section-system-config">
+      </div>
+
+      <!-- ACCESS: Users -->
+      <div class="admin-section" id="section-access-users">
+      </div>
+
+      <!-- ACCESS: Roles -->
+      <div class="admin-section" id="section-access-roles">
+      </div>
+
+      <!-- ACCESS: Permissions -->
+      <div class="admin-section" id="section-access-permissions">
+      </div>
+
+      <!-- GEO: Monitoring Zones -->
+      <div class="admin-section" id="section-geo-zones">
+      </div>
+
+      <!-- GEO: Map Layers -->
+      <div class="admin-section" id="section-geo-layers">
+      </div>
+
+      <!-- GEO: Geographic Config -->
+      <div class="admin-section" id="section-geo-config">
+      </div>
+
+      <!-- GOV: Governance Policies -->
+      <div class="admin-section" id="section-gov-policies">
+      </div>
+
+      <!-- GOV: Fail-Closed Rules -->
+      <div class="admin-section" id="section-gov-failclosed">
+      </div>
+
+      <!-- GOV: Evidence Configuration -->
+      <div class="admin-section" id="section-gov-evidence">
+      </div>
+
+      <!-- OPS: Alerts -->
+      <div class="admin-section" id="section-ops-alerts">
+      </div>
+
+      <!-- OPS: Alert Rules -->
+      <div class="admin-section" id="section-ops-alertrules">
+      </div>
+
+      <!-- OPS: Notification Rules -->
+      <div class="admin-section" id="section-ops-notifications">
+      </div>
+
+      <!-- AUDIT: Activity -->
+      <div class="admin-section" id="section-audit-activity">
+      </div>
+
+    </main>
+  </div>
+</div>
+
+<!-- Script loading order: config → auth → admin -->
+<script src="config.js"></script>
+<script src="admin-auth.js"></script>
+<script src="admin.js"></script>
+</body>
+</html>

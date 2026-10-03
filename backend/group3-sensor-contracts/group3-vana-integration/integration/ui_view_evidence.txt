@@ -1,0 +1,22 @@
+UI field-observation view emitted -> ui_field_observation_view.json
+
+  MISSION        TC-Z03-F02
+  OBSERVATION ID TC-Z03-F02-LIDAR-OBS001
+  DEVICE         G3-LIDAR-001   (NOT VERIFIED / PHASE 2)
+  TIME           2026-08-13T09:14:22Z
+  LOCATION       19.1288, 72.9421  EPSG:4326
+  MEASUREMENT    4.7 m  (canopy_height)
+  QUALITY        VALIDATED          <- field QA verdict
+  CALIBRATION    NOT VERIFIED
+  RAW ARTIFACT   TC-Z03-F02/drone/pointcloud_F02_001.las
+  PROVENANCE     TC-Z03-F02-LIDAR-OBS001-M1-P
+  STATUS         CANONICAL          <- pipeline position, DERIVED
+
+  BANNER: SYNTHETIC FIXTURE - NOT A HARDWARE OBSERVATION
+
+  Two status axes kept separate on purpose:
+    quality_status  = VALIDATED  (QA verdict, contract V1.0)
+    pipeline_status = CANONICAL  (transport position, derived)
+
+  CAVEAT: CANONICAL = Group 1's SCHEMA on a LOCAL database.
+          NOT their instance. Edge transport NOT crossed - SVACS blocked.

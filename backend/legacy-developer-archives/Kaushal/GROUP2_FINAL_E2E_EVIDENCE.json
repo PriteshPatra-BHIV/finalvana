@@ -1,0 +1,49 @@
+{
+  "group1_response": {
+    "trace_id": "VANA-7ed5b8eec07c",
+    "observation_id": "TC-Z03-EXT-OPENMETEO-OBS001",
+    "status": "RETRIEVED",
+    "observation": {
+      "observation_id": "TC-Z03-EXT-OPENMETEO-OBS001",
+      "canonical_record_id": "CR-b4615a27-7ab1-4bde-a078-a56fa0f2414c",
+      "observed_at": "2026-08-25 11:00:00+00:00",
+      "provenance_reference": "open-meteo:8d26e68328ac160f",
+      "location": {
+        "latitude": 19.1288,
+        "longitude": 72.9421,
+        "altitude_m": 4.0
+      },
+      "raw_artifact": "https://api.open-meteo.com/v1/forecast?latitude=19.1288&longitude=72.9421&current=temperature_2m,relative_humidity_2m,precipitation,wind_speed_10m&timezone=UTC"
+    }
+  },
+  "group2_response": {
+    "observation_id": "TC-Z03-EXT-OPENMETEO-OBS001",
+    "canonical_record_id": "CR-b4615a27-7ab1-4bde-a078-a56fa0f2414c",
+    "context_id": null,
+    "ruling": "ABSTAIN",
+    "action_eligibility": false,
+    "abstention_required": true,
+    "evidence": {
+      "source": "Open-Meteo.com — EXTERNAL LIVE API",
+      "confidence": "NOT VERIFIED",
+      "missing_critical_data": "NONE_BUT_UNVERIFIED",
+      "provenance_reference": "open-meteo:8d26e68328ac160f"
+    },
+    "provenance": {
+      "reason": "CONTEXT_NOT_VERIFIED",
+      "message": "Authoritative evidence threshold not met (Context not verified). Failing closed to ABSTAIN."
+    }
+  },
+  "group4_response": {
+    "status": "governed_abstention",
+    "evidence": {
+      "event_type": "GOVERNED_ABSTENTION",
+      "observation_id": "TC-Z03-EXT-OPENMETEO-OBS001",
+      "context_id": null,
+      "ruling": "ABSTAIN",
+      "decision_action": "noop",
+      "governance_allowed": true,
+      "canonical_record_id": "CR-b4615a27-7ab1-4bde-a078-a56fa0f2414c"
+    }
+  }
+}

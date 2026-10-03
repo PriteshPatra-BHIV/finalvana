@@ -1,0 +1,6 @@
+{
+  "test_case": "2_incomplete_evidence",
+  "description": "Valid Canonical ID and Timestamp, but MISSING context blocks.",
+  "error": "Error",
+  "response": null
+}

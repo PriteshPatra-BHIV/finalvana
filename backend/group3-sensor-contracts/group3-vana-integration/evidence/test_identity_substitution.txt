@@ -1,0 +1,77 @@
+IDENTITY SUBSTITUTION TEST
+canonical observation: TC-Z03-F02-LIDAR-OBS001
+
+Every case below is a WELL-FORMED record. The question is not
+'is it valid' but 'is it the observation it claims to be'.
+
+[A] CONTROL
+  [PASS] unmodified genuine observation               passed silently
+         schema alone: ACCEPTS it
+
+[B] IDENTITY REPLACEMENT
+  [PASS] observation_id swapped for another real one  FLAGGED
+         schema alone: ACCEPTS it   <- both IDs are contract-valid
+         ! IDENTITY REPLACED: 'TC-Z03-F02-IMX500-OBS002' is not 'TC-Z03-F02-LIDAR-OBS001'
+  [PASS] observation_id swapped for the V2.0 flat form FLAGGED
+         schema alone: rejects it   <- schema rejects this format too
+         ! IDENTITY REPLACED: 'OBS-THANE-0001' is not 'TC-Z03-F02-LIDAR-OBS001'
+
+[C] COORDINATE MODIFICATION
+  [PASS] latitude nudged 0.0001 deg (about 11 m)      FLAGGED
+         schema alone: ACCEPTS it   <- in range, schema-valid
+         ! LATITUDE MUTATED: 19.1288 -> 19.1289
+  [PASS] coordinates moved to a different zone        FLAGGED
+         schema alone: ACCEPTS it   <- in range, schema-valid
+         ! LATITUDE MUTATED: 19.1288 -> 19.033
+         ! LONGITUDE MUTATED: 72.9421 -> 72.92
+
+[D] MEASUREMENT SUBSTITUTION
+  [PASS] canopy height 4.7 -> 9.9 m                   FLAGGED
+         schema alone: ACCEPTS it   <- schema-valid; this IS the ecological claim
+         ! MEASUREMENT MUTATED: 4.7 -> 9.9
+  [PASS] unit m -> ft, value unchanged                FLAGGED
+         schema alone: ACCEPTS it   <- schema-valid; silently changes the meaning
+         ! UNIT MUTATED: 'm' -> 'ft'
+
+[E] EVIDENCE SWAP
+  [PASS] raw artifact path repointed                  FLAGGED
+         schema alone: ACCEPTS it
+         ! RAW ARTIFACT SWAPPED: 'TC-Z03-F02/drone/pointcloud_F02_001.las' -> 'TC-Z03-F02/drone/pointcloud_F02_
+  [PASS] same path, different content hash            FLAGGED
+         schema alone: ACCEPTS it   <- the file behind the observation was replaced
+         ! CONTENT HASH CHANGED - the evidence file is not the same file
+
+[F] PROVENANCE REWRITE
+  [PASS] provenance device reattributed               FLAGGED
+         schema alone: ACCEPTS it
+         ! PROVENANCE DEVICE REWRITTEN: 'G3-LIDAR-001' -> 'G3-CAM-001'
+  [PASS] provenance artifact repointed                FLAGGED
+         schema alone: ACCEPTS it
+         ! PROVENANCE ARTIFACT REWRITTEN
+
+[G] TIMESTAMP DRIFT
+  [PASS] captured 1 hour later                        FLAGGED
+         schema alone: ACCEPTS it   <- schema-valid ISO-8601
+         ! TIMESTAMP MUTATED: '2026-08-13T09:14:22Z' -> '2026-08-13T10:14:22Z'
+
+[H] SYNTHETIC SUBSTITUTION - the one that matters most
+  [PASS] fixture is marked synthetic at source        is_synthetic=True
+         A record identical in every field but claiming is_synthetic=false
+         is a DIFFERENT CLAIM ABOUT THE PHYSICAL WORLD, not a different
+         value. No Group 3 sensor has produced a recorded reading.
+
+==========================================================================
+RESULT: 13/13 checks passed
+
+WHAT THIS PROVES: an attempted identity, coordinate, measurement, evidence
+or provenance substitution is DETECTED and can be REJECTED or FLAGGED,
+even when the substituted record is perfectly schema-valid.
+
+HOW: comparison against an ATTESTED BASELINE for the same observation_id.
+Schema validation alone cannot do this - a mutated record is still a valid
+record. Detection requires knowing what the observation was BEFORE.
+
+LIMITATION, stated: the baseline here comes from the frozen fixture. In
+production it must come from Group 1's canonical record, which requires
+their deployed instance. Not available today (no host issued), so this is
+a CONTROLLED proof of the mechanism, not a live tamper-detection service.

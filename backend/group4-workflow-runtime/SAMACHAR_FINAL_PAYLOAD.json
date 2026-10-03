@@ -1,0 +1,32 @@
+{
+  "observation_id": "SMR-Z01-EXT-SAMACHAR-OBS001",
+  "canonical_record_id": "CR-c3d2e7cc-3ddc-41d6-a85c-b782cf43801d",
+  "context_id": null,
+  "ruling": "ABSTAIN",
+  "action_eligibility": false,
+  "abstention_required": true,
+  "action_request": null,
+  "evidence": {
+    "sou  rce": null,
+    "confidence": "NOT VERIFIED",
+    "missing_critical_data": "NONE_BUT_UNVERIFIED",
+    "provenance_reference": "samachar:ec58172b0f1e2ef8",
+    "artifact_hash": "ec58172b0f1e2ef8232d546aeff7a61ccdc89f378f448dc4a2d633d5a332a934",
+    "artifact_type": "sensor_reading",
+    "observation_timestamp": "2026-06-04 12:24:00+00:00",
+    "retrieval_timestamp": null,
+    "attribution": null,
+    "canonical_observation_location": {
+      "latitude": 19.222,
+      "longitude": 72.956,
+      "altitude_m": null,
+      "gnss_status": "NOT_VERIFIED",
+      "position_accuracy_m": null
+    }
+  },
+  "provenance": {
+    "group2_decision_time": "2026-09-01T10:36:08.922Z",
+    "reason": "CONTEXT_NOT_VERIFIED",
+    "message": "Authoritative evidence threshold not met (Context not verified). Failing closed to ABSTAIN."
+  }
+}

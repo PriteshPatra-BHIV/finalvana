@@ -1,0 +1,119 @@
+{
+  "_README": "Group 3 Source Evidence Pack, 2026-08-25. Every field captured from a real call. The observation_id below is PROVISIONAL: Group 1 returns the authoritative observation_id and canonical_record_id on ingestion, and those supersede it.",
+  "_produced_by": "integration/emit_source_evidence_pack.py",
+  "_produced_at": "2026-08-28T13:01:38.783868+00:00",
+  "provisional_observation_id": "TC-Z03-EXT-OPENMETEO-OBS001",
+  "_provisional_note": "Group 2 should treat this as provisional and consume the authoritative observation_id and canonical_record_id returned by Group 1, per Vijay's 2026-08-25 request.",
+  "source_owner_provider": "Open-Meteo.com",
+  "exact_source_reference": "https://api.open-meteo.com/v1/forecast?latitude=19.1288&longitude=72.9421&current=temperature_2m,relative_humidity_2m,precipitation,wind_speed_10m&timezone=UTC",
+  "http_status": 200,
+  "collection_observation_timestamp_utc": "2026-08-28T13:00:00Z",
+  "retrieval_timestamp_utc": "2026-08-28T13:01:38.783868+00:00",
+  "raw_artifact": {
+    "kind": "HTTP JSON response body",
+    "reference": "https://api.open-meteo.com/v1/forecast?latitude=19.1288&longitude=72.9421&current=temperature_2m,relative_humidity_2m,precipitation,wind_speed_10m&timezone=UTC",
+    "bytes": 462,
+    "sha256": "2e3647df1c32dbd30dfd762bd786b5ea326dc6dddea922898e2fbd88f61d113a",
+    "hash_algorithm": "sha256",
+    "_note": "Hash computed over the ACTUAL response bytes received, not over a re-serialisation."
+  },
+  "location": {
+    "latitude": 19.1288,
+    "longitude": 72.9421,
+    "crs": "EPSG:4326",
+    "name": "Thane Creek",
+    "_note": "Inside the mission-zone polygon in Group 2's existing context record."
+  },
+  "device_sensor_identity": {
+    "device_id": "G3-EXT-OPENMETEO-01",
+    "_note": "This is a Group 3 EXTERNAL-PROVIDER identifier under the approved G3-EXT-<PROVIDER>-<NN> convention. It is NOT a physical device and must not be represented as one. No Group 3 sensor was involved.",
+    "sensor_id": "OPENMETEO",
+    "capture_method": "external_api"
+  },
+  "measurement": {
+    "observation_type": "precipitation",
+    "value": 0.1,
+    "unit": "mm",
+    "_note": "Value and unit both taken from the source response. Never invented."
+  },
+  "evidence_classification": {
+    "class": "EXTERNAL LIVE API",
+    "source_type": "external_api",
+    "is_live": true,
+    "is_most_recent_snapshot": false,
+    "is_field_sensor": false,
+    "is_satellite_derived": false,
+    "is_dataset": false,
+    "is_other_verified_source": false,
+    "explanation": "EXTERNAL LIVE API - numerical weather model output, updated continuously",
+    "synthetic_state": "CONTROLLED",
+    "_honesty": "Real external third-party data carried through the controlled Group 3 runtime path. NOT physical Group 3 hardware evidence. accuracy NOT_VERIFIED, calibration_state NOT_VERIFIED, hardware_verified false. No Group 3 sensor has produced a recorded reading."
+  },
+  "licence_and_attribution": {
+    "licence": "CC-BY 4.0, non-commercial free tier",
+    "required_attribution": "Weather data by Open-Meteo.com (CC-BY 4.0), aggregating national weather services.",
+    "_note": "Attribution is a licence obligation and must survive every downstream handoff. Group 3 must not strip it."
+  },
+  "contract": {
+    "contract_version": "2.2",
+    "schema": "contract/observation.schema.v2.2.json",
+    "amendment": "EXT / external_api / G3-EXT-<PROVIDER>-<NN>, approved by Arya Barge 2026-08-24; MDU registration ruled NOT required by the manager 2026-08-25 for this Group 3 contract-level change."
+  },
+  "reproducibility": {
+    "REPLAY_proves_history": {
+      "how": "Verify sha256 2e3647df1c32dbd3 against the stored artifact.",
+      "proves": "Exactly these bytes were received at the retrieval timestamp above.",
+      "command": "cd integration && python emit_source_evidence_pack.py"
+    },
+    "REQUERY_proves_reachability_NOT_reproduction": {
+      "how": "Call the same endpoint again.",
+      "proves": "The source is reachable.",
+      "DOES_NOT_PROVE": "That the same value returns. This is a LIVE source - the weather changes, so the measurement and the artifact hash WILL differ. A re-query is not a reproduction of this observation and must never be presented as one."
+    },
+    "request_parameters": {
+      "latitude": 19.1288,
+      "longitude": 72.9421,
+      "timezone": "UTC",
+      "current": "temperature_2m,relative_humidity_2m,precipitation,wind_speed_10m"
+    }
+  },
+  "alternate_sources_probed_and_available": [
+    {
+      "sensor_id": "OMMARINE",
+      "provider": "Open-Meteo Marine",
+      "endpoint": "https://marine-api.open-meteo.com/v1/marine",
+      "variables": "wave_height, sea_surface_temperature",
+      "relevance": "Directly relevant to a tidal mangrove creek",
+      "key_required": false,
+      "probed_live": "2026-08-25, HTTP 200, wave_height 0.82 m"
+    },
+    {
+      "sensor_id": "OMFLOOD",
+      "provider": "Open-Meteo Flood",
+      "endpoint": "https://flood-api.open-meteo.com/v1/flood",
+      "variables": "river_discharge",
+      "relevance": "Freshwater inflow to the creek; drives salinity",
+      "key_required": false,
+      "probed_live": "2026-08-25, HTTP 200, river_discharge 1.06 m3/s"
+    },
+    {
+      "sensor_id": "OMAIRQ",
+      "provider": "Open-Meteo Air Quality",
+      "endpoint": "https://air-quality-api.open-meteo.com/v1/air-quality",
+      "variables": "pm10, pm2_5",
+      "relevance": "Urban-estuarine air quality context",
+      "key_required": false,
+      "probed_live": "2026-08-25, HTTP 200, pm10 53.8 ug/m3"
+    },
+    {
+      "sensor_id": "NASAPOWER",
+      "provider": "NASA Langley Research Center POWER Project",
+      "endpoint": "https://power.larc.nasa.gov/api/temporal/daily/point",
+      "variables": "T2M, PRECTOTCORR, RH2M",
+      "relevance": "Satellite- and model-derived observational agroclimatology, 2-3 day latency. INDEPENDENT cross-source to Open-Meteo - agreement raises confidence, divergence is a flagged signal.",
+      "key_required": false,
+      "probed_live": "2026-08-24, HTTP 200"
+    }
+  ],
+  "_alternates_note": "All probed live and keyless. Each validates against the amended V2.2 contract with ZERO further contract change - tested 2026-08-25, 3/3. They are catalogued, NOT emitted. Only the primary source above was emitted."
+}

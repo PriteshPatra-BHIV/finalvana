@@ -1,0 +1,28 @@
+SEMANTIC / REFERENTIAL VALIDATION
+checks the AGREEMENT between fields, which JSON Schema cannot
+
+VALID OBSERVATIONS FROM THE MISSION PACKAGE
+  [PASS] TC-Z03-F02-LIDAR-OBS001                              expect accept got accepted
+  [PASS] TC-Z03-F02-IMX500-OBS002                             expect accept got accepted
+  [PASS] TC-Z03-F02-IMX500-OBS003                             expect accept got accepted
+
+CONTRADICTORY RECORDS - must be rejected
+  [PASS] device not in register                               expect REJECT got rejected
+  [PASS] provenance device disagrees with device_id           expect REJECT got rejected
+  [PASS] provenance artifact disagrees with reference         expect REJECT got rejected
+  [PASS] provenance captured_at disagrees with timestamp      expect REJECT got rejected
+  [PASS] empty provenance mission_id                          expect REJECT got rejected
+  [PASS] missing provenance mission_id                        expect REJECT got rejected
+  [PASS] zone_id contradicts the composite ID                 expect REJECT got rejected
+  [PASS] sensor_id contradicts the composite ID               expect REJECT got rejected
+  [PASS] null latitude without UNCERTAIN                      expect REJECT got rejected
+
+12/12 semantic checks passed
+
+An observation can be schema-valid and still internally contradictory.
+This layer is what stops a record whose provenance points somewhere else.
+
+KNOWN LIMITATION: the device register does not exist yet - Shivam confirmed
+there is no Capability Registry API and no device-registration payload. The
+fixture's own device set is a STAND-IN. Real referential integrity needs
+Ashmit's register, and is tracked as a dependency rather than assumed.

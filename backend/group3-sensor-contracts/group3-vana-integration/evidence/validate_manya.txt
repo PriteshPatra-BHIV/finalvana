@@ -1,0 +1,15 @@
+[PASS] T01 Valid observation: expected ACCEPTED
+[PASS] T02 Missing timestamp: expected REJECTED
+[PASS] T03 Missing location: expected REJECTED
+[PASS] T04 Unknown device: expected REJECTED by semantic device check
+[PASS] T05 Invalid observation ID: expected REJECTED
+[PASS] T06 Malformed measurement: expected REJECTED
+[PASS] T07 NOT VERIFIED calibration: expected ACCEPTED
+[PASS] T08 Missing artifact reference: expected REJECTED
+[PASS] T09 Duplicate submission: same key + same payload => IDEMPOTENT_REPLAY; no second record
+[PASS] T10 Blank trace_id: expected ACCEPTED; runtime supplies response trace_id
+[PASS] Extra: invalid quality state: expected REJECTED
+[PASS] Extra: invalid calibration state: expected REJECTED
+[PASS] RAW-01 Raw artifact linkage: observation -> device -> raw artifact -> provenance
+
+13/13 validation checks passed

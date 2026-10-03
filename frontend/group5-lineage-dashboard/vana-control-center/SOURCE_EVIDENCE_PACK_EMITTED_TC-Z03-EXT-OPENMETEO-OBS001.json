@@ -1,0 +1,64 @@
+{
+  "$schema": "https://vana.prakriti.org/schemas/v2.2/source_evidence_pack.json",
+  "evidence_pack_id": "EP-TC-Z03-EXT-OPENMETEO-OBS001-20260825",
+  "observation_id": "TC-Z03-EXT-OPENMETEO-OBS001",
+  "contract_version": "2.2",
+  "emitter": {
+    "group": "Group 3",
+    "subsystem": "Provenance & Ingestion Engine",
+    "device_id": "G3-EXT-OPENMETEO-01",
+    "mission_id": "TC-Z03-EXT",
+    "emitted_at": "2026-08-25T11:00:00+00:00"
+  },
+  "source": {
+    "source_identity": "Open-Meteo.com",
+    "capture_method": "external_api",
+    "synthetic_state": "CONTROLLED",
+    "license": "CC-BY 4.0",
+    "api_endpoint": "https://api.open-meteo.com/v1/forecast?latitude=19.1288&longitude=72.9421&current=temperature_2m,relative_humidity_2m,precipitation,wind_speed_10m&timezone=UTC"
+  },
+  "field_applicability": {
+    "gnss_status": {
+      "category": "not_applicable",
+      "note": "No GNSS receiver in this ingestion path (cloud API lookup by coordinate)."
+    },
+    "position_accuracy": {
+      "category": "not_applicable",
+      "note": "Fixed query coordinate; no real-time telemetry positioning system present."
+    },
+    "calibration_state": {
+      "category": "not_applicable",
+      "note": "Numerical weather forecast model is not a physical calibrated hardware sensor."
+    },
+    "accuracy": {
+      "category": "genuine_gap",
+      "note": "Not reported by source - Open-Meteo does not publish per-measurement uncertainty bounds."
+    },
+    "hardware_verified": {
+      "category": "not_applicable",
+      "note": "Synthetic / cloud API capture method; no physical Group 3 edge hardware deployed."
+    },
+    "raw_artifact": {
+      "category": "declared_gap",
+      "note": "Bytes not persisted at capture time - declared gap per contract §26 and §49.1."
+    },
+    "raw_artifact_integrity": {
+      "category": "true_value",
+      "note": "Checksum SHA-256 computed on received payload."
+    },
+    "measurement": {
+      "category": "true_value",
+      "note": "Precipitation measurement (0.1 mm) extracted directly from source response."
+    },
+    "observation_timestamp": {
+      "category": "true_value",
+      "note": "Timestamp (2026-08-25 11:00:00+00:00) provided by source."
+    }
+  },
+  "compliance_and_governance": {
+    "contract_clause_26_acknowledged": true,
+    "contract_clause_49_1_acknowledged": true,
+    "synthetic_state_governed": "CONTROLLED",
+    "authoritative_status": "CONFIRMED_LIVE"
+  }
+}

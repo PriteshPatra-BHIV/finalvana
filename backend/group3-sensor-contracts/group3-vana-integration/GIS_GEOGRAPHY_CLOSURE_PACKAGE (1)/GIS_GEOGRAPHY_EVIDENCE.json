@@ -1,0 +1,18 @@
+{
+  "closure": "GIS_GEOGRAPHY_CLOSURE",
+  "geo_id": "GEO_TCFS_001",
+  "place_name": "Thane Creek Flamingo Sanctuary (TCFS)",
+  "coordinates": {
+    "lat": 19.1477,
+    "lon": 72.9817
+  },
+  "crs": "EPSG:4326",
+  "source_id": "SRC_GOVT_MFD_001",
+  "dataset_id": "DS_GOVT_MFD_001",
+  "measurement_id": "MEAS-TCFS-EXTENT-2020-01",
+  "run_id": "RUN_20260812_01",
+  "provenance_id": "PROV_MEAS_TCFS_001",
+  "source_authority_status": "NOT_SOURCE_VERIFIED",
+  "dataset_status": "UNCERTAIN",
+  "substitute_geo_id_created": false
+}

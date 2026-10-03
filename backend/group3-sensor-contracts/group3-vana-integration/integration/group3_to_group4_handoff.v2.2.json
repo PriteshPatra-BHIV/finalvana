@@ -1,0 +1,124 @@
+{
+  "_README": "Group 3 -> Group 4 handoff, TANTRA execution envelope. Format confirmed by Karan Barda (Group 4 Lead) on 2026-08-14. The four null fields are runtime-owned by his instruction and are null BY DESIGN, not by omission.",
+  "_format_ruling": {
+    "confirmed_by": "Karan Barda, Group 4 Lead",
+    "date": "2026-08-14",
+    "envelope": "TANTRA Execution Envelope (Candidate A)",
+    "runtime_owned_fields": [
+      "execution_id",
+      "trace_id",
+      "tenant_id",
+      "lineage_hash"
+    ],
+    "producer_owned_fields": [
+      "replay.idempotency_key",
+      "replay.sequence"
+    ],
+    "supersedes": "the two-candidate emitter; Candidate B is not the runtime handoff"
+  },
+  "_honesty": {
+    "is_synthetic": true,
+    "source_type": "external_api - Open-Meteo.com, EXTERNAL LIVE API",
+    "hardware_verified": false,
+    "canonical_store": "Group 1's DEPLOYED PostgreSQL 16 + PostGIS 3.4 instance. Accepted TC-Z03-EXT-OPENMETEO-OBS001 at 2026-08-25T11:04:54Z - 13/13 checks passed.",
+    "note": "No Group 3 sensor has produced a recorded reading. This is real third-party data from an EXTERNAL LIVE API carried through the controlled Group 3 path, accepted by Group 1's DEPLOYED instance. It is NOT Group 3 hardware evidence and must not be presented as one."
+  },
+  "_trace_convention": {
+    "canonical_format": "VANA-<12 lowercase hex>",
+    "example": "VANA-3a9fd87b337d",
+    "regex": "^VANA-[0-9a-f]{12}$",
+    "source": "Group 1 VANA MasterDB Observation API v1.0.0 handoff, Raj Prajapati 2026-08-14, target commit 92a37b337df1fb1d4b8565ada47656d182771cdf. The API returns trace_id in every ingestion, replay, conflict and duplicate response.",
+    "supersedes": "the provisional 'trace-vana-<16 hex>' form observed in a Group 4 governed execution on 2026-08-13",
+    "group3_position": "Group 3 emits null and never mints a trace. Karan's 2026-08-14 ruling on OWNERSHIP stands - the producer does not mint traces. This fixes only the FORMAT.",
+    "correlation_resolved": "Because Group 1's API returns trace_id on ingestion, Group 3 CAN now correlate its submission to the resulting trace. This closes the open question of whether the trace is returned to the producer."
+  },
+  "_still_open_with_group4": [
+    {
+      "item": "Does Group 4's runtime accept Group 1's VANA-<12 hex> trace, or mint its own?",
+      "status": "OPEN - must be settled between Groups 1 and 4",
+      "impact_on_group3": "If both mint a trace, one observation carries two identifiers and correlation breaks at the boundary. Group 3 has adopted the Group 1 format and will carry whichever the two groups agree on.",
+      "owner": "Raj / Karan"
+    },
+    {
+      "item": "Trace null in runtime/OTel logs",
+      "status": "OPEN - disclosed by Karan himself",
+      "impact_on_group3": "Correlation unproven at Group 4's layer. Not Group 3's to fix, but it means the injected trace is not yet observable end to end.",
+      "owner": "Mohit, Group 4"
+    }
+  ],
+  "_payload_sha256": "0592d7573e90d022624a9d0531a0516aa5c20c8a691589460072ee610b8a40d0",
+  "_generated_at": "2026-08-27T17:36:39.569572+00:00",
+  "envelope": {
+    "execution_id": null,
+    "trace_id": null,
+    "tenant_id": null,
+    "lineage_hash": null,
+    "replay": {
+      "idempotency_key": "IK-TC-Z03-EXT-OPENMETEO-OBS001",
+      "sequence": 1
+    },
+    "payload": {
+      "observation": {
+        "contract_version": "2.2",
+        "schema_version": "2.2",
+        "observation_id": "TC-Z03-EXT-OPENMETEO-OBS001",
+        "source_identity": "group3-field-edge",
+        "survey_id": "TC",
+        "zone_id": "Z03",
+        "flight_id": "EXT",
+        "sensor_id": "OPENMETEO",
+        "observation_seq": "OBS001",
+        "mission_id": "TC-Z03-EXT",
+        "parent_reference": null,
+        "observation_timestamp": "2026-08-25T11:00:00Z",
+        "source_timestamp": "2026-08-25T11:00:00Z",
+        "ingestion_timestamp": null,
+        "data_state": "CAPTURED",
+        "synthetic_state": "CONTROLLED",
+        "is_synthetic": true,
+        "calibration_state": "NOT_VERIFIED",
+        "quality_state": "CAPTURED",
+        "location": {
+          "latitude": 19.1288,
+          "longitude": 72.9421,
+          "altitude_m": 4.0,
+          "gnss_status": "NOT_VERIFIED",
+          "position_accuracy_m": null
+        },
+        "waypoint_id": null,
+        "device_id": "G3-EXT-OPENMETEO-01",
+        "observation_type": "precipitation",
+        "capture_method": "external_api",
+        "measurement": 0.1,
+        "unit": "mm",
+        "accuracy": "NOT_VERIFIED",
+        "processing_status": "raw",
+        "raw_artifact": "https://api.open-meteo.com/v1/forecast?latitude=19.1288&longitude=72.9421&current=temperature_2m,relative_humidity_2m,precipitation,wind_speed_10m&timezone=UTC",
+        "raw_artifact_integrity": {
+          "checksum_sha256": "8d26e68328ac160f7b69f1a24ccb2de4972ff9fc60af11093c246903a7c52502",
+          "hash_algorithm": "sha256",
+          "artifact_type": "sensor_reading"
+        },
+        "integrity_reference": null,
+        "provenance_reference": "open-meteo:8d26e68328ac160f",
+        "provenance": {
+          "device_id": "G3-EXT-OPENMETEO-01",
+          "mission_id": "TC-Z03-EXT",
+          "captured_at": "2026-08-25T11:00:00Z",
+          "raw_artifact": "https://api.open-meteo.com/v1/forecast?latitude=19.1288&longitude=72.9421&current=temperature_2m,relative_humidity_2m,precipitation,wind_speed_10m&timezone=UTC",
+          "operator": "Open-Meteo.com (external data provider)",
+          "qa_record": null
+        },
+        "tidal_state": null,
+        "trace_id": null,
+        "idempotency_key": "IK-TC-Z03-EXT-OPENMETEO-OBS001",
+        "hardware_verified": false
+      },
+      "emitted_by": "group3-field-edge",
+      "contract_version": "2.2",
+      "contract_version_note": "V2.2 observation contract. This observation was emitted to and ACCEPTED by Group 1's deployed instance on 2026-08-25 (13/13). It supersedes the V1.2 envelope, which was built from a local v0.1 ingestion and never left this machine.",
+      "is_synthetic": true,
+      "hardware_verified": false
+    }
+  }
+}

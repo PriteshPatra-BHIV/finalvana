@@ -1,0 +1,155 @@
+{
+  "timestamp": "2026-09-01T10:49:03.236877+00:00",
+  "target_observation_id": "SMR-Z01-EXT-SAMACHAR-OBS001",
+  "expected_canonical_record_id": "CR-c3d2e7cc-3ddc-41d6-a85c-b782cf43801d",
+  "group1_raw": {
+    "trace_id": "VANA-6eab9a2434a8",
+    "observation_id": "SMR-Z01-EXT-SAMACHAR-OBS001",
+    "status": "RETRIEVED",
+    "observation": {
+      "observation_id": "SMR-Z01-EXT-SAMACHAR-OBS001",
+      "canonical_record_id": "CR-c3d2e7cc-3ddc-41d6-a85c-b782cf43801d",
+      "dataset_id": "DS-GROUP3-FIELD-EDGE-SMR-Z01-EXT",
+      "geo_id": "GEO-18b9254c87e531776dde8036f92334f3",
+      "observed_at": "2026-06-04 12:24:00+00:00",
+      "observation_timestamp": "2026-06-04 12:24:00+00:00",
+      "timestamp": "2026-06-04 12:24:00+00:00",
+      "contract_version": "2.2",
+      "schema_version": "2.2",
+      "provenance_reference": "samachar:ec58172b0f1e2ef8",
+      "source_timestamp": "2026-06-04 12:24:00+00:00",
+      "capture_method": "external_api",
+      "device_id": "G3-EXT-SAMACHAR-01",
+      "species": null,
+      "observation_type": "news_report",
+      "quality_status": "CAPTURED",
+      "quality_state": "CAPTURED",
+      "data_state": "CAPTURED",
+      "confidence": null,
+      "is_synthetic": true,
+      "synthetic_state": "CONTROLLED",
+      "location": {
+        "latitude": 19.222,
+        "longitude": 72.956,
+        "altitude_m": null,
+        "gnss_status": "NOT_VERIFIED",
+        "position_accuracy_m": null
+      },
+      "latitude": 19.222,
+      "longitude": 72.956,
+      "altitude_m": null,
+      "gnss_status": "NOT_VERIFIED",
+      "position_accuracy_m": null,
+      "calibration_status": "NOT_VERIFIED",
+      "calibration_state": "NOT_VERIFIED",
+      "raw_artifact": "https://www.freepressjournal.in/mumbai/thane-mangrove-cell-installs-protective-fencing-at-mithbunder-wetlands-to-prevent-encroachments-and-dumping",
+      "raw_artifact_integrity": {
+        "checksum_sha256": "ec58172b0f1e2ef8232d546aeff7a61ccdc89f378f448dc4a2d633d5a332a934",
+        "hash_algorithm": "sha256",
+        "artifact_type": "sensor_reading"
+      },
+      "raw_artifact_reference": {
+        "path": "https://www.freepressjournal.in/mumbai/thane-mangrove-cell-installs-protective-fencing-at-mithbunder-wetlands-to-prevent-encroachments-and-dumping",
+        "checksum_sha256": "ec58172b0f1e2ef8232d546aeff7a61ccdc89f378f448dc4a2d633d5a332a934",
+        "artifact_type": "sensor_reading"
+      },
+      "geo_location": {
+        "place_name": "Group 3 observation location",
+        "latitude": 19.222,
+        "longitude": 72.956,
+        "altitude_m": null,
+        "crs": "EPSG:4326"
+      },
+      "field_observation_meta": {
+        "device_id": "G3-EXT-SAMACHAR-01",
+        "operator": null,
+        "mission_id": "SMR-Z01-EXT",
+        "accuracy": null,
+        "accuracy_unit": null,
+        "accuracy_status": "NOT_VERIFIED",
+        "calibration_status": "NOT_VERIFIED",
+        "gnss_status": "NOT_VERIFIED",
+        "position_accuracy_m": null,
+        "processing_status": "raw",
+        "notes": null
+      },
+      "measurements": [
+        {
+          "measurement_id": "MEAS-fd68c40d07b25a818347cf76a3cfe729",
+          "metric_name": "news_report",
+          "data_type": "NUMERIC",
+          "value": 0.8999999999999999,
+          "value_text": null,
+          "unit": "score",
+          "method": "news_report",
+          "provenance": {
+            "provenance_id": "PROV-8b1c8dc59a661220d1214ec6829124c6",
+            "source_id": "SRC-GROUP3-FIELD-EDGE",
+            "run_id": "RUN-703074e964e0ce4e0d259e16159f2c86",
+            "derivation_note": "Group 3 V2.2 observation ingested through consumer-facing API."
+          }
+        }
+      ],
+      "raw_artifacts": [
+        {
+          "artifact_id": "ART-6fc774249d410b52a67b02b5a4e7d53a",
+          "artifact_type": "sensor_reading",
+          "storage_ref": "https://www.freepressjournal.in/mumbai/thane-mangrove-cell-installs-protective-fencing-at-mithbunder-wetlands-to-prevent-encroachments-and-dumping",
+          "content_hash": "ec58172b0f1e2ef8232d546aeff7a61ccdc89f378f448dc4a2d633d5a332a934",
+          "hash_algorithm": "sha256",
+          "captured_at": "2026-06-04 12:24:00+00:00"
+        }
+      ]
+    }
+  },
+  "group2_raw": {
+    "observation_id": "SMR-Z01-EXT-SAMACHAR-OBS001",
+    "canonical_record_id": "CR-c3d2e7cc-3ddc-41d6-a85c-b782cf43801d",
+    "context_id": null,
+    "ruling": "ABSTAIN",
+    "action_eligibility": false,
+    "abstention_required": true,
+    "action_request": null,
+    "evidence": {
+      "source": null,
+      "confidence": "NOT VERIFIED",
+      "missing_critical_data": "NONE_BUT_UNVERIFIED",
+      "provenance_reference": "samachar:ec58172b0f1e2ef8",
+      "artifact_hash": "ec58172b0f1e2ef8232d546aeff7a61ccdc89f378f448dc4a2d633d5a332a934",
+      "artifact_type": "sensor_reading",
+      "observation_timestamp": "2026-06-04 12:24:00+00:00",
+      "retrieval_timestamp": null,
+      "attribution": null,
+      "canonical_observation_location": {
+        "latitude": 19.222,
+        "longitude": 72.956,
+        "altitude_m": null,
+        "gnss_status": "NOT_VERIFIED",
+        "position_accuracy_m": null
+      }
+    },
+    "provenance": {
+      "group2_decision_time": "2026-09-01T10:49:08.653Z",
+      "reason": "CONTEXT_NOT_VERIFIED",
+      "message": "Authoritative evidence threshold not met (Context not verified). Failing closed to ABSTAIN."
+    }
+  },
+  "passed": [
+    "Group 1 HTTP 200",
+    "Group 2 HTTP 200",
+    "Observation ID Exact Match (SMR-Z01-EXT-SAMACHAR-OBS001)",
+    "Canonical Record ID Exact Match (CR-c3d2e7cc-3ddc-41d6-a85c-b782cf43801d)",
+    "Provenance Reference Dynamic Propagation",
+    "Artifact Hash Dynamic Propagation",
+    "Artifact Type Dynamic Propagation",
+    "Observation Timestamp Dynamic Propagation",
+    "Location Coordinates Match",
+    "Ruling is ABSTAIN",
+    "Action Eligibility is False",
+    "Abstention Required is True",
+    "Context ID is null",
+    "Action Request is null"
+  ],
+  "failed": [],
+  "overall": "PASS"
+}

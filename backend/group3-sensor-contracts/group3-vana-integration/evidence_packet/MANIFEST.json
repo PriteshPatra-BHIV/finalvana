@@ -1,0 +1,238 @@
+{
+  "_packet": "Group 3 evidence packet",
+  "_task": "GROUP 3 TASK-31-09-2026.md",
+  "_owner": "Hemanth Reddy - VANA Integration & Data Interface",
+  "_built_at": "2026-08-31T06:35:13.990667+00:00",
+  "_built_by": "integration/build_evidence_packet.py",
+  "verified_at_build": {
+    "required": 24,
+    "rules": 15,
+    "physical_observations": 0
+  },
+  "contents": {
+    "code_packet": [
+      "observation.schema.v2.2.json",
+      "validate_semantic_v22.py",
+      "build_live_observation_candidate.py",
+      "post_single_frozen_observation.py",
+      "probe_group1_six_region_state.py"
+    ],
+    "api_samples": [
+      "LIVE_ACCEPTANCE_PASSED_2026-08-25.json",
+      "SOURCE_EVIDENCE_PACK_EMITTED_2026-08-25.json",
+      "live_mission_package.json"
+    ],
+    "runtime_logs": [
+      "SINGLE_POST_MU-Z01-EXT-OPENMETEO-OBS001_20260829T071116Z.json",
+      "SINGLE_POST_MU-Z01-EXT-OPENMETEO-OBS001_20260829T095839Z.json"
+    ],
+    "deployment_proof": [
+      "GROUP3_INTAKE_ADAPTER_CONTRACT.json",
+      "V2.2_PERSISTENCE_MATRIX.json",
+      "GROUP3_ENDPOINT_INVENTORY.json"
+    ]
+  },
+  "screenshots": "EMPTY - operator-captured, see screenshots/README.md",
+  "_README": "Group 3 evidence packet. Every artifact is the output of a real run; nothing here was generated to fill the packet.",
+  "_updated_at": "2026-09-02T03:36:51.661104+00:00",
+  "_latest_addition": "Six-region independent verification, 6/6, 114 checks. Group 3 retrieved every Group 1 record and diffed it against the payload Group 3 built.",
+  "file_count": 39,
+  "files": [
+    {
+      "path": "SIX_REGION_VERIFICATION_RESULT.md",
+      "sha256": "181e3b958312559dfd40ca625e382014b0f8688b8446390513f1dc794127fe3c",
+      "bytes": 3239
+    },
+    {
+      "path": "review_packet.md",
+      "sha256": "769b263df8d222152fd1bb894d9dadc3025bb88bbb8ba217d667b4dd640680c2",
+      "bytes": 6488
+    },
+    {
+      "path": "samachar.zip",
+      "sha256": "8c665a56dcca313bd1b5a64f472f771e9d7b02ad2d752c600d5ec30a1b8ee705",
+      "bytes": 52117
+    },
+    {
+      "path": "api_samples/GET_retrieval_TC-Z03_VERIFIED.json",
+      "sha256": "da06e7dd029967b8dc251c0498d327347ff01a7e06f7ba24a89172678a5984dd",
+      "bytes": 4584
+    },
+    {
+      "path": "api_samples/LIVE_ACCEPTANCE_PASSED_2026-08-25.json",
+      "sha256": "f1d252ac37cfbe63226202e4ae7e8caafd6a6382ee805eaeed0578f08635777b",
+      "bytes": 2765
+    },
+    {
+      "path": "api_samples/SOURCE_EVIDENCE_PACK_EMITTED_2026-08-25.json",
+      "sha256": "e1f3803a95a7fdee8d17dcbd3f4d4dce4e3bd556ea08c33e29b6dbb2ffba4063",
+      "bytes": 11357
+    },
+    {
+      "path": "api_samples/live_mission_package.json",
+      "sha256": "cf95235d541bd62fc893e657d182b0701da75d65fe20251ec7d717e4f982b3cb",
+      "bytes": 3077
+    },
+    {
+      "path": "code_packet/build_live_observation_candidate.py",
+      "sha256": "4a9b2ba8c9d12f45764e2dbdb00c36075141edf3acc9cb07f76dfb620dd15d0a",
+      "bytes": 12551
+    },
+    {
+      "path": "code_packet/emit_samachar_observation.py",
+      "sha256": "5ebacaba050e52271feb03bba6242ea09dfbac39cdde25484b00d12ea06c38ae",
+      "bytes": 13470
+    },
+    {
+      "path": "code_packet/observation.schema.v2.2.json",
+      "sha256": "5e1bfc5875d6ed8049f9282973f5550d8c385bc771704ce2787b4f9910cdb868",
+      "bytes": 50182
+    },
+    {
+      "path": "code_packet/post_single_frozen_observation.py",
+      "sha256": "5ebf27486ba43dd48ff76b7f37c36c8de2325d790ff3993f7a7a5d170f7d48f7",
+      "bytes": 9085
+    },
+    {
+      "path": "code_packet/probe_group1_six_region_state.py",
+      "sha256": "2d82e6a6cd6f62ccac4150c11108798edef8fedd50bb6d6b7b39cc359217ea12",
+      "bytes": 6737
+    },
+    {
+      "path": "code_packet/validate_semantic_v22.py",
+      "sha256": "5e6d31ec516e975604037b490f77f35114ceace75f68e60b75763d724bcf4d40",
+      "bytes": 25006
+    },
+    {
+      "path": "code_packet/verify_five_region_payloads.py",
+      "sha256": "6ac81f06657961f3545c0ac16a7692d0570b137303ed8b0bafdd394129125f37",
+      "bytes": 4907
+    },
+    {
+      "path": "code_packet/verify_group1_six_region_closure.py",
+      "sha256": "2f8c18eff4ebb7de3ca7ecfa774f60f0408f6cfd7623602d135c9579b422ca15",
+      "bytes": 13829
+    },
+    {
+      "path": "deployment_proof/GROUP3_ENDPOINT_INVENTORY.json",
+      "sha256": "5238ea611e8f66c91e5785d55db6a55ad4a09cebf7b8b8c2f59c06d6a00f6ac2",
+      "bytes": 5973
+    },
+    {
+      "path": "deployment_proof/GROUP3_INTAKE_ADAPTER_CONTRACT.json",
+      "sha256": "26e4ea68dcbbf45a69c49ce20d88a4940c8275ca67749282f5a41246bcdc4d67",
+      "bytes": 12049
+    },
+    {
+      "path": "deployment_proof/V2.2_PERSISTENCE_MATRIX.json",
+      "sha256": "6c135ebd9203293b320387067d420a84954474352667146f962eddf607749fc3",
+      "bytes": 15293
+    },
+    {
+      "path": "runtime_logs/GROUP1_SIX_REGION_VERIFICATION_20260901T091610Z.json",
+      "sha256": "4ef349b935c50f5b4bb6d7aef28ef531ed209c828e9813f15678f71395461b4d",
+      "bytes": 35251
+    },
+    {
+      "path": "runtime_logs/SINGLE_POST_MU-Z01-EXT-OPENMETEO-OBS001_20260829T071116Z.json",
+      "sha256": "7c4f92c86717553e8b970a97b93430dc35d5babb11b516c31a01e66597def648",
+      "bytes": 681
+    },
+    {
+      "path": "runtime_logs/SINGLE_POST_MU-Z01-EXT-OPENMETEO-OBS001_20260829T095839Z.json",
+      "sha256": "331c8f7611352d6a483fadb983b26b4ec3630ca1e7b3ae0b8dfb3c7899ac4fd6",
+      "bytes": 681
+    },
+    {
+      "path": "runtime_logs/SINGLE_POST_SMR-Z01-EXT-SAMACHAR-OBS001_20260901T100042Z.json",
+      "sha256": "ddb8aaf14ce9d733f89432699d43a7984644328686624a16a0e7ebd47eeb75f9",
+      "bytes": 4950
+    },
+    {
+      "path": "samachar/INGESTION_RESULT.md",
+      "sha256": "e02f6e94fcadd82d60505178f6cdd41b199ca490394f8eaccfcee8199e67b695",
+      "bytes": 2107
+    },
+    {
+      "path": "samachar/MANIFEST.json",
+      "sha256": "1be68cf8ac39f5b5502c726cea45e1e82ef7d7d3808bded8d990eba76d0be485",
+      "bytes": 4794
+    },
+    {
+      "path": "samachar/api_samples/SAMACHAR_payload_as_built.json",
+      "sha256": "cb8bdcf4baf92b7533b07062824cc5a2194fad403e6d2c4791e0e7cc454b069d",
+      "bytes": 5166
+    },
+    {
+      "path": "samachar/api_samples/SOURCE_samachar4.json",
+      "sha256": "33fe7998d397ddf91651ecc4970e7eeaadbcc457d7ed205a7b428c58f271d9b5",
+      "bytes": 48751
+    },
+    {
+      "path": "samachar/api_samples/raw_artifact_samachar_ec58172b0f1e2ef8.json",
+      "sha256": "ec58172b0f1e2ef8232d546aeff7a61ccdc89f378f448dc4a2d633d5a332a934",
+      "bytes": 34124
+    },
+    {
+      "path": "samachar/code_packet/emit_samachar_observation.py",
+      "sha256": "5ebacaba050e52271feb03bba6242ea09dfbac39cdde25484b00d12ea06c38ae",
+      "bytes": 13470
+    },
+    {
+      "path": "samachar/code_packet/observation.schema.v2.2.json",
+      "sha256": "5e1bfc5875d6ed8049f9282973f5550d8c385bc771704ce2787b4f9910cdb868",
+      "bytes": 50182
+    },
+    {
+      "path": "samachar/code_packet/post_single_frozen_observation.py",
+      "sha256": "5ebf27486ba43dd48ff76b7f37c36c8de2325d790ff3993f7a7a5d170f7d48f7",
+      "bytes": 9085
+    },
+    {
+      "path": "samachar/code_packet/validate_semantic_v22.py",
+      "sha256": "5e6d31ec516e975604037b490f77f35114ceace75f68e60b75763d724bcf4d40",
+      "bytes": 25006
+    },
+    {
+      "path": "samachar/runtime_logs/POST_STATUS_HELD.json",
+      "sha256": "4d19093f3b4957a661ce3c0cf23c456920fd442924c1ddaaa554e84c967322b3",
+      "bytes": 1582
+    },
+    {
+      "path": "samachar/runtime_logs/SINGLE_POST_SMR-Z01-EXT-SAMACHAR-OBS001_20260901T100042Z.json",
+      "sha256": "ddb8aaf14ce9d733f89432699d43a7984644328686624a16a0e7ebd47eeb75f9",
+      "bytes": 4950
+    },
+    {
+      "path": "samachar/runtime_logs/validation_run.txt",
+      "sha256": "6ade94d714852bc7875d8b9c20b7a629a231279a776a558cb2f1b17dcda7e135",
+      "bytes": 816
+    },
+    {
+      "path": "samachar/screenshots/README.md",
+      "sha256": "e570f501b724d2d2327c627e1f72b36665805b15746436639c2587465d6c7d27",
+      "bytes": 339
+    },
+    {
+      "path": "screenshots/6 location get.png",
+      "sha256": "cceab984670761b00250fa6629515fcfd861e6c7eb98ea714cf169cf185f71fa",
+      "bytes": 54912
+    },
+    {
+      "path": "screenshots/emission1.png",
+      "sha256": "d3fc8298a7fa0abcd93fc0de0f41b386cb9b467d83207771268033209a374ec3",
+      "bytes": 165469
+    },
+    {
+      "path": "screenshots/emission2.png",
+      "sha256": "d71ecae6e0a77de4b70caba013762b1e9021d3e24add410c906ddb4dad903eba",
+      "bytes": 161805
+    },
+    {
+      "path": "screenshots/samachar post.png",
+      "sha256": "09fcb72182e281c07ccdc6428b6cba48765d23c79038a0980b6a21dd56bcf640",
+      "bytes": 162549
+    }
+  ],
+  "_count_note": "39 files hashed; 40 total including this manifest, which cannot hash itself."
+}

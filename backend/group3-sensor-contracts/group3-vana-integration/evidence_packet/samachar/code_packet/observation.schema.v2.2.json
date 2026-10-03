@@ -1,0 +1,1041 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://bhiv.local/vana/group3/observation.schema.v2.2.json",
+  "title": "VANA Group 3 Canonical Observation Contract — V2.2",
+  "description": "GROUP 3 CANONICAL OBSERVATION CONTRACT V2.2 - FREEZE-READY, PENDING LIVE GROUP 1 ACCEPTANCE. Specified by Arya Barge; implemented by Hemanth Reddy. All four open contract questions and the coordinate-shape question were RULED by the contract owner on 2026-08-20. Her freeze condition is explicit: the schema can proceed to final freeze subject to the final live Group 1 acceptance/regression evidence. It is therefore NOT yet FROZEN - see _freeze_status.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contract_version",
+    "observation_id",
+    "source_identity",
+    "survey_id",
+    "zone_id",
+    "flight_id",
+    "sensor_id",
+    "observation_seq",
+    "observation_timestamp",
+    "data_state",
+    "synthetic_state",
+    "mission_id",
+    "device_id",
+    "location",
+    "observation_type",
+    "measurement",
+    "quality_state",
+    "calibration_state",
+    "raw_artifact",
+    "provenance",
+    "provenance_reference",
+    "accuracy",
+    "processing_status",
+    "raw_artifact_integrity"
+  ],
+  "properties": {
+    "contract_version": {
+      "type": "string",
+      "const": "2.2",
+      "description": "REQUIRED per Arya's field register, section 5 'Contract Metadata' — identifies the contract version used. Distinct from schema_version, which she marks as retained for compatibility only.",
+      "examples": [
+        "2.2"
+      ]
+    },
+    "schema_version": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "OPTIONAL. Arya: 'Can be retained for compatibility if required.' contract_version is the canonical field in V2.2.",
+      "examples": [
+        "2.2",
+        "2.1",
+        null
+      ]
+    },
+    "observation_id": {
+      "type": "string",
+      "description": "AMENDED 2026-08-22 (V2.2 additive external-source amendment): the third segment accepts EXT as well as F###, so a truthful non-flight identity is expressible. Determinism and uniqueness are unchanged. Composite observation identity: Survey + Zone + Flight + Sensor + Observation sequence. CONFIRMED in Arya's settled-decisions table. Suraj Surve ruled 2026-08-17 'keep it as per Group 1'; the 2026-08-19 task lists replacing it with the flat form as out of scope. Group 1 preserves the caller-supplied identity verbatim. Identity is the WHOLE tuple including coordinates and timestamp — the OBS### fragment repeats every flight and is never unique alone.",
+      "pattern": "^[A-Z0-9]+-Z[0-9]{1,2}-(F[0-9]{1,3}|EXT)-[A-Z0-9]+-OBS[0-9]{3,}$",
+      "examples": [
+        "TC-Z03-F02-LIDAR-OBS001"
+      ]
+    },
+    "source_identity": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^\\S(.*\\S)?$",
+      "description": "NEW in V2.2. Identity of the producing source — the Group 3 producer that emitted this observation, as distinct from device_id, which identifies the physical capturing device. Required so a reviewer starting at the canonical record can answer 'from which Group 3 producer?' without reconstruction.",
+      "examples": [
+        "group3-field-edge",
+        "SRC-G3-FIELD-TC-Z03-F02"
+      ]
+    },
+    "survey_id": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^\\S(.*\\S)?$",
+      "description": "Survey identifier. CONFIRMED. Group 1's documented request body carries this as an explicit field, and Kavy is building v0.5 zone/flight queryability on these arriving explicitly rather than being parsed out of observation_id.",
+      "examples": [
+        "TC"
+      ]
+    },
+    "zone_id": {
+      "type": "string",
+      "pattern": "^Z[0-9]{1,2}$",
+      "description": "Survey zone, Z1-Z8. CONFIRMED. This is the field that answers 'all observations in Z03 across flights' — the quarterly repeat-survey query. It must be explicit, not parsed.",
+      "examples": [
+        "Z03"
+      ]
+    },
+    "flight_id": {
+      "type": "string",
+      "pattern": "^(F[0-9]{1,3}|EXT)$",
+      "description": "AMENDED 2026-08-22 (V2.2 additive external-source amendment). Flight identifier F### for an aerial capture, OR the literal EXT for a source with no flight at all - an external live API, a dataset, or any non-flight capture. EXT is deliberately not a number: a nominal F000 would still read as a flight. Per Arya Barge's ruling of 2026-08-22, a nominal flight identifier must not be used to represent an external weather API call when no flight occurred. Flight identifier. CONFIRMED.",
+      "examples": [
+        "F02"
+      ]
+    },
+    "sensor_id": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^\\S(.*\\S)?$",
+      "description": "Sensor/source identifier. CONFIRMED.",
+      "examples": [
+        "LIDAR",
+        "IMX500",
+        "OAKD",
+        "DRONERGB"
+      ]
+    },
+    "observation_seq": {
+      "type": "string",
+      "pattern": "^OBS[0-9]{3,}$",
+      "description": "Observation sequence within the flight. CONFIRMED. NOT globally unique on its own.",
+      "examples": [
+        "OBS001"
+      ]
+    },
+    "mission_id": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Mission identity. REQUIRED per Arya's field register.",
+      "examples": [
+        "TC-Z03-F02",
+        "MNG-THANE-20260817-001"
+      ]
+    },
+    "parent_reference": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "OPTIONAL. Links to a parent observation or mission package, where one exists. Null where the observation has no parent.",
+      "examples": [
+        "TC-Z03-F02",
+        null
+      ]
+    },
+    "observation_timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d+)?(Z|[+-]00:00)$",
+      "description": "REQUIRED. Timestamp associated with the observation — the capture time. ISO-8601 UTC with an explicit timezone. If the clock cannot be trusted the observation carries data_state UNCERTAIN; a time is never invented. NOTE FOR GROUP 1: their live API currently accepts this on the wire as 'timestamp'. The wire name must be reconciled at Group 1 validator alignment. That is now a GROUP 1 item owned by Raj, not a contract-owner question - Arya ruled the contract on 2026-08-20 and it is freeze-ready. Consumers MUST enable format checking or impossible dates such as 2026-02-30T10:00:00Z validate cleanly. ISO-8601 UTC with an explicit UTC designator. Arya's Observation Metadata Contract section 6 (FROZEN): 'All capture timestamps shall use ISO-8601 UTC. Fractional seconds are permitted.' Both 'Z' and '+00:00' are accepted; a non-zero offset such as '+05:30' is NOT UTC and is rejected. Verified 2026-08-20: no non-zero offset appears anywhere in Group 3 or Group 1 evidence.",
+      "examples": [
+        "2026-08-13T09:14:22Z"
+      ]
+    },
+    "source_timestamp": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "format": "date-time",
+      "description": "OPTIONAL. Timestamp as originally supplied by the source, where it differs from observation_timestamp. Null where the source supplies none. ISO-8601 UTC with an explicit UTC designator. Arya's Observation Metadata Contract section 6 (FROZEN): 'All capture timestamps shall use ISO-8601 UTC. Fractional seconds are permitted.' Both 'Z' and '+00:00' are accepted; a non-zero offset such as '+05:30' is NOT UTC and is rejected. Verified 2026-08-20: no non-zero offset appears anywhere in Group 3 or Group 1 evidence.",
+      "examples": [
+        "2026-08-13T09:14:22Z",
+        null
+      ],
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d+)?(Z|[+-]00:00)$"
+    },
+    "ingestion_timestamp": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "format": "date-time",
+      "description": "RUNTIME-OWNED. Generated by canonical ingestion, not by the producer. Group 3 emits null and MUST NOT invent a value — the same rule that applies to trace_id. Arya classifies this as RUNTIME rather than YES/OPTIONAL for exactly that reason. ENFORCED 2026-08-20: constrained to null because it is runtime-owned. A producer populating it asserts a canonicalisation event it did not perform.",
+      "examples": [
+        null
+      ],
+      "const": null
+    },
+    "data_state": {
+      "type": "string",
+      "enum": [
+        "RAW",
+        "CAPTURED",
+        "INGESTED"
+      ],
+      "description": "APPROVED RULING, Arya Barge, 2026-08-22: data_state is RAW / CAPTURED / INGESTED ONLY - a pure lifecycle axis. quality_state keeps the full six-value QA vocabulary. This supersedes the 2026-08-20 ruling, which retained identical vocabularies on both axes and left a producer unable to tell which field to set. VALIDATED, REJECTED and UNCERTAIN are QA verdicts and belong to quality_state alone. The two axes must not be merged or treated as aliases."
+    },
+    "synthetic_state": {
+      "type": "string",
+      "enum": [
+        "PHYSICAL",
+        "CONTROLLED",
+        "SYNTHETIC",
+        "SIMULATED",
+        "UNKNOWN"
+      ],
+      "description": "REQUIRED. THE CANONICAL ORIGIN FIELD in V2.2, replacing the V2.1 boolean. Arya: the boolean 'cannot represent all five required states', therefore 'synthetic_state is the canonical field'. PHYSICAL — produced by an actual physical device during an actual physical capture. CONTROLLED — produced during a controlled integration/test condition. SYNTHETIC — intentionally generated as synthetic test data. SIMULATED — produced by a simulator or simulation environment. UNKNOWN — the origin cannot be reliably established from available evidence. As of 2026-08-20 no Group 3 observation may be PHYSICAL: no Group 3 sensor has produced a recorded reading and 0 of 8 quadruped actuators are mounted."
+    },
+    "is_synthetic": {
+      "type": [
+        "boolean",
+        "null"
+      ],
+      "description": "OPTIONAL, BACKWARD COMPATIBILITY ONLY. Arya's rule: 'If is_synthetic is retained for backward compatibility, it must not replace synthetic_state.' Mapping: PHYSICAL→false, CONTROLLED→true, SYNTHETIC→true, SIMULATED→true, UNKNOWN→null. HER WARNING, CARRIED VERBATIM: 'The compatibility mapping must not be interpreted as physical validation.' A false value means only that synthetic_state is PHYSICAL; it is not evidence that any device was tested, calibrated or verified. This field exists because Group 1's live API reads is_synthetic per observation — and because sending it at package level rather than per observation is what stored a synthetic record as false in their live canonical database on 2026-08-19."
+    },
+    "calibration_state": {
+      "type": "string",
+      "enum": [
+        "CALIBRATED",
+        "UNCALIBRATED",
+        "NOT_VERIFIED"
+      ],
+      "description": "RULED by Arya Barge (contract owner), 2026-08-20. Vocabulary is CALIBRATED, UNCALIBRATED, NOT_VERIFIED. UNCALIBRATED is used because it matches the live Group 1 v0.4 CHECK constraint character for character. NOT_CALIBRATED, from Observation Metadata Contract section 10, is NOT used in V2.2. Current Group 3 observations remain NOT_VERIFIED - no device holds a calibration record. CALIBRATED additionally requires hardware_verified true, enforced by validate_semantic_v22.py."
+    },
+    "quality_state": {
+      "type": "string",
+      "enum": [
+        "RAW",
+        "CAPTURED",
+        "VALIDATED",
+        "REJECTED",
+        "UNCERTAIN",
+        "INGESTED"
+      ],
+      "description": "RULED by Arya Barge (contract owner), 2026-08-20. The QA/quality verdict - a distinct REQUIRED axis from data_state, which carries the lifecycle state. The two must not be merged or treated as aliases. REQUIRED. Observation quality state — the field QA verdict. Maps to Group 1 v0.4's observation.quality_status, confirmed by Kavy via Raj on 2026-08-19. STATE OWNERSHIP (Manya Shukla, 2026-08-17): RAW set by the field/device capture layer at creation; CAPTURED set by the field acquisition process once observation and capture metadata are recorded; VALIDATED set by the validation/QA layer after all mandatory checks pass; REJECTED set when a mandatory rule fails; UNCERTAIN set when the observation is structurally usable but its quality is unresolved; INGESTED set by the downstream canonicalization layer. This is a QA verdict, NOT a pipeline position — never write PACKAGED, TRANSMITTED or CANONICAL here. ⚠ See data_state for the open overlap question."
+    },
+    "location": {
+      "type": "object",
+      "description": "RULED by Arya Barge (contract owner), 2026-08-20. NESTED IS RULED: use the nested location structure (location.latitude, location.longitude, location.altitude_m, etc.), because it preserves the GNSS and position-accuracy fields already represented and persisted in the Group 1 evidence. This closes the flat-vs-nested conflict between the Closure Plan and the JSON specification. Coordinates are WGS84/EPSG:4326; a coordinate is never invented - no fix means latitude and longitude null with quality_state UNCERTAIN.",
+      "required": [
+        "latitude",
+        "longitude"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "latitude": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": -90,
+          "maximum": 90,
+          "description": "Decimal degrees, WGS84 / EPSG:4326. Null ONLY when no GNSS fix was obtained, and then quality_state MUST be UNCERTAIN. A coordinate is never invented or defaulted."
+        },
+        "longitude": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": -180,
+          "maximum": 180,
+          "description": "Decimal degrees, WGS84 / EPSG:4326. Same rule as latitude."
+        },
+        "altitude_m": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "description": "Altitude above ground level in METRES. VERIFIED PERSISTED by Group 1 — live GET 2026-08-19 returned this field populated in geo_location. Without altitude a nadir RGB frame has no ground sample distance, so any extent derived from it is unscaled. Null only where the platform reports none; never estimated.",
+          "examples": [
+            120,
+            null
+          ]
+        },
+        "gnss_status": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "enum": [
+            "FIX",
+            "NO_FIX",
+            "DEGRADED",
+            "NOT_VERIFIED",
+            null
+          ],
+          "description": "GNSS state at capture. VERIFIED PERSISTED by Group 1 in field_observation_meta — live GET 2026-08-19. Exists only in the nested specification. NOT_VERIFIED where the platform does not report it."
+        },
+        "position_accuracy_m": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "description": "Position accuracy in metres, ONLY if the platform actually reports it. VERIFIED PERSISTED by Group 1 in field_observation_meta — live GET 2026-08-19. Exists only in the nested specification. The Closure Plan is explicit: 'If accuracy is unavailable, GPS accuracy = NOT VERIFIED. Do not invent an accuracy value.' Null is that state here."
+        }
+      }
+    },
+    "waypoint_id": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "OPTIONAL. Flight waypoint at which the observation was captured. Required in practice for the quarterly repeat-flight method — without it, two surveys of the same zone cannot be compared point-for-point. Null where the platform does not report waypoints.",
+      "examples": [
+        "WP-001",
+        null
+      ]
+    },
+    "device_id": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^\\S(.*\\S)?$",
+      "description": "AMENDED 2026-08-22 (V2.2 additive external-source amendment). For an external provider use G3-EXT-<PROVIDER>-<NN>, e.g. G3-EXT-OPENMETEO-01. This is a Group 3 external-provider identifier, NOT a physical device identifier, and it must not imply hardware. A G3-EXT- prefix REQUIRES capture_method external_api - enforced below. REQUIRED. The producing physical device. Distinct from source_identity, which identifies the software producer. Group 4's file-based capability registry holds a placeholder entry for Group 3 at maturity V1, status DOCUMENTED — confirmed by Shivam 2026-08-20. Registration records that a capability is declared; it does not make a device tested or verified.",
+      "examples": [
+        "G3-LIDAR-001",
+        "DRONE-RGB-001"
+      ]
+    },
+    "observation_type": {
+      "type": "string",
+      "minLength": 1,
+      "description": "REQUIRED. What was observed. Group 1 v0.4 uses this column for WHAT was measured (e.g. CARBON_STOCK, BIOMASS); capture_method carries HOW it was captured. Group 1's live ingestion confirmed this split on 2026-08-19 — Group 3's 'aerial' landed in capture_method and the parameter became observation_type.",
+      "examples": [
+        "canopy_height",
+        "MANGROVE_RGB_IMAGE",
+        "MANGROVE_EXTENT"
+      ]
+    },
+    "capture_method": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "enum": [
+        "aerial",
+        "ground",
+        "sensor",
+        "site_evidence",
+        "external_api",
+        null
+      ],
+      "description": "AMENDED 2026-08-22 (V2.2 additive external-source amendment): external_api added for a real third-party live API or dataset feed. It is NOT a Group 3 sensor and must never be recorded as one. OPTIONAL. HOW the observation was captured. Maps to Group 1 v0.4's observation.capture_method, which Kavy added specifically to resolve the observation_type naming collision. Confirmed mapped by Group 1, 2026-08-19."
+    },
+    "measurement": {
+      "type": [
+        "object",
+        "number",
+        "string"
+      ],
+      "description": "REQUIRED. The observation payload. Accepts three forms so that both the V1.2 wire shape Group 1 currently validates and the V2.1/V2.2 object form remain expressible during validator alignment: a number for a numeric measurement, a string for a descriptive one, or an object carrying artifact/value/parameter. ⚠ The single canonical form must be settled at Group 1 validator alignment. That is now a GROUP 1 item owned by Raj, not a contract-owner question - Arya ruled the contract on 2026-08-20. STRUCTURE RESTORED 2026-08-20: the V2.2 rewrite declared this as a bare union type and lost the object's inner properties, which V2.1 had. An object measurement could carry any keys, and a numeric value inside the object bypassed the unit rule entirely."
+    },
+    "unit": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "OPTIONAL. Unit for a numeric measurement. Null for image or descriptive observations. 'IMAGE' is permitted where the Closure Plan vocabulary is used, though it denotes an artifact kind rather than a unit of measure.",
+      "examples": [
+        "m",
+        "m2",
+        "IMAGE",
+        null
+      ]
+    },
+    "raw_artifact": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^\\S(.*\\S)?$",
+      "description": "REQUIRED. Reference to the preserved original evidence. The raw file itself is NOT transmitted to the canonical store — the record holds the reference. Raw data survives; derived values travel alongside originals, never replacing them.",
+      "examples": [
+        "TC-Z03-F02/drone/pointcloud_F02_001.las"
+      ]
+    },
+    "raw_artifact_integrity": {
+      "type": "object",
+      "description": "REQUIRED. Arya's metadata contract section 11 states the raw artifact carries REQUIRED fields 'path' and 'artifact_type'. The path is the top-level raw_artifact; artifact_type lives here, so this object and its artifact_type are mandatory. TIGHTENED 2026-08-20: previously optional and nullable, so an observation could reference an artifact of wholly unknown kind. checksum_sha256 and hash_algorithm remain nullable - a device that cannot hash must say so rather than carry a placeholder.",
+      "additionalProperties": false,
+      "properties": {
+        "checksum_sha256": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "pattern": "^[a-f0-9]{64}$",
+          "description": "Computed at capture where the edge device supports it. Null where it does not — NEVER a placeholder value."
+        },
+        "hash_algorithm": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "examples": [
+            "sha256",
+            null
+          ]
+        },
+        "artifact_type": {
+          "type": "string",
+          "enum": [
+            "image",
+            "video",
+            "point_cloud",
+            "sensor_reading",
+            "flight_log",
+            "document",
+            "other"
+          ]
+        }
+      },
+      "required": [
+        "artifact_type"
+      ]
+    },
+    "integrity_reference": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "OPTIONAL. Links the observation to its integrity/hash evidence, where that evidence lives outside raw_artifact_integrity. Null where the inline integrity block is sufficient.",
+      "examples": [
+        null
+      ]
+    },
+    "provenance_reference": {
+      "type": "string",
+      "minLength": 1,
+      "description": "RULED by Arya Barge (contract owner), 2026-08-20. REQUIRED and non-empty. The reviewer-facing pointer to provenance evidence, distinct from the inline provenance object.",
+      "examples": [
+        "TC-Z03-F02/qa/qa_F02.json",
+        "PROV-5fc011feefc21de643dda02ccbd1f68f"
+      ]
+    },
+    "provenance": {
+      "type": "object",
+      "description": "REQUIRED. Device / mission / capture provenance. Answers the Day-1 acceptance question: which device produced this, when, where, and which original evidence supports it. REQUIRED SET WIDENED 2026-08-20: Arya's metadata contract section 13 specifies required provenance as device_id, mission_id, captured_at AND raw_artifact (operator and qa_record optional). The V2.2 rewrite required only the first two, so provenance could omit both the capture time and the link to the original evidence - which is most of what provenance is for.",
+      "required": [
+        "device_id",
+        "mission_id",
+        "captured_at",
+        "raw_artifact"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "device_id": {
+          "type": "string",
+          "minLength": 1,
+          "description": "MUST equal the top-level device_id. Cross-field agreement is NOT expressible in JSON Schema and is enforced by contract/validate_semantic_v22.py, which exists and runs. An earlier draft cited that validator before it was written; that claim was false and is corrected."
+        },
+        "mission_id": {
+          "type": "string",
+          "minLength": 1,
+          "description": "MUST equal the top-level mission_id."
+        },
+        "captured_at": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "date-time",
+          "description": "REQUIRED, and MUST equal observation_timestamp. May be null ONLY where the clock could not be trusted (metadata contract section 6: 'the system shall not invent a timestamp'); in that case data_state MUST be UNCERTAIN - enforced by validate_semantic_v22.py. ISO-8601 UTC with an explicit UTC designator. Arya's Observation Metadata Contract section 6 (FROZEN): 'All capture timestamps shall use ISO-8601 UTC. Fractional seconds are permitted.' Both 'Z' and '+00:00' are accepted; a non-zero offset such as '+05:30' is NOT UTC and is rejected. Verified 2026-08-20: no non-zero offset appears anywhere in Group 3 or Group 1 evidence.",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d+)?(Z|[+-]00:00)$"
+        },
+        "raw_artifact": {
+          "type": "string",
+          "minLength": 1,
+          "description": "REQUIRED. MUST equal the top-level raw_artifact. Provenance links Device -> Operator -> Mission -> Raw Artifact; a null here breaks the last link."
+        },
+        "operator": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Named field operator."
+        },
+        "qa_record": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    },
+    "tidal_state": {
+      "type": [
+        "object",
+        "string",
+        "null"
+      ],
+      "description": "OPTIONAL — environmental context. Recorded SEPARATELY from the measurement and never inferred from an image. CANONICAL STATUS: DEFERRED TO GROUP 1 v0.5 — Kavy placed it on the v0.5 list 2026-08-17 and Raj reconfirmed the deferral 2026-08-19. Group 3 may emit it; Group 1 will NOT persist it. Object and string forms are both accepted during validator alignment because Group 1's live V1.2 validator types this as string|null. STRUCTURE RESTORED 2026-08-20: the V2.2 rewrite lost the object's inner definition. An object with no 'state' key validated cleanly, which defeats the purpose of recording tidal state at all."
+    },
+    "trace_id": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "pattern": "^VANA-[0-9a-f]{12}$",
+      "description": "OPTIONAL, RUNTIME-INJECTED. Group 3 emits null and MUST NOT invent a value. Format 'VANA-<12 lowercase hex>' per Group 1's live API, which returns a trace on every response. Karan Barda ruled 2026-08-14 that execution_id, trace_id, tenant_id and lineage_hash are runtime-owned. KNOWN ISSUE: Group 1's trace is per-REQUEST, not per-observation — four calls on one observation returned four different traces on 2026-08-19 — so it cannot correlate an observation over time. Group 4's runtime separately uses a 16-hex 'trace-vana-' form; the two schemes are unreconciled.",
+      "examples": [
+        "VANA-3a9fd87b337d",
+        null
+      ]
+    },
+    "idempotency_key": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "OPTIONAL. CONVENTION CONFIRMED by Raj (Group 1) on 2026-08-24 at commit 1140f589884501235122709230536c28fcd9ed68: the documented V2.2 convention is IK-<observation_id>, e.g. IK-TC-Z03-F02-LIDAR-OBS001. IMPORTANT - the Group 1 backend is FORMAT-AGNOSTIC: it enforces no prefix or pattern and accepts any non-empty key as the lookup key. IK- is therefore an agreed convention Group 3 must honour, NOT a backend constraint. No pattern is enforced in this schema for the same reason - enforcing one here would assert a constraint Group 1 does not have. Sent as the Idempotency-Key header on POST /observations. Expected sequence with the SAME key: 201 ACCEPTED -> 200 IDEMPOTENT_REPLAY -> 409 IDEMPOTENCY_CONFLICT. canonical_record_id must NEVER be supplied in the POST; it is resolved from Group 1's authoritative persistence/retrieval path."
+    },
+    "hardware_verified": {
+      "type": [
+        "boolean",
+        "null"
+      ],
+      "description": "OPTIONAL. Whether the producing device has completed PRESENT → TESTED → CALIBRATED → VERIFIED. FALSE for every Group 3 device as of 2026-08-20. Suraj ruled that day: 'The available Oak-D Pro and T-Motor 4-in-1 are only classified as PRESENT, not VERIFIED.'"
+    },
+    "accuracy": {
+      "oneOf": [
+        {
+          "type": "number",
+          "minimum": 0
+        },
+        {
+          "type": "string",
+          "const": "NOT_VERIFIED"
+        }
+      ],
+      "description": "RULED by Arya Barge (contract owner), 2026-08-20. Metadata Contract section 18 confirmed: accuracy remains MANDATORY. It must be either a verified numeric value or the literal NOT_VERIFIED; no estimated value may be invented. Null is not permitted - an absent value does not record THAT the check was made. A numeric value additionally requires hardware_verified true. GROUP 1 MAPPING: v0.4 stores the pair accuracy NUMERIC + accuracy_status TEXT. NOT_VERIFIED maps to accuracy null + accuracy_status NOT_VERIFIED; a number maps to accuracy <n> + accuracy_status SPECIFIED. Both confirmed on live records - no distinction is lost.",
+      "examples": [
+        "NOT_VERIFIED",
+        0.85
+      ]
+    },
+    "processing_status": {
+      "type": "string",
+      "minLength": 1,
+      "description": "RULED by Arya Barge (contract owner), 2026-08-20. Metadata Contract section 18 confirmed: processing_status remains MANDATORY. Stage in the processing chain - raw and derived must stay distinguishable once derived values travel alongside originals. Maps to Group 1 v0.4 field_observation_meta.processing_status. No controlled vocabulary is specified in the contract; a non-empty string is enforced.",
+      "examples": [
+        "raw",
+        "orthomosaic",
+        "chm_derived",
+        "qa_passed"
+      ]
+    }
+  },
+  "allOf": [
+    {
+      "$comment": "Location rule: a missing coordinate cannot claim VALIDATED.",
+      "if": {
+        "properties": {
+          "location": {
+            "anyOf": [
+              {
+                "properties": {
+                  "latitude": {
+                    "type": "null"
+                  }
+                },
+                "required": [
+                  "latitude"
+                ]
+              },
+              {
+                "properties": {
+                  "longitude": {
+                    "type": "null"
+                  }
+                },
+                "required": [
+                  "longitude"
+                ]
+              }
+            ]
+          }
+        },
+        "required": [
+          "location"
+        ]
+      },
+      "then": {
+        "properties": {
+          "quality_state": {
+            "const": "UNCERTAIN"
+          }
+        }
+      }
+    },
+    {
+      "$comment": "Arya's compatibility mapping: synthetic_state PHYSICAL is the ONLY state permitting is_synthetic false.",
+      "if": {
+        "properties": {
+          "is_synthetic": {
+            "const": false
+          }
+        },
+        "required": [
+          "is_synthetic"
+        ]
+      },
+      "then": {
+        "properties": {
+          "synthetic_state": {
+            "const": "PHYSICAL"
+          }
+        }
+      }
+    },
+    {
+      "$comment": "A PHYSICAL observation requires hardware evidence. As of 2026-08-20 no Group 3 device qualifies.",
+      "if": {
+        "properties": {
+          "synthetic_state": {
+            "const": "PHYSICAL"
+          }
+        },
+        "required": [
+          "synthetic_state"
+        ]
+      },
+      "then": {
+        "required": [
+          "hardware_verified"
+        ],
+        "properties": {
+          "hardware_verified": {
+            "const": true
+          }
+        }
+      }
+    },
+    {
+      "$comment": "REGRESSION FIX 2026-08-20: V1.2 enforced 'a numeric measurement requires a unit' and V2.2 lost it when unit became OPTIONAL per Arya's field register. OPTIONAL is right for image and descriptive observations; it is wrong for numeric ones - a canopy height of 4.7 with no unit is meaningless. The rule is conditional on measurement being a number, which preserves both.",
+      "if": {
+        "properties": {
+          "measurement": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "measurement"
+        ]
+      },
+      "then": {
+        "required": [
+          "unit"
+        ],
+        "properties": {
+          "unit": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^\\S(.*\\S)?$",
+            "description": "A unit must carry an actual symbol. minLength alone let a whitespace-only string such as '   ' through - found by the 2026-08-21 mandatory-test audit ('invalid unit rejected'), which no prior suite covered."
+          }
+        }
+      }
+    },
+    {
+      "$comment": "MAPPING FIX 2026-08-20: Arya's table maps PHYSICAL->false. Only the is_synthetic=false direction was enforced. This closes the reverse: PHYSICAL must not carry is_synthetic true.",
+      "if": {
+        "properties": {
+          "synthetic_state": {
+            "const": "PHYSICAL"
+          }
+        },
+        "required": [
+          "synthetic_state"
+        ]
+      },
+      "then": {
+        "properties": {
+          "is_synthetic": {
+            "enum": [
+              false,
+              null
+            ]
+          }
+        }
+      }
+    },
+    {
+      "$comment": "MAPPING FIX 2026-08-20: the non-physical half of Arya's table. CONTROLLED, SYNTHETIC and SIMULATED all map to is_synthetic true, so none may carry false.",
+      "if": {
+        "properties": {
+          "synthetic_state": {
+            "enum": [
+              "CONTROLLED",
+              "SYNTHETIC",
+              "SIMULATED"
+            ]
+          }
+        },
+        "required": [
+          "synthetic_state"
+        ]
+      },
+      "then": {
+        "properties": {
+          "is_synthetic": {
+            "enum": [
+              true,
+              null
+            ]
+          }
+        }
+      }
+    },
+    {
+      "$comment": "STRUCTURE FIX: object-form measurement must carry artifact or value, and nothing else.",
+      "if": {
+        "properties": {
+          "measurement": {
+            "type": "object"
+          }
+        },
+        "required": [
+          "measurement"
+        ]
+      },
+      "then": {
+        "properties": {
+          "measurement": {
+            "additionalProperties": false,
+            "properties": {
+              "artifact": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "minLength": 1
+              },
+              "value": {
+                "type": [
+                  "number",
+                  "null"
+                ]
+              },
+              "parameter": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "minLength": 1
+              }
+            },
+            "anyOf": [
+              {
+                "required": [
+                  "artifact"
+                ]
+              },
+              {
+                "required": [
+                  "value"
+                ]
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "$comment": "UNIT FIX: the numeric-requires-unit rule must apply to the OBJECT form too. A value of 4.7 inside measurement.value is exactly as meaningless without a unit as a bare 4.7.",
+      "if": {
+        "properties": {
+          "measurement": {
+            "type": "object",
+            "properties": {
+              "value": {
+                "type": "number"
+              }
+            },
+            "required": [
+              "value"
+            ]
+          }
+        },
+        "required": [
+          "measurement"
+        ]
+      },
+      "then": {
+        "required": [
+          "unit"
+        ],
+        "properties": {
+          "unit": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^\\S(.*\\S)?$",
+            "description": "A unit must carry an actual symbol. minLength alone let a whitespace-only string such as '   ' through - found by the 2026-08-21 mandatory-test audit ('invalid unit rejected'), which no prior suite covered."
+          }
+        }
+      }
+    },
+    {
+      "$comment": "A descriptive measurement must actually describe something - empty string rejected.",
+      "if": {
+        "properties": {
+          "measurement": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "measurement"
+        ]
+      },
+      "then": {
+        "properties": {
+          "measurement": {
+            "minLength": 1,
+            "pattern": "^\\S(.*\\S)?$"
+          }
+        }
+      }
+    },
+    {
+      "$comment": "STRUCTURE FIX: object-form tidal_state must carry a state from the Closure Plan vocabulary.",
+      "if": {
+        "properties": {
+          "tidal_state": {
+            "type": "object"
+          }
+        },
+        "required": [
+          "tidal_state"
+        ]
+      },
+      "then": {
+        "properties": {
+          "tidal_state": {
+            "required": [
+              "state"
+            ],
+            "additionalProperties": false,
+            "properties": {
+              "state": {
+                "type": "string",
+                "enum": [
+                  "HIGH",
+                  "MID",
+                  "LOW",
+                  "UNKNOWN"
+                ]
+              },
+              "source": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "timestamp": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "format": "date-time"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "$comment": "String-form tidal_state must still use the agreed vocabulary.",
+      "if": {
+        "properties": {
+          "tidal_state": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "tidal_state"
+        ]
+      },
+      "then": {
+        "properties": {
+          "tidal_state": {
+            "enum": [
+              "HIGH",
+              "MID",
+              "LOW",
+              "UNKNOWN"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "$comment": "V2.2 additive external-source amendment (2026-08-22): capture_method external_api requires flight_id EXT.",
+      "if": {
+        "properties": {
+          "capture_method": {
+            "const": "external_api"
+          }
+        },
+        "required": [
+          "capture_method"
+        ]
+      },
+      "then": {
+        "properties": {
+          "flight_id": {
+            "const": "EXT"
+          }
+        }
+      }
+    },
+    {
+      "$comment": "V2.2 additive external-source amendment (2026-08-22): flight_id EXT requires capture_method external_api.",
+      "if": {
+        "properties": {
+          "flight_id": {
+            "const": "EXT"
+          }
+        },
+        "required": [
+          "flight_id"
+        ]
+      },
+      "then": {
+        "properties": {
+          "capture_method": {
+            "const": "external_api"
+          }
+        },
+        "required": [
+          "capture_method"
+        ]
+      }
+    },
+    {
+      "$comment": "V2.2 additive external-source amendment (2026-08-22): a G3-EXT- device is an external provider and requires external_api. This is what makes the F001 + sensor representation of an external provider REJECTED.",
+      "if": {
+        "properties": {
+          "device_id": {
+            "pattern": "^G3-EXT-"
+          }
+        },
+        "required": [
+          "device_id"
+        ]
+      },
+      "then": {
+        "properties": {
+          "capture_method": {
+            "const": "external_api"
+          }
+        },
+        "required": [
+          "capture_method"
+        ]
+      }
+    },
+    {
+      "$comment": "V2.2 additive external-source amendment (2026-08-22): external third-party data is never Group 3 physical hardware evidence.",
+      "if": {
+        "properties": {
+          "capture_method": {
+            "const": "external_api"
+          }
+        },
+        "required": [
+          "capture_method"
+        ]
+      },
+      "then": {
+        "properties": {
+          "synthetic_state": {
+            "not": {
+              "const": "PHYSICAL"
+            }
+          }
+        }
+      }
+    }
+  ],
+  "_authorship": {
+    "contract_owner": "Arya Barge — Canonical Observation Contract & Provenance Owner",
+    "specification": "GROUP 3 - CANONICAL OBSERVATION CONTRACT V2.2, 2026-08-20, plus the contract owner's rulings of 2026-08-20 which closed all four open questions and the coordinate shape.",
+    "implemented_by": "Hemanth Reddy, from that specification",
+    "note": "Group 3's earlier V2.0/V2.1 were built and versioned by Hemanth without the contract owner ruling on them. That is corrected here: V2.2 is Arya's specification, implemented rather than authored by the integration role."
+  },
+  "_physical_boundary": "No Group 3 observation may carry synthetic_state PHYSICAL as of 2026-08-20. No Group 3 sensor has produced a recorded reading; 0 of 8 quadruped actuators are mounted; available hardware is PRESENT only, per Suraj's ruling. The schema enforces this structurally: PHYSICAL requires hardware_verified true, and is_synthetic false requires synthetic_state PHYSICAL.",
+  "version": "2.2",
+  "_contract_owner_rulings": {
+    "ruled_by": "Arya Barge - Canonical Observation Contract & Provenance Owner",
+    "date": "2026-08-20",
+    "rulings": [
+      {
+        "topic": "calibration vocabulary",
+        "ruling": "V2.2 canonical vocabulary is CALIBRATED, UNCALIBRATED, NOT_VERIFIED. UNCALIBRATED is used because it matches the live Group 1 v0.4 constraint. NOT_CALIBRATED is not used in V2.2. Current Group 3 observations remain NOT_VERIFIED.",
+        "supersedes": "Observation Metadata Contract section 10, which specified NOT_CALIBRATED and a space-separated NOT VERIFIED.",
+        "implemented": true
+      },
+      {
+        "topic": "data_state vs quality_state",
+        "ruling": "Two distinct REQUIRED axes. data_state represents lifecycle/data state; quality_state represents the QA/quality verdict. Both retained. Outright contradictions rejected. They must not be merged or treated as aliases.",
+        "note": "The owner retained the identical vocabulary for both axes. That is her ruling and is implemented as given; the enums are NOT differentiated.",
+        "implemented": true
+      },
+      {
+        "topic": "provenance_reference",
+        "ruling": "Required and non-empty. It is the reviewer-facing pointer to provenance evidence and is distinct from the inline provenance object.",
+        "implemented": true
+      },
+      {
+        "topic": "metadata contract section 18",
+        "ruling": "Confirmed. accuracy and processing_status remain mandatory. Accuracy must be either a verified numeric value or NOT_VERIFIED; no estimated value may be invented.",
+        "implemented": true
+      },
+      {
+        "topic": "coordinate shape",
+        "ruling": "Use the nested location structure (location.latitude, location.longitude, location.altitude_m, etc.). This preserves the GNSS and position-accuracy fields already represented/persisted in the Group 1 evidence.",
+        "note": "Closes the flat-vs-nested conflict between the Closure Plan and the JSON specification. Suraj had delegated this to Dhruv; the contract owner has now ruled.",
+        "implemented": true
+      }
+    ]
+  },
+  "_freeze_status": {
+    "status": "FREEZE-READY - NOT YET FROZEN",
+    "contract_owner_position": "The schema can now proceed to final freeze, subject to the final live Group 1 acceptance/regression evidence. - Arya Barge, 2026-08-20",
+    "remaining_condition": "Live Group 1 acceptance and regression evidence against this V2.2 shape.",
+    "closed_by_the_rulings": [
+      "Coordinate shape - RULED nested.",
+      "Calibration vocabulary - RULED UNCALIBRATED/NOT_VERIFIED, which also closes Group 3 mismatch M-1 against Group 1 v0.4's live CHECK constraint.",
+      "data_state vs quality_state - RULED two axes.",
+      "provenance_reference - RULED required and non-empty.",
+      "accuracy and processing_status mandatory - RULED confirmed."
+    ],
+    "still_owned_by_group_1": [
+      "Validator alignment to the V2.2 shape: wire field name timestamp vs observation_timestamp, and a single canonical measurement form. Raj is holding this change.",
+      "Repair of live record TC-Z03-F02-LIDAR-OBS001, stored is_synthetic false for a synthetic observation, and removal of the diagnostic control TC-Z03-F02-LIDAR-OBS009.",
+      "TC-Z03-F02-ACCEPTANCE-OBS1787138092 carries gnss_status FIX, position_accuracy_m 0.25, accuracy_status SPECIFIED and calibration_status CALIBRATED. Those were probe values written before the no-invention rules were enforced; no Group 3 device holds a GNSS fix, a position accuracy figure or a calibration record. The record is correctly flagged is_synthetic true, but the hardware values in it are not real and Group 3 would not emit them today."
+    ],
+    "accuracy_mapping_to_group_1": "RESOLVED, verified against the live record 2026-08-19. Group 1 v0.4 stores the pair field_observation_meta.accuracy NUMERIC and field_observation_meta.accuracy_status TEXT. Group 3's accuracy maps onto that pair with no loss: the literal NOT_VERIFIED becomes accuracy null plus accuracy_status NOT_VERIFIED, and a verified number becomes accuracy <n> plus accuracy_status SPECIFIED. Both spellings are confirmed present on live records - NOT_VERIFIED on TC-Z03-F02-LIDAR-OBS001 and SPECIFIED on TC-Z03-F02-ACCEPTANCE-OBS1787138092. Group 1 implemented Group 3's proposed accuracy_status column, so mismatch M-2 is CLOSED. An earlier note in this file called M-2 a blocking obstacle; that was wrong and is corrected here.",
+    "group_1_column_alignment_verified": {
+      "calibration_status": "CLOSED - v0.4 CHECK is CALIBRATED/UNCALIBRATED/NOT_VERIFIED; the contract owner's ruling adopts exactly this. NOT_VERIFIED confirmed persisted live. Mismatch M-1 closed.",
+      "accuracy": "CLOSED - see accuracy_mapping_to_group_1.",
+      "processing_status": "CLOSED - field_observation_meta.processing_status confirmed persisted live (values chm_derived and raw observed).",
+      "artifact_type": "CLOSED IN PRACTICE - Group 3's lowercase point_cloud was stored verbatim on the live record. There is no CHECK constraint on the column, so the vocabularies should still be agreed in writing to prevent divergence. Mismatch M-3 downgraded from open to advisory.",
+      "altitude_m / gnss_status / position_accuracy_m": "CLOSED - all three confirmed persisted with real values on TC-Z03-F02-ACCEPTANCE-OBS1787138092 (45.2, FIX, 0.25). This is the evidence behind the contract owner's nested-location ruling."
+    },
+    "amendments_after_owner_ruling": [
+      "2026-08-21: unit tightened from minLength 1 to a non-whitespace pattern. A whitespace-only unit was accepted for a numeric measurement. Defect found by the Group 3 task's mandatory test 'invalid unit rejected'. This is a DEFECT FIX, not a semantic change - no value that was previously valid becomes invalid, and no value that was invalid becomes valid.",
+      "2026-08-21: synthetic_state in the canonical fixture moved SYNTHETIC -> CONTROLLED per the Group 3 task mandate. Schema unchanged - CONTROLLED was already in the ruled five-state vocabulary.",
+      "2026-08-22 APPROVED AND APPLIED: data_state narrowed from six values to RAW / CAPTURED / INGESTED. Approved by Arya Barge as a frozen V2.2 ruling, superseding her 2026-08-20 ruling which kept identical six-value vocabularies on both axes. NOT backward compatible: two fixture observations were corrected (OBS001 VALIDATED -> CAPTURED, OBS003 UNCERTAIN -> CAPTURED, quality_state unchanged in both) and three semantic rules moved from data_state to quality_state. contract_version remains const 2.2 - no wire change.",
+      "2026-08-24 CONVENTION CONFIRMED, not a contract semantic change: the Idempotency-Key header convention is IK-<observation_id>, confirmed by Raj at Group 1 commit 1140f589884501235122709230536c28fcd9ed68. The backend is format-agnostic and enforces no prefix. This satisfies the precondition in Arya's contract section 41, which withheld the amendment because the format 'has not been independently confirmed by Group 3'. Fixture idempotency_key values and the Group 1 client updated to the convention. NO schema pattern added - Group 1 enforces none, and asserting one here would overstate their contract.",
+      "2026-08-24 APPLIED UNDER MANAGER RULING: the external-source amendment - flight_id and the observation_id third segment accept the literal EXT; capture_method gains external_api; device_id documents the G3-EXT-<PROVIDER>-<NN> convention; four cross-field rules bind them so an external provider cannot be recorded as a flight or a Group 3 sensor. AUTHORITY: manager ruling of 2026-08-24, 'no key needed today', lifting the MDU/schema-authority gate for today, with Nupur to review tomorrow. STILL OUTSTANDING: Arya's explicit written approval - the amendment is applied so the pipeline can be exercised, but NO live emission is performed against it until she signs off. ADDITIVE: no payload valid before this change becomes invalid. contract_version remains 2.2."
+    ]
+  },
+  "_external_amendment_authority": {
+    "applied": "2026-08-24",
+    "authority": "Manager ruling: 'Let's go with no key needed today. Nupur will be present tomorrow we will take a look at it again tomorrow.'",
+    "mdu_gate": "LIFTED FOR TODAY by the manager. MDU is the BHIV Intelligence Data Universe Registry, operator Nupur. Reviewed tomorrow.",
+    "arya_signoff": "NOT YET GIVEN IN WRITING. Emission to Group 1 is gated on it.",
+    "reversible": "Yes. Removing the four external_api/EXT rules and restoring the four property definitions returns the contract to its 2026-08-22 state."
+  }
+}

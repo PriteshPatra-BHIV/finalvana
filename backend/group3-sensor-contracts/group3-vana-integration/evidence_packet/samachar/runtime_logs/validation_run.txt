@@ -1,0 +1,18 @@
+SAMACHAR V2.2 VALIDATION - run 2026-08-31T12:04:46.669042+00:00
+========================================================================
+
+observation_id   : SMR-Z01-EXT-SAMACHAR-OBS001
+observation_type : news_report
+measurement      : 0.8999999999999999 score
+observation_time : 2026-06-04T12:24:00Z
+device / sensor  : G3-EXT-SAMACHAR-01 / SAMACHAR
+provenance_ref   : samachar:ec58172b0f1e2ef8
+
+STRUCTURAL (jsonschema Draft202012) : PASS - 0 errors
+SEMANTIC   (validate_semantic_v22)  : PASS - 0 errors
+
+raw source artifact : raw_artifact_samachar_ec58172b0f1e2ef8.json
+  bytes             : 34124
+  sha256 recorded   : ec58172b0f1e2ef8232d546aeff7a61ccdc89f378f448dc4a2d633d5a332a934
+  sha256 re-read    : ec58172b0f1e2ef8232d546aeff7a61ccdc89f378f448dc4a2d633d5a332a934
+  match             : YES

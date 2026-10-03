@@ -1,0 +1,83 @@
+VANA Group 3 -> Group 1 round-trip test
+schema  : VANA-schema-v0.1.sql
+fixture : sample_mission_package.json
+target  : localhost:5433/vana
+run at  : 2026-08-17T14:09:19.935123+00:00
+
+fixture carries 3 observations from mission TC-Z03-F02
+
+==============================================================================
+PRE-FLIGHT - does the schema apply as written?
+==============================================================================
+  Group 1 schema applies verbatim into public: FAIL
+    type "geography" already exists
+
+  DEFECT CONFIRMED. `CREATE TABLE geography` collides with the PostGIS
+  `geography` TYPE, which the schema's own `CREATE EXTENSION postgis` installs
+  into public. The schema header states "Requires PostGIS extension", so this
+  will reproduce on any PostGIS database.
+
+  Why it was not caught earlier: Group 1's proof ran against a local SQLite
+  stand-in, which has no PostGIS and therefore no colliding type.
+
+  Fix used below, which changes no line of Group 1's DDL: install the VANA
+  tables into their own `vana` schema, so vana.geography (table) and
+  public.geography (PostGIS type) coexist.
+
+==============================================================================
+PASS A - schema exactly as Group 1 wrote it
+==============================================================================
+
+  [1] INGEST        3 observations -> {'source': 1, 'dataset': 1, 'geography': 1, 'observation': 3, 'measurement': 1, 'provenance': 1}
+  [2] RETRIEVE      TC-Z03-F02-LIDAR-OBS001 -> FOUND
+        dataset=TC-Z03-F02  place=Thane Creek Kanjurmarg  synthetic=True  date=2026-08-13
+  [3] RE-SUBMIT     same package again -> {'source': 1, 'dataset': 1, 'geography': 1, 'observation': 3, 'measurement': 1, 'provenance': 1}
+  [4] DUPLICATE?    NO DUPLICATE - counts identical
+
+  RESULT: ingest=PASS retrieve=PASS idempotent=PASS
+
+==============================================================================
+WHAT PASS A COULD NOT STORE
+==============================================================================
+  DROPPED  device_id                  no column anywhere in the schema
+  DROPPED  timestamp (time-of-day)    observation_date is DATE - only the date survives
+  DROPPED  latitude / longitude       no per-observation coordinate; geography is per named place
+  DROPPED  accuracy                   no column
+  DROPPED  calibration_status         no column
+  DROPPED  raw_artifact_reference     no column
+  DROPPED  quality_status             no column at observation level
+  DROPPED  trace_id                   no column
+  DROPPED  tidal_state                no column
+
+  Consequence: the Day-3 acceptance question - "what device produced this,
+  when, where, and which original artifact supports it?" - cannot be answered
+  from a Pass A record. Device, precise time, precise position and artifact
+  reference were all discarded at the boundary.
+
+==============================================================================
+PASS B - schema plus the 8 additive columns
+==============================================================================
+  applied 8 additive columns proposed by Group 3
+
+  [1] INGEST        3 observations -> {'source': 1, 'dataset': 1, 'geography': 1, 'observation': 3, 'measurement': 1, 'provenance': 1}
+  [2] RETRIEVE      TC-Z03-F02-LIDAR-OBS001 -> FOUND
+        dataset=TC-Z03-F02  place=Thane Creek Kanjurmarg  synthetic=True  date=2026-08-13
+        observed_at=2026-08-13 09:14:22+00:00  device=G3-LIDAR-001  lat=19.1288 lon=72.9421  quality=VALIDATED
+  [3] RE-SUBMIT     same package again -> {'source': 1, 'dataset': 1, 'geography': 1, 'observation': 3, 'measurement': 1, 'provenance': 1}
+  [4] DUPLICATE?    NO DUPLICATE - counts identical
+
+  RESULT: ingest=PASS retrieve=PASS idempotent=PASS
+
+==============================================================================
+SUMMARY
+==============================================================================
+  Pass A (schema as-is)      : PASS  - round-trip works, 9 contract fields lost
+  Pass B (with additions)    : PASS  - round-trip works, full provenance retained
+
+  Both passes prove the contract maps, persists, retrieves and is idempotent
+  against Group 1's real schema. The difference between them is exactly the
+  evidence Group 1 needs for the consolidation decision.
+
+  NOT proven here: Group 1's own instance, the SVACS/edge hop, and any
+  hardware. This is a local run against their schema, with a synthetic
+  fixture. Hardware remains Phase 2.

@@ -1,0 +1,32 @@
+{
+  "observation_id": "TC-Z03-F02-LIDAR-OBS001",
+  "canonical_record_id": "CR-8d4af61c-4638-4e78-8931-206e49843615",
+  "context_id": null,
+  "ruling": "ABSTAIN",
+  "action_eligibility": false,
+  "abstention_required": true,
+  "action_request": null,
+  "evidence": {
+    "source": null,
+    "confidence": "NOT VERIFIED",
+    "missing_critical_data": "NONE_BUT_UNVERIFIED",
+    "provenance_reference": null,
+    "artifact_hash": null,
+    "artifact_type": null,
+    "observation_timestamp": "2026-08-13 09:14:22+00:00",
+    "retrieval_timestamp": null,
+    "attribution": null,
+    "canonical_observation_location": {
+      "latitude": 19.1288,
+      "longitude": 72.9421,
+      "altitude_m": null,
+      "gnss_status": null,
+      "position_accuracy_m": null
+    }
+  },
+  "provenance": {
+    "group2_decision_time": "2026-09-01T06:02:33.451Z",
+    "reason": "CONTEXT_NOT_VERIFIED",
+    "message": "Authoritative evidence threshold not met (Context not verified). Failing closed to ABSTAIN."
+  }
+}

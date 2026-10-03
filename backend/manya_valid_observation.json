@@ -1,0 +1,36 @@
+{
+  "observation_id": "TC-Z03-F02-LIDAR-OBS001",
+  "survey_id": "TC",
+  "zone_id": "Z03",
+  "flight_id": "F02",
+  "sensor_id": "LIDAR",
+  "observation_seq": "OBS001",
+  "device_id": "G3-LIDAR-001",
+  "timestamp": "2026-08-13T09:14:22Z",
+  "latitude": 19.1288,
+  "longitude": 72.9421,
+  "observation_type": "aerial",
+  "measurement": 4.7,
+  "parameter": "canopy_height",
+  "unit": "m",
+  "accuracy": "NOT VERIFIED",
+  "calibration_status": "NOT VERIFIED",
+  "raw_artifact_reference": {
+    "path": "TC-Z03-F02/drone/pointcloud_F02_001.las",
+    "checksum_sha256": "f7254999689ae5b530a0006d0fb6765df0317973504e8c5d1b393bfa5826cf9d",
+    "artifact_type": "point_cloud"
+  },
+  "quality_status": "VALIDATED",
+  "processing_status": "chm_derived",
+  "provenance": {
+    "device_id": "G3-LIDAR-001",
+    "operator": "<named field operator>",
+    "mission_id": "TC-Z03-F02",
+    "captured_at": "2026-08-13T09:14:22Z",
+    "raw_artifact": "TC-Z03-F02/drone/pointcloud_F02_001.las",
+    "qa_record": "TC-Z03-F02/qa/qa_F02.json"
+  },
+  "tidal_state": null,
+  "trace_id": null,
+  "idempotency_key": "TC-Z03-F02-LIDAR-OBS001"
+}

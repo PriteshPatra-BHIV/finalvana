@@ -1,0 +1,86 @@
+{
+  "_README": "Group 3 UI field-observation view. Every value is read from the canonical record produced by integration/emit_canonical_observation.py. Nothing here is hand-entered.",
+  "_two_status_axes": {
+    "quality_status": {
+      "value": "VALIDATED",
+      "meaning": "field QA verdict about the observation itself",
+      "vocabulary": [
+        "RAW",
+        "CAPTURED",
+        "VALIDATED",
+        "REJECTED",
+        "UNCERTAIN",
+        "INGESTED"
+      ],
+      "owner": "Group 3 field QA",
+      "frozen_in": "observation contract V1.0"
+    },
+    "pipeline_status": {
+      "value": "CANONICAL",
+      "meaning": "how far the observation has travelled through VANA",
+      "vocabulary": [
+        "CAPTURED",
+        "VALIDATED",
+        "PACKAGED",
+        "TRANSMITTED",
+        "CANONICAL"
+      ],
+      "owner": "the pipeline - DERIVED, never hand-set",
+      "deliberately_not_in_contract": "Adding it would break the V1.0 freeze and would conflate a QA verdict with a transport position. An observation can be UNCERTAIN and CANONICAL at the same time; both are true."
+    }
+  },
+  "_status_derivation": {
+    "reached_group1_schema": true,
+    "reached_group1_instance": false,
+    "crossed_edge_transport": false,
+    "packaged_for_group4": true,
+    "derived_status": "CANONICAL",
+    "honest_caveat": "CANONICAL here means the observation reached a canonical record built from Group 1's SCHEMA on a LOCAL database. It has NOT reached Group 1's instance, and it did NOT cross the edge transport - SVACS is blocked. The UI must not imply otherwise."
+  },
+  "_generated_at": "2026-08-20T18:00:29.459127+00:00",
+  "view": {
+    "mission": "TC-Z03-F02",
+    "observation_id": "TC-Z03-F02-LIDAR-OBS001",
+    "device": {
+      "device_id": "G3-LIDAR-001",
+      "verification_state": "NOT VERIFIED",
+      "deployment_state": "PHASE 2",
+      "note": "Device identifier only. No Group 3 device has produced a recorded reading."
+    },
+    "time": "2026-08-13T09:14:22Z",
+    "location": {
+      "latitude": 19.1288,
+      "longitude": 72.9421,
+      "crs": "EPSG:4326",
+      "place_name": "Thane Creek Kanjurmarg"
+    },
+    "measurement": {
+      "parameter": "canopy_height",
+      "value": 4.7,
+      "unit": "m"
+    },
+    "quality": "VALIDATED",
+    "calibration": "NOT VERIFIED",
+    "accuracy": "NOT VERIFIED",
+    "raw_artifact": {
+      "reference": "TC-Z03-F02/drone/pointcloud_F02_001.las",
+      "sha256": "f7254999689ae5b530a0006d0fb6765df0317973504e8c5d1b393bfa5826cf9d",
+      "note": "Reference only - the raw file is not transmitted to the canonical store."
+    },
+    "provenance": {
+      "provenance_id": "TC-Z03-F02-LIDAR-OBS001-M1-P",
+      "source_id": "SRC-G3-FIELD-TC-Z03-F02",
+      "device_id": "G3-LIDAR-001",
+      "mission_id": "TC-Z03-F02"
+    },
+    "status": "CANONICAL",
+    "origin_banner": {
+      "level": "WARNING",
+      "label": "SYNTHETIC FIXTURE - NOT A HARDWARE OBSERVATION",
+      "is_synthetic": true,
+      "source_type": "SYNTHETIC_TEST",
+      "hardware_verified": false,
+      "display_rule": "MUST be shown prominently and MUST NOT be dismissible while is_synthetic is true. A synthetic observation rendered like a real one is the failure mode this banner exists to prevent."
+    }
+  }
+}

@@ -1,0 +1,60 @@
+IDENTITY SURVIVAL ACROSS FOUR GROUPS
+expected observation_id: TC-Z03-F02-LIDAR-OBS001
+
+[1] observation_id present and unchanged in every artifact
+  [PASS] GROUP 3 fixture              found
+         also present: TC-Z03-F02-IMX500-OBS002, TC-Z03-F02-IMX500-OBS003
+  [PASS] GROUP 1 canonical record     found
+  [PASS] GROUP 2 context record       found
+  [PASS] GROUP 2 semantic input       found
+  [PASS] GROUP 4 TANTRA envelope      found
+  [PASS] UI field-observation view    found
+
+[2] no artifact renames the observation
+  [PASS] Group 3 fixture        TC-Z03-F02-LIDAR-OBS001
+  [PASS] Group 1 canonical      TC-Z03-F02-LIDAR-OBS001
+  [PASS] Group 2 context        TC-Z03-F02-LIDAR-OBS001
+  [PASS] Group 4 envelope       TC-Z03-F02-LIDAR-OBS001
+  [PASS] UI view                TC-Z03-F02-LIDAR-OBS001
+
+[3] the primary measurement is not mutated downstream
+  Group 1 canonical value : 4.7
+  UI view value           : 4.7
+  Group 2 context value   : None  (null is CORRECT - Group 2 declared a GAP)
+  [PASS] Group 3's 4.7 m survives unmodified
+  [PASS] Group 2 did NOT overwrite the primary observation
+
+[4] provenance survives to the canonical record
+  [PASS] provenance_id        TC-Z03-F02-LIDAR-OBS001-M1-P
+  [PASS] device_id            G3-LIDAR-001
+  [PASS] raw artifact ref     TC-Z03-F02/drone/pointcloud_F02_001.las
+  [PASS] raw artifact sha256  f7254999689ae5b530a0006d0fb6765df0317973504e8c5d1b393bfa5826cf9d
+
+[5] synthetic marking survives every hop - the rule most costly to lose
+  [PASS] Group 3 fixture        is_synthetic=True
+  [PASS] Group 1 canonical      is_synthetic=True
+  [PASS] Group 4 envelope       is_synthetic=True
+  [PASS] UI banner              is_synthetic=True
+  [INFO] Group 2 context        Group 2 record carries no is_synthetic flag of its own
+         (their record describes CONTEXT, not the observation - the
+          synthetic marking travels on the observation, which is correct)
+
+[6] trace_id is null everywhere Group 3 touches - never invented
+  [PASS] Group 3 fixture        trace_id=None
+  [PASS] Group 4 envelope       trace_id=None
+
+==========================================================================
+RESULT: 23/23 checks passed
+
+WHAT THIS PROVES: one observation is identifiable, unmutated and
+provenance-linked across the Group 3, Group 1, Group 2 and Group 4
+artifacts, with its synthetic marking intact at every hop.
+
+WHAT IT DOES NOT PROVE:
+  - Group 1's DEPLOYED instance   (API specified, no host issued)
+  - the SVACS / edge transport    (not a transport service - see SVACS_ANALYSIS)
+  - Group 2's LIVE service        (their own sheet says LOCAL / NOT LIVE)
+  - Group 4 governed execution    (awaiting their run)
+  - any hardware                  (no sensor has produced a reading)
+
+This is artifact-level identity survival, not a live end-to-end run.

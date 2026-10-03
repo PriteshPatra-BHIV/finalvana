@@ -1,0 +1,112 @@
+{
+  "_README": "Group 3 live E2E results for Manya's Sheet5 grid. Every value captured from Group 1's deployed API on 2026-08-19, not from a local container. Supplied so the grid is filled with evidence rather than left blank or filled with claims.",
+  "_classification": "LIVE",
+  "_target_observation": "TC-Z03-F02-LIDAR-OBS001",
+  "_caveat": "Run with the V1.2 payload, because Group 1's live validator rejects V2.1/V2.2. The record is also stored is_synthetic=false - a known RED defect only Group 1 can repair.",
+  "results": [
+    {
+      "test_id": "E2E-01",
+      "stage": "Health",
+      "input": "GET /health",
+      "expected": "HTTP 200; status healthy; VANA MasterDB Observation API; v1.0.0",
+      "actual": "HTTP 200; {\"status\":\"healthy\",\"service\":\"VANA MasterDB Observation API\",\"version\":\"1.0.0\"}",
+      "http_status": "200",
+      "trace_id": "-",
+      "observation_id": "-",
+      "evidence_reference": "evidence/live/group1_live_records.json",
+      "status": "PASS",
+      "notes": "LIVE"
+    },
+    {
+      "test_id": "E2E-02",
+      "stage": "Ingestion",
+      "input": "POST /observations + Idempotency-Key",
+      "expected": "HTTP 201; ACCEPTED; observation_id preserved",
+      "actual": "HTTP 201 ACCEPTED - 'Observation persisted through canonical VANA persistence.'",
+      "http_status": "201",
+      "trace_id": "VANA-f1aeff98ee61",
+      "observation_id": "TC-Z03-F02-LIDAR-OBS001",
+      "evidence_reference": "evidence/live/group1_live_records.json",
+      "status": "PASS",
+      "notes": "LIVE - V1.2 payload"
+    },
+    {
+      "test_id": "E2E-03",
+      "stage": "Retrieval",
+      "input": "GET /observations/{id}",
+      "expected": "Canonical record retrievable; same observation_id",
+      "actual": "HTTP 200 RETRIEVED; observation_id identical; provenance + raw artifact + hash all present",
+      "http_status": "200",
+      "trace_id": "VANA-15a5a080413a",
+      "observation_id": "TC-Z03-F02-LIDAR-OBS001",
+      "evidence_reference": "evidence/live/group1_live_records.json",
+      "status": "PASS",
+      "notes": "LIVE"
+    },
+    {
+      "test_id": "E2E-04",
+      "stage": "Replay",
+      "input": "Same payload + same key",
+      "expected": "HTTP 200; IDEMPOTENT_REPLAY; no duplicate",
+      "actual": "HTTP 200 IDEMPOTENT_REPLAY",
+      "http_status": "200",
+      "trace_id": "VANA-b14bf72a2169",
+      "observation_id": "TC-Z03-F02-LIDAR-OBS001",
+      "evidence_reference": "evidence/group1_api_client.txt",
+      "status": "PASS",
+      "notes": "LIVE"
+    },
+    {
+      "test_id": "E2E-05",
+      "stage": "Idempotency Conflict",
+      "input": "Same key + changed payload",
+      "expected": "HTTP 409; IDEMPOTENCY_CONFLICT",
+      "actual": "HTTP 409 IDEMPOTENCY_CONFLICT; canonical record unchanged",
+      "http_status": "409",
+      "trace_id": "VANA-144482f2193d",
+      "observation_id": "TC-Z03-F02-LIDAR-OBS001",
+      "evidence_reference": "evidence/group1_api_client.txt",
+      "status": "PASS",
+      "notes": "LIVE"
+    },
+    {
+      "test_id": "E2E-06",
+      "stage": "Duplicate",
+      "input": "Existing observation_id, NO key",
+      "expected": "HTTP 409; DUPLICATE",
+      "actual": "HTTP 200 IDEMPOTENT_REPLAY (not 409). NOTE: 409 DUPLICATE DOES occur with a DIFFERENT key.",
+      "http_status": "200",
+      "trace_id": "VANA-7d34f4e37737",
+      "observation_id": "TC-Z03-F02-LIDAR-OBS001",
+      "evidence_reference": "evidence/group1_api_client.txt",
+      "status": "DIVERGENCE",
+      "notes": "Group 1 handoff sec 8 documents 409 DUPLICATE for no-key. Live returns 200. Raised with Raj."
+    },
+    {
+      "test_id": "E2E-07",
+      "stage": "Identity Continuity",
+      "input": "Compare G3 id / API response / canonical record",
+      "expected": "observation_id preserved verbatim and IS the canonical record id",
+      "actual": "Identical at all three points; also identical in G2 context record and G4 envelope",
+      "http_status": "-",
+      "trace_id": "-",
+      "observation_id": "TC-Z03-F02-LIDAR-OBS001",
+      "evidence_reference": "evidence/test_identity_survival.txt",
+      "status": "PASS",
+      "notes": "23/23 across four groups"
+    },
+    {
+      "test_id": "E2E-08",
+      "stage": "Provenance Continuity",
+      "input": "Compare provenance before/after ingestion",
+      "expected": "Required provenance remains linked; no loss or reconstruction",
+      "actual": "PROV-5fc011feefc21de643dda02ccbd1f68f; raw artifact + sha256 f7254999...5826cf9d byte-identical",
+      "http_status": "-",
+      "trace_id": "-",
+      "observation_id": "TC-Z03-F02-LIDAR-OBS001",
+      "evidence_reference": "evidence/live/group1_live_records.json",
+      "status": "PASS",
+      "notes": "LIVE"
+    }
+  ]
+}

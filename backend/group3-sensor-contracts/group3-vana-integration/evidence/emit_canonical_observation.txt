@@ -1,0 +1,15 @@
+canonical observation emitted -> canonical_observation.json
+
+  observation_id  : TC-Z03-F02-LIDAR-OBS001
+  observed_at     : 2026-08-13T09:14:22Z
+  location        : 19.1288, 72.9421  (EPSG:4326)
+  measurement     : 4.7 m  (canopy_height)
+  device_id       : G3-LIDAR-001
+  quality_status  : VALIDATED
+  source_type     : SYNTHETIC_TEST   is_synthetic=True
+  raw artifact    : TC-Z03-F02/drone/pointcloud_F02_001.las
+  provenance_id   : TC-Z03-F02-LIDAR-OBS001-M1-P
+
+  re-submitted, re-read: IDENTICAL   observation rows: 3
+
+  NOT PROVEN: Group 1's instance, the SVACS/edge hop, any hardware.

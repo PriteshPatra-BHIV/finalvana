@@ -1,0 +1,80 @@
+{
+  "_README": "Ready-to-emit mission package containing ONE truthful live external observation. Regenerated on every run - the measurement and the artifact hash change because the source is live. Emit the package you just built, never a stale one.",
+  "_built_at": "2026-08-28T14:53:30.021965+00:00",
+  "_source_url": "https://api.open-meteo.com/v1/forecast?latitude=19.349&longitude=72.812&current=temperature_2m,relative_humidity_2m,precipitation,wind_speed_10m&timezone=UTC",
+  "_attribution": "Weather data by Open-Meteo.com, CC-BY 4.0, non-commercial free tier. Open-Meteo aggregates national weather services.",
+  "_schema_valid": true,
+  "_semantic_clean": true,
+  "mission_id": "VS-Z01-EXT",
+  "survey": "VS",
+  "contract_version": "2.2",
+  "observations": [
+    {
+      "contract_version": "2.2",
+      "schema_version": "2.2",
+      "observation_id": "VS-Z01-EXT-OPENMETEO-OBS004",
+      "source_identity": "group3-field-edge",
+      "survey_id": "VS",
+      "zone_id": "Z01",
+      "flight_id": "EXT",
+      "sensor_id": "OPENMETEO",
+      "observation_seq": "OBS004",
+      "mission_id": "VS-Z01-EXT",
+      "parent_reference": null,
+      "observation_timestamp": "2026-08-28T14:45:00Z",
+      "source_timestamp": "2026-08-28T14:45:00Z",
+      "ingestion_timestamp": null,
+      "data_state": "CAPTURED",
+      "synthetic_state": "CONTROLLED",
+      "is_synthetic": true,
+      "calibration_state": "NOT_VERIFIED",
+      "quality_state": "CAPTURED",
+      "location": {
+        "latitude": 19.349,
+        "longitude": 72.812,
+        "altitude_m": 12.0,
+        "gnss_status": "NOT_VERIFIED",
+        "position_accuracy_m": null
+      },
+      "waypoint_id": null,
+      "device_id": "G3-EXT-OPENMETEO-01",
+      "observation_type": "wind_speed",
+      "capture_method": "external_api",
+      "measurement": 18.2,
+      "unit": "km/h",
+      "accuracy": "NOT_VERIFIED",
+      "processing_status": "raw",
+      "raw_artifact": "https://api.open-meteo.com/v1/forecast?latitude=19.349&longitude=72.812&current=temperature_2m,relative_humidity_2m,precipitation,wind_speed_10m&timezone=UTC",
+      "raw_artifact_integrity": {
+        "checksum_sha256": "eebcc3c2c23e0c4ec5b4a8f952a61b6b0abb8c00db94794e0e8f7391a9d63ba8",
+        "hash_algorithm": "sha256",
+        "artifact_type": "sensor_reading"
+      },
+      "integrity_reference": null,
+      "provenance_reference": "open-meteo:eebcc3c2c23e0c4e",
+      "provenance": {
+        "device_id": "G3-EXT-OPENMETEO-01",
+        "mission_id": "VS-Z01-EXT",
+        "captured_at": "2026-08-28T14:45:00Z",
+        "raw_artifact": "https://api.open-meteo.com/v1/forecast?latitude=19.349&longitude=72.812&current=temperature_2m,relative_humidity_2m,precipitation,wind_speed_10m&timezone=UTC",
+        "operator": "Open-Meteo.com (external data provider)",
+        "qa_record": "coordinate basis: Vasai Creek Estuary (Vasai) - supplied by Group 2, 2026-08-28"
+      },
+      "tidal_state": null,
+      "trace_id": null,
+      "idempotency_key": "IK-VS-Z01-EXT-OPENMETEO-OBS004",
+      "hardware_verified": false
+    }
+  ],
+  "_g68": {
+    "emitted_under": "Arya Barge semantic ruling, 2026-09-02",
+    "source_field": "wind_speed_10m",
+    "unit_authority": "Open-Meteo current_units, source-declared, unconverted",
+    "derived_from_capture": "raw_artifact_eebcc3c2c23e0c4e.json",
+    "raw_artifact_sha256_reverified": "eebcc3c2c23e0c4ec5b4a8f952a61b6b0abb8c00db94794e0e8f7391a9d63ba8",
+    "no_new_capture": true,
+    "no_conversion": true,
+    "no_rounding": true,
+    "sibling_of": "VS-Z01-EXT-OPENMETEO-OBS001"
+  }
+}

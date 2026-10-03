@@ -1,0 +1,130 @@
+{
+  "_README": "Group 3 region coverage for Sanskar's six-region Group 1 closure. Group 3 has emitted ONE observation, for Thane Creek. It holds no observation, source id or runtime path for any other region. This file states that plainly and proves what Group 3 can produce instead.",
+  "_generated_by": "integration/emit_region_coverage.py",
+  "_generated_at": "2026-08-28T05:35:49.677362+00:00",
+  "_asked_by": "Sanskar (Group 1), 2026-08-28",
+  "_probe_mode": "LIVE",
+  "what_group3_actually_has": {
+    "region": "Thane Creek",
+    "observation_id": "TC-Z03-EXT-OPENMETEO-OBS001",
+    "canonical_record_id": "CR-b4615a27-7ab1-4bde-a078-a56fa0f2414c",
+    "source": "Open-Meteo.com - EXTERNAL LIVE API, CC-BY 4.0, keyless",
+    "runtime_path": "POST /observations with Idempotency-Key: IK-TC-Z03-EXT-OPENMETEO-OBS001, then GET /observations/{observation_id}",
+    "observation_timestamp": "2026-08-25T11:00:00Z",
+    "location": "19.1288, 72.9421 (requested point, per frozen contract 12.1)",
+    "acceptance": "13/13 live, 2026-08-25T11:04:54Z",
+    "label": "VERIFIED - Group 3 ran it and holds the output"
+  },
+  "what_group3_does_NOT_have": {
+    "regions": [
+      "Mumbai",
+      "Navi Mumbai",
+      "Vasai",
+      "Maval"
+    ],
+    "_thane_note": "'Thane' as a separate region is also absent. Every Group 3 observation id begins TC- for the Thane CREEK survey, which is a specific mangrove site inside Thane district, not the district. Treating them as the same region would be a substitution.",
+    "observation_ids_held": "NONE",
+    "canonical_record_ids_held": "NONE",
+    "runtime_paths_held": "NONE",
+    "_why_this_is_the_answer": "Sanskar asked for no manually created IDs and no substituted fixtures. Group 3 agrees, and therefore supplies none. An id invented to fill a row on a closure board is the exact failure the request is guarding against."
+  },
+  "what_group3_CAN_produce_today": {
+    "_claim": "Every one of the five regions is reachable through the SAME proven path Thane Creek used. Open-Meteo is keyless and global; the contract, the emitter, the validator and the acceptance sequence are unchanged.",
+    "_verified_how": "Live probe of all five regions. Each returned HTTP 200 with a current reading.",
+    "_effort": "About 15 minutes per region once the zone identity is agreed.",
+    "_what_is_needed_first": [
+      "AUTHORITATIVE ZONE DEFINITION for each region. Group 3 does not own zone polygons - Group 2 does. Today's observation was checked against Group 2's Thane Creek polygon. Coordinates below are city-centre points and are PROVISIONAL, not approved zones.",
+      "A survey/zone identifier per region so observation_id is truthful. Thane Creek is TC-Z03. The other five have no assigned survey or zone code.",
+      "Confirmation from Group 1 that five more external_api observations are wanted in the canonical store, rather than one region being the demo path."
+    ],
+    "probe_results": [
+      {
+        "region": "Mumbai",
+        "lat": 19.076,
+        "lon": 72.8777,
+        "http_status": 200,
+        "reachable": true,
+        "grid_latitude": 19.086115,
+        "grid_longitude": 72.85291,
+        "source_reported_time": "2026-08-28T05:30",
+        "precipitation_mm": 0.0,
+        "temperature_c": 28.6,
+        "relative_humidity_pct": 76,
+        "group3_observation_id": null,
+        "group3_canonical_record_id": null,
+        "group3_runtime_path": null,
+        "status": "NO GROUP 3 OBSERVATION EXISTS"
+      },
+      {
+        "region": "Navi Mumbai",
+        "lat": 19.033,
+        "lon": 73.0297,
+        "http_status": 200,
+        "reachable": true,
+        "grid_latitude": 19.015816,
+        "grid_longitude": 73.04734,
+        "source_reported_time": "2026-08-28T05:30",
+        "precipitation_mm": 0.2,
+        "temperature_c": 28.7,
+        "relative_humidity_pct": 76,
+        "group3_observation_id": null,
+        "group3_canonical_record_id": null,
+        "group3_runtime_path": null,
+        "status": "NO GROUP 3 OBSERVATION EXISTS"
+      },
+      {
+        "region": "Vasai",
+        "lat": 19.4259,
+        "lon": 72.8225,
+        "http_status": 200,
+        "reachable": true,
+        "grid_latitude": 19.437609,
+        "grid_longitude": 72.85715,
+        "source_reported_time": "2026-08-28T05:30",
+        "precipitation_mm": 0.1,
+        "temperature_c": 28.5,
+        "relative_humidity_pct": 76,
+        "group3_observation_id": null,
+        "group3_canonical_record_id": null,
+        "group3_runtime_path": null,
+        "status": "NO GROUP 3 OBSERVATION EXISTS"
+      },
+      {
+        "region": "Thane",
+        "lat": 19.2183,
+        "lon": 72.9781,
+        "http_status": 200,
+        "reachable": true,
+        "grid_latitude": 19.226713,
+        "grid_longitude": 72.99703,
+        "source_reported_time": "2026-08-28T05:30",
+        "precipitation_mm": 0.0,
+        "temperature_c": 28.5,
+        "relative_humidity_pct": 77,
+        "group3_observation_id": null,
+        "group3_canonical_record_id": null,
+        "group3_runtime_path": null,
+        "status": "NO GROUP 3 OBSERVATION EXISTS"
+      },
+      {
+        "region": "Maval",
+        "lat": 18.75,
+        "lon": 73.5,
+        "http_status": 200,
+        "reachable": true,
+        "grid_latitude": 18.734621,
+        "grid_longitude": 73.46758,
+        "source_reported_time": "2026-08-28T05:30",
+        "precipitation_mm": 0.5,
+        "temperature_c": 22.9,
+        "relative_humidity_pct": 92,
+        "group3_observation_id": null,
+        "group3_canonical_record_id": null,
+        "group3_runtime_path": null,
+        "status": "NO GROUP 3 OBSERVATION EXISTS"
+      }
+    ]
+  },
+  "_honest_caveat": "These would be EXTERNAL LIVE API observations - synthetic_state CONTROLLED, is_synthetic true, hardware_verified false. They are real third-party weather data, not Group 3 field sensing. Six regions of external API data is still zero regions of hardware evidence.",
+  "_attribution_obligation": "Weather data by Open-Meteo.com (CC-BY 4.0), aggregating national weather services. This must survive every downstream handoff for every region."
+}

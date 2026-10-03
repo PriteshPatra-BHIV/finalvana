@@ -1,0 +1,20 @@
+{
+  "_README": "FROZEN at Arya Barge's request, 2026-08-22: 'Please keep the source evidence unchanged until the ruling.' These are byte-for-byte copies taken at freeze time. The generating scripts make a LIVE API call on every run, so re-running them CHANGES the measurement and the artifact hash - that is the source being genuinely live, not tampering. This folder is the fixed reference for the contract-contradiction ruling.",
+  "_frozen_at": "2026-08-22T12:12:33.420457+00:00",
+  "_frozen_for": "Contract contradiction: F001/sensor accepted (false) vs WX/external_api rejected (true)",
+  "_do_not_regenerate": "Do not re-run build_live_observation_candidate.py against this folder.",
+  "files": {
+    "live_observation_minimal_variant.json": {
+      "sha256": "ea40ec2b4cd5c4e0b512c37b3eece989072e4b978126a6bee3c22292e680577f",
+      "bytes": 2058
+    },
+    "live_observation_candidate.json": {
+      "sha256": "42afdf9e12cc145ccdbba40fca356150ac42d056744bfd5464c2dadbdbb1d94c",
+      "bytes": 3386
+    },
+    "aiaic_source_probe.json": {
+      "sha256": "e2f4c8ae987a9b6a79f4843f0b9b76a17ce1c08e83b9a71b703ba7c0a8475bfb",
+      "bytes": 2836
+    }
+  }
+}

@@ -1,0 +1,30 @@
+V2.0 SEMANTIC / REFERENTIAL VALIDATION
+
+VALID OBSERVATIONS
+  [PASS] TC-Z03-F02-DRONERGB-OBS001                             expect accept got accepted
+
+CONTRADICTORY RECORDS - must be rejected
+  [PASS] device not in register                                 expect REJECT got rejected
+  [PASS] provenance device disagrees                            expect REJECT got rejected
+  [PASS] provenance mission disagrees                           expect REJECT got rejected
+  [PASS] provenance artifact disagrees                          expect REJECT got rejected
+  [PASS] provenance captured_at disagrees with timestamp        expect REJECT got rejected
+  [PASS] measurement.artifact disagrees with raw_artifact       expect REJECT got rejected
+  [PASS] null latitude without UNCERTAIN                        expect REJECT got rejected
+  [PASS] tidal HIGH claimed with no source                      expect REJECT got rejected
+  [PASS] numeric value with no parameter                        expect REJECT got rejected
+
+THE SYNTHETIC GUARD - Closure Plan section 4
+  [PASS] is_synthetic=false on today's fixture                  expect REJECT got rejected
+  [PASS] is_synthetic=false, verified, but no content hash      expect REJECT got rejected
+  [PASS] is_synthetic=false, verified, hashed (a real capture)  expect accept got accepted
+
+13/13 semantic checks passed
+
+KNOWN LIMITATIONS, stated rather than hidden:
+  - the device register does not exist (no Capability Registry API,
+    confirmed by Shivam 2026-08-17). KNOWN_DEVICES is a STAND-IN.
+  - tidal_state has no canonical home. Group 1 has not accepted it;
+    Kavy has it on the v0.5 list.
+  - is_synthetic=false is currently unreachable for real Group 3 data:
+    no sensor has produced a reading, 0 of 8 actuators mounted.

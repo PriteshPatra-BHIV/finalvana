@@ -1,0 +1,34 @@
+{
+  "review_target": "SMR-Z01-EXT-SAMACHAR-OBS001",
+  "role": "Kaushlendra - Technical review / schema-runtime support",
+  "known_live_ui_status": {
+    "group1_api": "healthy",
+    "group2_api": "healthy",
+    "group4_result": "governed_abstention"
+  },
+  "group1": {
+    "observation_id": "SMR-Z01-EXT-SAMACHAR-OBS001",
+    "canonical_record_id": "CR-c3d2e7cc-3ddc-41d6-a85c-b782cf43801d",
+    "verification_source": "Use the current live Group 1 GET response / UI raw response as authoritative for all other fields."
+  },
+  "group2": {
+    "verification_source": "Use the current live Group 2 response shown by the UI. Do not infer or copy an older response."
+  },
+  "group4": {
+    "verification_source": "Current UI shows a live governed-abstention result. Verify only as a downstream continuity cross-check; G4 is not Kaushlendra's primary ownership."
+  },
+  "checks": [
+    "V2.2 schema consistency",
+    "G1 to G2 field mapping",
+    "observation_id continuity",
+    "canonical_record_id continuity",
+    "timestamp preservation",
+    "location preservation",
+    "measurement and unit preservation",
+    "provenance preservation",
+    "G2 decision envelope consistency",
+    "No identity rewrite",
+    "No silent semantic change",
+    "No fabricated fallback data"
+  ]
+}

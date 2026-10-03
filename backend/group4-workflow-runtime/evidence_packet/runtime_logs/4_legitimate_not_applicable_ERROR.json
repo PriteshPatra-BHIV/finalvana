@@ -1,0 +1,6 @@
+{
+  "test_case": "4_legitimate_not_applicable",
+  "description": "Non-applicable fields are omitted, but core context is present.",
+  "error": "Error",
+  "response": null
+}

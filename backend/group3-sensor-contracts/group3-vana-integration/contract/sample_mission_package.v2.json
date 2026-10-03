@@ -1,0 +1,63 @@
+{
+  "_comment": "V2.1 CONTROLLED FIXTURE. Shape per Suraj Surve's Closure Plan; composite observation_id kept per his 2026-08-17 decision 'as per Group 1'; the five component fields restored because Group 1's documented request body carries them. is_synthetic is TRUE - no Group 3 sensor has produced a recorded reading as of 2026-08-17.",
+  "mission_id": "MNG-THANE-20260817-001",
+  "survey": "Thane Creek mangrove",
+  "source_type": "SYNTHETIC_TEST",
+  "is_synthetic": true,
+  "hardware_verified": false,
+  "observations": [
+    {
+      "observation_id": "TC-Z03-F02-DRONERGB-OBS001",
+      "schema_version": "2.1",
+      "survey_id": "TC",
+      "zone_id": "Z03",
+      "flight_id": "F02",
+      "sensor_id": "DRONERGB",
+      "observation_seq": "OBS001",
+      "mission_id": "MNG-THANE-20260817-001",
+      "device_id": "DRONE-RGB-001",
+      "timestamp": "2026-08-17T09:14:22Z",
+      "location": {
+        "latitude": 19.1288,
+        "longitude": 72.9421,
+        "altitude_m": 120,
+        "gnss_status": "NOT_VERIFIED",
+        "position_accuracy_m": null
+      },
+      "waypoint_id": "WP-001",
+      "observation_type": "MANGROVE_RGB_IMAGE",
+      "capture_method": "aerial",
+      "measurement": {
+        "artifact": "RAW-MNG-THANE-0001.JPG"
+      },
+      "unit": "IMAGE",
+      "quality_state": "CAPTURED",
+      "calibration_state": "NOT_VERIFIED",
+      "accuracy": "NOT_VERIFIED",
+      "processing_status": "raw",
+      "raw_artifact": "RAW-MNG-THANE-0001.JPG",
+      "raw_artifact_integrity": {
+        "checksum_sha256": null,
+        "hash_algorithm": null,
+        "artifact_type": "IMAGE"
+      },
+      "provenance": {
+        "device_id": "DRONE-RGB-001",
+        "mission_id": "MNG-THANE-20260817-001",
+        "captured_at": "2026-08-17T09:14:22Z",
+        "raw_artifact": "RAW-MNG-THANE-0001.JPG",
+        "operator": "<named field operator>",
+        "qa_record": null
+      },
+      "tidal_state": {
+        "state": "UNKNOWN",
+        "source": null,
+        "timestamp": null
+      },
+      "trace_id": null,
+      "idempotency_key": "TC-Z03-F02-DRONERGB-OBS001",
+      "is_synthetic": true,
+      "hardware_verified": false
+    }
+  ]
+}

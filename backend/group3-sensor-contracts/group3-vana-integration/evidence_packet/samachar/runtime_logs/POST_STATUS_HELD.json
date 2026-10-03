@@ -1,0 +1,12 @@
+{
+  "_status": "NOT ATTEMPTED - HELD",
+  "_this_is_not_a_failure": "The POST has not been attempted. This is not a G3 defect, not a validation failure, and not a 500 on this observation.",
+  "_who_asked": "Sanskar, Group 1, 2026-08-31",
+  "_their_words": "'Please continue holding the five regional payloads and don't retry them yet ... we are treating this as a new-survey/external-source ingestion-path issue, not only a five-region issue. We will verify the fix against the new-survey path before asking you to retry.'",
+  "_why_it_covers_SAMACHAR": "SMR-Z01-EXT-SAMACHAR-OBS001 is a first observation for a previously-unseen survey (SMR) - exactly the path Group 1 asked to hold.",
+  "_what_G40_evidence_exists": "Three captured POST/GET exchanges on the SAME new-survey path, using Mumbai. Held in evidence_packet/runtime_logs/. They document the blocker but are NOT SAMACHAR's own POST and must not be presented as such.",
+  "_what_would_complete_this": "One command, once Group 1 gives the GO. Everything else in this bundle is finished.",
+  "_command": "python post_single_frozen_observation.py --fixture ../evidence/live/live_mission_package_SAMACHAR.json --expect-id SMR-Z01-EXT-SAMACHAR-OBS001 --expect-lat 19.222 --expect-lon 72.956",
+  "_SUPERSEDED": "2026-09-01: the hold was lifted by Rukayya and the record was ingested. POST 201, canonical CR-c3d2e7cc-3ddc-41d6-a85c-b782cf43801d, GET 200. This file is kept as the record of the held period, not as current status.",
+  "_current_status": "INGESTED - canonical CR-c3d2e7cc-3ddc-41d6-a85c-b782cf43801d"
+}

@@ -1,0 +1,70 @@
+{
+  "_README": "TRUTHFUL V2.2 observation built from a LIVE Open-Meteo call. Uses the approved EXT non-flight identity and external_api capture method. The amendment was approved by Arya Barge 2026-08-24 and ratified in the 25 Aug contract; the manager ruled MDU registration NOT required for this controlled demonstration.",
+  "_built_at": "2026-08-28T14:53:32.370117+00:00",
+  "_source_url": "https://api.open-meteo.com/v1/forecast?latitude=19.222&longitude=72.956&current=temperature_2m,relative_humidity_2m,precipitation,wind_speed_10m&timezone=UTC",
+  "_attribution": "Weather data by Open-Meteo.com, CC-BY 4.0, non-commercial free tier. Open-Meteo aggregates national weather services.",
+  "_schema_valid": true,
+  "_semantic_clean": true,
+  "_resolved_questions": [
+    "observation_id scheme - RESOLVED: flight_id EXT is the approved non-flight marker; no fabricated flight is written. Arya 2026-08-24, ratified 2026-08-25.",
+    "synthetic_state for real external third-party data - RESOLVED: CONTROLLED. PHYSICAL is forbidden for external_api by contract rule.",
+    "device_id 'G3-EXT-OPENMETEO-01' - RESOLVED: approved external-provider convention G3-EXT-<PROVIDER>-<NN>. It is NOT a physical device identifier."
+  ],
+  "_raw_artifact_bytes_file": "raw_artifact_5492ece45919ec02.json",
+  "observation": {
+    "contract_version": "2.2",
+    "schema_version": "2.2",
+    "observation_id": "THN-Z01-EXT-OPENMETEO-OBS001",
+    "source_identity": "group3-field-edge",
+    "survey_id": "THN",
+    "zone_id": "Z01",
+    "flight_id": "EXT",
+    "sensor_id": "OPENMETEO",
+    "observation_seq": "OBS001",
+    "mission_id": "THN-Z01-EXT",
+    "parent_reference": null,
+    "observation_timestamp": "2026-08-28T14:45:00Z",
+    "source_timestamp": "2026-08-28T14:45:00Z",
+    "ingestion_timestamp": null,
+    "data_state": "CAPTURED",
+    "synthetic_state": "CONTROLLED",
+    "is_synthetic": true,
+    "calibration_state": "NOT_VERIFIED",
+    "quality_state": "CAPTURED",
+    "location": {
+      "latitude": 19.222,
+      "longitude": 72.956,
+      "altitude_m": 47.0,
+      "gnss_status": "NOT_VERIFIED",
+      "position_accuracy_m": null
+    },
+    "waypoint_id": null,
+    "device_id": "G3-EXT-OPENMETEO-01",
+    "observation_type": "precipitation",
+    "capture_method": "external_api",
+    "measurement": 0.0,
+    "unit": "mm",
+    "accuracy": "NOT_VERIFIED",
+    "processing_status": "raw",
+    "raw_artifact": "https://api.open-meteo.com/v1/forecast?latitude=19.222&longitude=72.956&current=temperature_2m,relative_humidity_2m,precipitation,wind_speed_10m&timezone=UTC",
+    "raw_artifact_integrity": {
+      "checksum_sha256": "5492ece45919ec02c2c577bdd16d58304105a80542772de2457c2a9640a06af9",
+      "hash_algorithm": "sha256",
+      "artifact_type": "sensor_reading"
+    },
+    "integrity_reference": null,
+    "provenance_reference": "open-meteo:5492ece45919ec02",
+    "provenance": {
+      "device_id": "G3-EXT-OPENMETEO-01",
+      "mission_id": "THN-Z01-EXT",
+      "captured_at": "2026-08-28T14:45:00Z",
+      "raw_artifact": "https://api.open-meteo.com/v1/forecast?latitude=19.222&longitude=72.956&current=temperature_2m,relative_humidity_2m,precipitation,wind_speed_10m&timezone=UTC",
+      "operator": "Open-Meteo.com (external data provider)",
+      "qa_record": "coordinate basis: Upvan Lake Basin / Yeoor Hills boundary (Thane) - supplied by Group 2, 2026-08-28"
+    },
+    "tidal_state": null,
+    "trace_id": null,
+    "idempotency_key": "IK-THN-Z01-EXT-OPENMETEO-OBS001",
+    "hardware_verified": false
+  }
+}

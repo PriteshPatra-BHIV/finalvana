@@ -1,0 +1,58 @@
+============================================================================
+TEST A - VALID OBSERVATION
+============================================================================
+  [PASS] A1 observation package created                 TC-Z03-F02-LIDAR-OBS001
+  [PASS] A2 validation PASS                             schema + semantic
+  [PASS] A3 cross-field agreement (device/artifact/time) 
+  [FAIL] A4 edge transport                              SVACS is a vision runtime, not transport - NOT APPLICABLE (see SVACS_ANALYSIS.md)
+  [PASS] A5 Group 1 API - schema path                   canonical record produced locally
+  [PASS] A6 canonical record                            observation_id preserved verbatim
+  [PASS] A7 retrieval                                   SELECTed back with provenance
+
+  A4 note: Group 1's DEPLOYED instance is not reachable (no host issued).
+  A5-A7 are against Group 1's SCHEMA on a local PostgreSQL/PostGIS.
+
+============================================================================
+TEST B - INVALID OBSERVATION
+============================================================================
+  Suraj names two cases explicitly; both are run, plus the mandatory set.
+
+  [PASS] B1 timestamp = null  (Suraj's example 1)       REJECTED
+  [PASS] B2 timestamp removed                           REJECTED
+  [PASS] B3 device_id = unknown  (Suraj's example 2)    REJECTED by the SEMANTIC layer; schema alone would ACCEPT
+  [PASS] B4 missing mandatory field: device_id          REJECTED
+  [PASS] B4 missing mandatory field: latitude           REJECTED
+  [PASS] B4 missing mandatory field: observation_type   REJECTED
+  [PASS] B4 missing mandatory field: measurement        REJECTED
+  [PASS] B4 missing mandatory field: accuracy           REJECTED
+  [PASS] B4 missing mandatory field: calibration_status REJECTED
+  [PASS] B4 missing mandatory field: raw_artifact_reference REJECTED
+  [PASS] B4 missing mandatory field: quality_status     REJECTED
+  [PASS] B4 missing mandatory field: processing_status  REJECTED
+  [PASS] B4 missing mandatory field: provenance         REJECTED
+
+============================================================================
+TEST C - RETRY
+============================================================================
+  [PASS] C1 first submission creates a canonical record from roundtrip_evidence.txt
+  [PASS] C2 retry preserves the same observation_id     same natural key
+  [PASS] C3 no unintended duplicate                     table counts unchanged after re-submission
+  [PASS] C4 re-read after re-submission is identical    
+
+============================================================================
+RESULT: 23/23 checks passed
+
+SURAJ'S ACCEPTANCE, ANSWERED DIRECTLY:
+  TEST A  Valid observation ......... PASS, against Group 1's SCHEMA
+                                     Edge hop NOT APPLICABLE - SVACS is
+                                     a vision runtime, not transport
+                                     Group 1 INSTANCE not reachable
+  TEST B  Invalid observation ...... PASS - both of your named cases plus
+                                     10 mandatory-field removals
+  TEST C  Retry / no duplicate ..... PASS - counts unchanged, re-read identical
+
+NOT PROVEN, and not by Group 3's choice:
+  - Group 1's deployed instance   (Sanskar - no host issued)
+  - the edge transport hop        (SVACS is not a transport service)
+  - ONE ACTUAL MANGROVE DRONE IMAGE - your Definition of DONE requires a
+    real flight. No Group 3 sensor has produced a reading. PHASE 2.

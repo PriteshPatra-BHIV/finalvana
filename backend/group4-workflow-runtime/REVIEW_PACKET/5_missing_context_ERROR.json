@@ -1,0 +1,6 @@
+{
+  "test_case": "5_missing_context",
+  "description": "Canonical Record exists, but all context arrays are empty.",
+  "error": "Error",
+  "response": null
+}

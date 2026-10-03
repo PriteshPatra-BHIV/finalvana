@@ -1,0 +1,21 @@
+{
+  "test_id": "RAW-01",
+  "observation_id": "TC-Z03-F02-LIDAR-OBS001",
+  "device_id": "G3-LIDAR-001",
+  "raw_artifact_reference": {
+    "path": "TC-Z03-F02/drone/pointcloud_F02_001.las",
+    "checksum_sha256": "f7254999689ae5b530a0006d0fb6765df0317973504e8c5d1b393bfa5826cf9d",
+    "artifact_type": "point_cloud"
+  },
+  "provenance_raw_artifact": "TC-Z03-F02/drone/pointcloud_F02_001.las",
+  "provenance_device_id": "G3-LIDAR-001",
+  "provenance_mission_id": "TC-Z03-F02",
+  "provenance_qa_record": "TC-Z03-F02/qa/qa_F02.json",
+  "checks": {
+    "observation_to_artifact_path_matches": true,
+    "observation_to_device_matches": true,
+    "sha256_present_and_64_hex": true,
+    "artifact_type_allowed": true
+  },
+  "overall": "PASS"
+}

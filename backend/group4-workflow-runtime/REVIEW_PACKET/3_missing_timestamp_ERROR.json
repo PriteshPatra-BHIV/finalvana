@@ -1,0 +1,6 @@
+{
+  "test_case": "3_missing_timestamp",
+  "description": "MISSING_SOURCE_TIMESTAMP condition strictly triggers ABSTAIN.",
+  "error": "read ECONNRESET",
+  "response": null
+}

@@ -1,0 +1,358 @@
+{
+  "_README": "Read-only snapshot of the AIAIC facts VANA / Group 3 cites. Copied OUT of the AIAIC repository, which is BHIV reference material and was not modified. VANA has no runtime dependency on the AIAIC path - the two live sources are called directly over HTTP.",
+  "_retrieved_at": "2026-08-22",
+  "_source_repository": "AIAIC (Agricultural Intelligence & Income Creation Platform) - READ ONLY",
+  "_registry_file": {
+    "path": "engine/evidence_registry/evidence_registry.json",
+    "sha256": "406f684dd3b5257db8a269f49bbb03a1efe743c003d709898baae98c8a8f20e4",
+    "registry_version": "1.0.0"
+  },
+  "_summary": {
+    "total_sources": 16,
+    "keyless_live_api": [
+      "open_meteo_weather",
+      "nasa_power_weather"
+    ],
+    "require_api_key": [
+      "agmarknet_daily_prices",
+      "msp_cacp",
+      "imd_rainfall"
+    ],
+    "note": "In AIAIC's vocabulary 'verified_live' means the source is REAL AND WIRED. It does NOT mean a live API call - ten of the fourteen are local CSVs or PDF extractions."
+  },
+  "sources": [
+    {
+      "source_id": "agmarknet_daily_prices",
+      "source_name": "Agmarknet — Variety-wise Daily Market Prices of Commodities (Mandi)",
+      "source_type": "market_price",
+      "access_method": "data.gov.in REST API (api-key), resource 9ef84268-d588-465a-a308-a864a43d0070",
+      "update_frequency": "daily",
+      "license": "GODL-India",
+      "attribution": "Source: Directorate of Marketing & Inspection (Agmarknet), Ministry of Agriculture & Farmers Welfare, Government of India, via data.gov.in (Government Open Data License – India).",
+      "status": "verified_live",
+      "requires_api_key": true,
+      "base_url": "https://api.data.gov.in/resource/",
+      "signal_targets": [
+        "market"
+      ]
+    },
+    {
+      "source_id": "msp_cacp",
+      "source_name": "Minimum Support Price (MSP) & Cost of Production — CACP / Dept. of Agriculture",
+      "source_type": "msp_reference",
+      "access_method": "data.gov.in REST API (api-key) and CACP/PIB published tables",
+      "update_frequency": "seasonal (kharif/rabi, annual)",
+      "license": "GODL-India",
+      "attribution": "Source: Commission for Agricultural Costs & Prices (CACP), Dept. of Agriculture & Farmers Welfare, Government of India; obtained via data.gov.in (GODL-India; resource published under the Rajya Sabha collection).",
+      "status": "verified_live",
+      "requires_api_key": true,
+      "base_url": "https://api.data.gov.in/resource/",
+      "signal_targets": [
+        "market"
+      ]
+    },
+    {
+      "source_id": "cacp_cost_of_production",
+      "source_name": "CACP Cost of Production (state-wise) — Maharashtra",
+      "source_type": "cost_reference",
+      "access_method": "Local CSV downloaded from data.gov.in (Crop/State/MSP/Cost table)",
+      "update_frequency": "as_published (per CACP season)",
+      "license": "GODL-India",
+      "attribution": "Source: Commission for Agricultural Costs & Prices (CACP), Dept. of Agriculture & Farmers Welfare, Government of India; via data.gov.in (GODL-India). Tabled in Rajya Sabha (Session 246, Unstarred Q. AU1158).",
+      "status": "verified_live",
+      "requires_api_key": false,
+      "base_url": "https://www.data.gov.in/resource/minimum-support-price-msp-cost-production-and-profit-margins-over-cost-production-major",
+      "signal_targets": [
+        "market"
+      ]
+    },
+    {
+      "source_id": "imd_rainfall",
+      "source_name": "India Meteorological Department — Rainfall (sub-division / district)",
+      "source_type": "weather",
+      "access_method": "data.gov.in REST API (api-key) and IMD published rainfall statistics",
+      "update_frequency": "daily/seasonal",
+      "license": "GODL-India / NDSAP",
+      "attribution": "Source: India Meteorological Department (IMD), Ministry of Earth Sciences, Government of India, via data.gov.in (NDSAP / GODL-India).",
+      "status": "documented_unverified",
+      "requires_api_key": true,
+      "base_url": "https://api.data.gov.in/resource/",
+      "signal_targets": [
+        "weather"
+      ]
+    },
+    {
+      "source_id": "cgwb_groundwater",
+      "source_name": "Central Ground Water Board — Dynamic Ground Water Resources / assessment categories",
+      "source_type": "groundwater",
+      "access_method": "Local CSV (CGWB National Compilation on Dynamic Ground Water Resources, district-level Maharashtra), downloaded by owner from data.opencity.in",
+      "update_frequency": "annual (assessment)",
+      "license": "GODL-India (source: CGWB / Ministry of Jal Shakti; republished via OpenCity)",
+      "attribution": "Source: Central Ground Water Board (CGWB), Ministry of Jal Shakti, Government of India — National Compilation on Dynamic Ground Water Resources of India; obtained via OpenCity (data.opencity.in).",
+      "status": "verified_live",
+      "requires_api_key": false,
+      "base_url": "https://data.opencity.in/dataset/national-compilation-on-dynamic-ground-water-resources-of-india-2022",
+      "signal_targets": [
+        "groundwater"
+      ]
+    },
+    {
+      "source_id": "wdra_warehouses",
+      "source_name": "Warehousing Development & Regulatory Authority — Registered Warehouses / e-NWR",
+      "source_type": "warehouse",
+      "access_method": "WDRA public portal (registered warehouses listing) and published e-NWR statistics",
+      "update_frequency": "as_published",
+      "license": "public-report",
+      "attribution": "Source: Warehousing Development & Regulatory Authority (WDRA), Department of Food & Public Distribution, Government of India.",
+      "status": "documented_unverified",
+      "requires_api_key": false,
+      "base_url": "https://wdra.gov.in/web/wdra/registered-warehouses",
+      "signal_targets": [
+        "storage"
+      ]
+    },
+    {
+      "source_id": "gsda_gwre_2023",
+      "source_name": "GSDA Dynamic Ground Water Resources of Maharashtra 2023 — watershed/assessment-unit level",
+      "source_type": "groundwater",
+      "access_method": "Extracted from the GSDA+CGWB GWRE-2023 report PDF (Annexure-A-II) to CSV (pdfplumber)",
+      "update_frequency": "annual (assessment)",
+      "license": "public-report (GSDA, Govt. of Maharashtra + CGWB)",
+      "attribution": "Source: Groundwater Surveys & Development Agency (GSDA), Govt. of Maharashtra & Central Ground Water Board — Dynamic Ground Water Resources of Maharashtra 2023 (gsda.maharashtra.gov.in).",
+      "status": "verified_live",
+      "requires_api_key": false,
+      "base_url": "https://gsda.maharashtra.gov.in/en-reports/",
+      "signal_targets": [
+        "groundwater"
+      ]
+    },
+    {
+      "source_id": "gsda_taluka_2023",
+      "source_name": "GSDA Dynamic GW Resources of Maharashtra 2023 — TALUKA-level categorization (Annexure-E)",
+      "source_type": "groundwater",
+      "access_method": "Extracted from the GSDA GWRE-2023 report PDF (Annexure-E) to CSV (pdfplumber)",
+      "update_frequency": "annual (assessment)",
+      "license": "public-report (GSDA, Govt. of Maharashtra + CGWB)",
+      "attribution": "Source: GSDA, Govt. of Maharashtra & CGWB — Dynamic Ground Water Resources of Maharashtra 2023, Annexure-E (gsda.maharashtra.gov.in).",
+      "status": "verified_live",
+      "requires_api_key": false,
+      "base_url": "https://gsda.maharashtra.gov.in/en-reports/",
+      "signal_targets": [
+        "groundwater"
+      ]
+    },
+    {
+      "source_id": "gsda_gwdi",
+      "source_name": "GSDA Ground Water Drought Index (GWDI) — taluka-level, Oct 2024 & Oct 2025",
+      "source_type": "groundwater_drought",
+      "access_method": "Extracted from the GSDA GWDI report PDFs to CSV (pdfplumber)",
+      "update_frequency": "annual (October)",
+      "license": "public-report (GSDA, Govt. of Maharashtra)",
+      "attribution": "Source: Groundwater Surveys & Development Agency (GSDA), Govt. of Maharashtra — Ground Water Drought Index reports (gsda.maharashtra.gov.in/en-reports/).",
+      "status": "verified_live",
+      "requires_api_key": false,
+      "base_url": "https://gsda.maharashtra.gov.in/en-reports/",
+      "signal_targets": [
+        "groundwater"
+      ]
+    },
+    {
+      "source_id": "open_meteo_weather",
+      "source_name": "Open-Meteo — daily precipitation (forecast + historical archive)",
+      "source_type": "weather",
+      "access_method": "Open-Meteo REST API (no key; api.open-meteo.com forecast + archive-api.open-meteo.com)",
+      "update_frequency": "daily (forecast 16d) + historical archive",
+      "license": "CC-BY 4.0 (Open-Meteo; non-commercial free tier)",
+      "attribution": "Weather data by Open-Meteo.com (CC-BY 4.0), aggregating national weather services.",
+      "status": "verified_live",
+      "requires_api_key": false,
+      "base_url": "https://api.open-meteo.com/v1/forecast",
+      "signal_targets": [
+        "weather"
+      ]
+    },
+    {
+      "source_id": "nasa_power_weather",
+      "source_name": "NASA POWER — daily agroclimatology (precipitation, temperature, humidity)",
+      "source_type": "weather",
+      "access_method": "NASA POWER REST API (no key; power.larc.nasa.gov daily point)",
+      "update_frequency": "daily, observational (~2-3 day latency) + multi-decade archive",
+      "license": "NASA POWER — free and open (no restrictions); cite the NASA POWER Project.",
+      "attribution": "These data were obtained from the NASA Langley Research Center POWER Project (power.larc.nasa.gov).",
+      "status": "verified_live",
+      "requires_api_key": false,
+      "base_url": "https://power.larc.nasa.gov/api/temporal/daily/point",
+      "signal_targets": [
+        "weather"
+      ]
+    },
+    {
+      "source_id": "enam_channel",
+      "source_name": "eNAM (National Agriculture Market) — public price dashboards",
+      "source_type": "market_price",
+      "access_method": "eNAM public dashboards (enam.gov.in)",
+      "update_frequency": "daily",
+      "license": "public-portal",
+      "attribution": "Source: National Agriculture Market (eNAM), Small Farmers' Agribusiness Consortium, Ministry of Agriculture & Farmers Welfare, Government of India.",
+      "status": "registry_only",
+      "requires_api_key": false,
+      "base_url": "https://enam.gov.in/web/dashboard/trade-data",
+      "signal_targets": [
+        "market"
+      ]
+    },
+    {
+      "source_id": "public_agri_advisories",
+      "source_name": "Public agricultural advisories (IMD Agromet / ICAR-KVK district advisories)",
+      "source_type": "advisory",
+      "access_method": "Public advisory bulletins (IMD Agromet, KVK), text/PDF",
+      "update_frequency": "weekly",
+      "license": "public-report",
+      "attribution": "Source: IMD Agrometeorology Division / ICAR Krishi Vigyan Kendras, Government of India.",
+      "status": "registry_only",
+      "requires_api_key": false,
+      "base_url": "https://mausam.imd.gov.in/",
+      "signal_targets": []
+    },
+    {
+      "source_id": "surface_water_context",
+      "source_name": "Maharashtra surface-water context — India-WRIS Water-Resource-Projects (command area, dams) + CWC/NWDP river/reservoir/canal gauges",
+      "source_type": "surface_water",
+      "access_method": "Local curated CSVs (surface-water-prep/curated/), deterministically derived from the raw India-WRIS / CWC-NWDP haul downloaded by the owner from indiawris.gov.in and the CWC National Water Data Portal (NWDP/NWIC)",
+      "update_frequency": "as_published (static WRIS command/dam inventory; multi-decade CWC/NWDP gauge series)",
+      "license": "GODL-India (source: India-WRIS / Central Water Commission, Ministry of Jal Shakti)",
+      "attribution": "Source: India-WRIS & Central Water Commission (CWC), Ministry of Jal Shakti, Government of India — republished under GODL-India; curated for AIAIC.",
+      "status": "verified_live",
+      "requires_api_key": false,
+      "base_url": "https://indiawris.gov.in/",
+      "signal_targets": []
+    },
+    {
+      "source_id": "nwdp_water_context",
+      "source_name": "Madhya Pradesh water context — NWDP (National Water Data Portal / NWIC) telemetry: rainfall, reservoir/canal/river discharge, river level, groundwater level, surface-water quality, temperature",
+      "source_type": "surface_water",
+      "access_method": "Local curated CSVs (mp-water-prep/curated/), deterministically aggregated from the raw NWDP CKAN datastore haul (nwdp.nwic.gov.in) downloaded by the owner, State-filtered to Madhya Pradesh",
+      "update_frequency": "as_published (NWDP telemetry 2021-2025 + manual series; near-real-time at source)",
+      "license": "GODL-India (source: NWIC / Central Water Commission / CGWB, Ministry of Jal Shakti)",
+      "attribution": "Source: National Water Informatics Centre (NWIC) / CWC / CGWB, Ministry of Jal Shakti, Government of India — republished under GODL-India; curated for AIAIC.",
+      "status": "verified_live",
+      "requires_api_key": false,
+      "base_url": "https://nwdp.nwic.gov.in/",
+      "signal_targets": []
+    },
+    {
+      "source_id": "cgwb_groundwater_mp",
+      "source_name": "Central Ground Water Board — Dynamic Ground Water Resources of Madhya Pradesh (district categories)",
+      "source_type": "groundwater",
+      "access_method": "Local curated CSV extracted from CGWB 'Dynamic Ground Water Resources of Madhya Pradesh - 2024' report PDF (Annexure IV, DISTRICT TOTAL rows) via mp-groundwater-prep/extract_cgwb_mp.py",
+      "update_frequency": "annual (assessment)",
+      "license": "GODL-India (source: CGWB / Ministry of Jal Shakti)",
+      "attribution": "Source: Central Ground Water Board (CGWB), Ministry of Jal Shakti, Government of India — Dynamic Ground Water Resources of Madhya Pradesh 2024.",
+      "status": "verified_live",
+      "requires_api_key": false,
+      "base_url": "https://cgwb.gov.in/",
+      "signal_targets": [
+        "groundwater"
+      ]
+    }
+  ],
+  "isro_satellite_holdings": {
+    "_honesty": "Real ISRO satellite data, authority Bhuvan / NRSC. Processed offline into curated CSVs, clipped to a Maharashtra bounding box, labelled by AIAIC itself as 'REGIONAL CONTEXT, UNCALIBRATED'. Annual snapshots - NOT a live feed, and therefore unable to produce a dynamic runtime observation.",
+    "awifs_water_body_fraction": {
+      "raster_count": 9,
+      "files": [
+        "AW_WBf01to15jan17_3min_v01.rst",
+        "AW_WBf01to15jan18_3min_v01.rst",
+        "AW_WBf01to15jan20_3min_v01.rst",
+        "aw_wbf01to15jan19_03min_v01.rst",
+        "aw_wbf_jan01to152021_03min_v01.rst",
+        "aw_wbf_jan01to152022_03min_v01.rst",
+        "aw_wbf_jan01to152023_03min_v01.rst",
+        "aw_wbf_jan01to152024_03min_v01.rst",
+        "aw_wbf_jan16to312025_03min_v01.rst"
+      ]
+    },
+    "ocm2_surface_water": {
+      "raster_count": 8,
+      "files": [
+        "ocm2_swp_01to02_jan2016_v01_02.tif",
+        "ocm2_swp_03to04_jan2016_v01_02.tif",
+        "ocm2_swp_05to06_jan2016_v01_02.tif",
+        "ocm2_swp_07to08_jan2016_v01_02.tif",
+        "ocm2_swp_09to10_jan2016_v01_02.tif",
+        "ocm2_swp_11to12_jan2016_v01_02.tif",
+        "ocm2_swp_13to14_jan2016_v01_02.tif",
+        "ocm2_swp_15to16_jan2016_v01_02.tif"
+      ]
+    },
+    "curated_water_bodies_by_year": [
+      {
+        "period": "2017",
+        "n_valid_cells": "24920",
+        "mean": "1.8266",
+        "min": "0.0",
+        "max": "100.0"
+      },
+      {
+        "period": "2018",
+        "n_valid_cells": "24920",
+        "mean": "1.672",
+        "min": "0.0",
+        "max": "98.0"
+      },
+      {
+        "period": "2019",
+        "n_valid_cells": "24920",
+        "mean": "1.3141",
+        "min": "0.0",
+        "max": "99.0"
+      },
+      {
+        "period": "2020",
+        "n_valid_cells": "21580",
+        "mean": "1.8785",
+        "min": "0.0",
+        "max": "100.0"
+      },
+      {
+        "period": "2021",
+        "n_valid_cells": "21580",
+        "mean": "2.0301",
+        "min": "0.0",
+        "max": "100.0"
+      },
+      {
+        "period": "2022",
+        "n_valid_cells": "21580",
+        "mean": "1.9132",
+        "min": "0.0",
+        "max": "99.0"
+      },
+      {
+        "period": "2023",
+        "n_valid_cells": "21580",
+        "mean": "1.9809",
+        "min": "0.0",
+        "max": "100.0"
+      },
+      {
+        "period": "2024",
+        "n_valid_cells": "21580",
+        "mean": "1.6709",
+        "min": "0.0",
+        "max": "100.0"
+      },
+      {
+        "period": "2025",
+        "n_valid_cells": "21580",
+        "mean": "1.9124",
+        "min": "0.0",
+        "max": "99.0"
+      }
+    ]
+  },
+  "attribution_obligations": {
+    "open_meteo_weather": "Weather data by Open-Meteo.com (CC-BY 4.0), aggregating national weather services.",
+    "nasa_power_weather": "These data were obtained from the NASA Langley Research Center POWER Project (power.larc.nasa.gov)."
+  }
+}

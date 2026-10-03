@@ -1,0 +1,110 @@
+{
+  "_README": "Identification of MDU, the 'schema authority' named in the VANA authority triple and in Arya's contract approval gate. MDU is NOT a person - it is a live BHIV registry service.",
+  "_question": "Arya, 2026-08-24: 'Do you have an idea about who has authority to confirm MDU?'",
+  "_finding": "MDU = BHIV Intelligence Data Universe Registry v1.0.0, a LIVE BHIV service. It is a SYSTEM, not a person. That is why no individual could be named.",
+  "_verified_live_at": "2026-08-24T10:29:31.297632+00:00",
+  "service": {
+    "url": "https://bhiv-mdu-api.onrender.com/",
+    "http": 200,
+    "root_response": {
+      "registry": "BHIV Intelligence Data Universe Registry",
+      "version": "1.0.0",
+      "registry_id": "BHIV-IDU-REGISTRY-V1",
+      "status": "operational",
+      "docs": "/docs"
+    },
+    "openapi": "HTTP 401 Unauthorized - authentication required, no token held by Group 3"
+  },
+  "corroboration": [
+    {
+      "source": "../day2/Group1-2-4 day1 and 2 reports/karan group 4 reports/Karan-group4-tasks.txt  (workspace root, not Day6/)",
+      "says": "MDU listed under the Insight ecosystem alongside InsightCore / InsightFlow / InsightBridge. 'Official Name: BHIV Intelligence Data Universe Registry v1.0.0', 'Registry ID: BHIV-IDU-REGISTRY-V1', 'Runtime Status: LIVE AND OPERATIONAL', 'MDU OpenAPI requires authentication'. Classification REUSE / ADAPT. Blocker noted: 'MDU authentication / bearer token provisioning'."
+    },
+    {
+      "source": "../day2/DAY2_CROSS_GROUP_EVIDENCE_RECONCILIATION.md line 332  (workspace root, not Day6/)",
+      "says": "'Insight ecosystem (Core / Flow / Bridge / MDU) | V3 | All four live; InsightBridge + MDU documented'. V3 is Group 3's highest evidence tier."
+    },
+    {
+      "source": "VANA-22-08-2026.md and every task file",
+      "says": "'TMS = strategy, GC = governance, MDU = schemas/provenance' - the triple names FUNCTIONS and SYSTEMS, not individuals."
+    }
+  ],
+  "_what_is_NOT_established": [
+    "WHO operates or administers the MDU registry within BHIV. No owner, maintainer or contact is named in any task document, contract, inbound artifact or Group 3 record.",
+    "Whether 'schema-authority approval' was ever intended as a human sign-off at all, as opposed to registration of a canonical schema in the MDU registry.",
+    "Group 3 holds no MDU bearer token, so it could not register anything even if that were the intent."
+  ],
+  "_consequence_for_the_amendment_gate": "The gate as written - 'contract-owner approval PLUS schema-authority/MDU approval' - cannot be satisfied by a signature, because MDU is a registry service. Either the requirement means registration rather than approval, or it means approval by whoever operates MDU - and that person is named nowhere in the available record.",
+  "_UPDATE_2026-08-24_manager_briefing": {
+    "_source": "Manager briefing on MDU execution state, 2026-08-24. REPORTED - transcribed from a message.",
+    "OPERATOR_IDENTIFIED": "Nupur — named as owner on 5 of the 6 listed gaps/blockers. This ANSWERS the question Group 3 and Arya could not: MDU has a human operator.",
+    "what_mdu_actually_does": "Dataset and trust registry. The verified E2E path is: API key auth -> dataset/trust service logic -> GC Shakti constitutional governance call -> PostgreSQL write -> audit log entry. The live proof was a TRUST TRANSITION test (VERIFIED <-> TRUSTED). Discovery reports 8 datasets, 37 canonical artifacts, 10 API keys.",
+    "access": {
+      "_precision_note": "Corrected 2026-08-24 after a sourcing check. An earlier version listed Vijay under 'api_keys_issued_to' and implied the list was exhaustive. Neither is supported by the briefing text.",
+      "api_key_issuance_EXPLICITLY_STATED": [
+        "Kavy - MasterDB: 'API key issued; live validation not yet performed (Phase 4, not started)'",
+        "Ruqaiya - PRANA: 'API key issued; no confirmed activity in audit logs yet'"
+      ],
+      "activity_stated_but_key_NOT_stated": [
+        "Vijay - InsightFlow: 'confirmed real integration activity in audit logs'. A key is a reasonable INFERENCE given the service uses API key auth, but issuance is not stated."
+      ],
+      "total_keys_reported": 10,
+      "attribution_is_NOT_exhaustive": "The briefing reports 10 API keys and explicitly attributes only 2. Who holds the other 8 is unknown.",
+      "group3_position": "Group 3 holds no MDU credential - verifiable from our own records, not inferred from the briefing. Whether one was ever issued to Group 3 and not passed on is NOT established either way."
+    },
+    "maturity_caveats_reported": [
+      "Phase 2 production hardening IN PROGRESS - dependency health check, startup validation, metrics, tracing, automated backups all outstanding.",
+      "/health returns a static OK and does NOT verify DB connectivity.",
+      "Replay-safe coverage 1/7, target 7/7.",
+      "Phase 4 MasterDB live validation with Kavy NOT STARTED.",
+      "Free-tier Postgres expires again on ~90-day cycle unless moved to paid tier.",
+      "Live OpenAPI does not self-describe API key auth."
+    ],
+    "NAME_DISCREPANCY": {
+      "manager_briefing_says": "MDU (Master Data Universe Registry)",
+      "live_service_returns": "BHIV Intelligence Data Universe Registry",
+      "registry_id": "BHIV-IDU-REGISTRY-V1",
+      "note": "Verified against the live root endpoint on 2026-08-24. Same service, two names in circulation. Minor, but worth settling before anything cites it formally."
+    },
+    "bearing_on_the_group3_gate": "MDU presents as a DATASET AND TRUST registry, not a schema-approval board. Its verified workflow is dataset trust-state transition under GC Shakti governance. Nothing in the briefing describes a JSON Schema submission or approval path. That is evidence the Group 3 observation contract may be out of scope - but it is NOT proof, because '37 canonical artifacts' is unexplained and Group 3 cannot inspect the registry without a key. The scope question still needs Nupur's answer."
+  },
+  "_VERIFICATION_OF_MANAGER_BRIEFING_2026-08-24": {
+    "_probed_at": "2026-08-24T12:28:14.433053+00:00",
+    "CONFIRMED": [
+      "Service is LIVE and externally reachable — GET / returns HTTP 200.",
+      "/docs is published and returns HTTP 200.",
+      "GC Shakti is a real, reachable dependency — /health reports gc_shakti reachable, http_status 200, latency 788 ms. This corroborates 'not mocked'."
+    ],
+    "CONTRADICTED_BY_LIVE_PROBE": {
+      "claim": "Section 5 PRODUCTION and section 6 GAPS: 'Health check: currently basic (returns static OK), not yet verifying live DB connectivity — this is an open Phase 2 item, not yet done.'",
+      "actual_response": {
+        "status": "healthy",
+        "version": "1.0.0",
+        "checks": {
+          "database": {
+            "status": "healthy",
+            "latency_ms": 5.4
+          },
+          "gc_shakti": {
+            "status": "reachable",
+            "http_status": 200,
+            "latency_ms": 305.3
+          }
+        }
+      },
+      "finding": "FALSE as written. /health performs REAL dependency checks and reports them: database status healthy with a measured latency, and gc_shakti reachable with an HTTP status and latency. It is not a static OK. The Phase 2 item listed as outstanding appears to be DONE.",
+      "most_likely_explanation": "The briefing is stale — Nupur shipped the dependency health check after it was written. Worth confirming rather than assuming."
+    },
+    "NAME_MISMATCH_RECONFIRMED": {
+      "briefing": "MDU (Master Data Universe Registry)",
+      "live_root": "BHIV Intelligence Data Universe Registry",
+      "registry_id": "BHIV-IDU-REGISTRY-V1"
+    },
+    "NOT_VERIFIABLE_FROM_OUTSIDE": [
+      "Render/Singapore hosting, PostgreSQL instance name and migration date",
+      "Discovery counts (8 datasets, 37 canonical artifacts, 10 API keys) — behind 401",
+      "Audit-log contents and per-integration activity",
+      "Replay-safe coverage 1/7, Phase status, backup schedule"
+    ]
+  }
+}

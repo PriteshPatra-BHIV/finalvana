@@ -1,0 +1,32 @@
+{
+  "observation_id": "MV-Z01-EXT-OPENMETEO-OBS001",
+  "canonical_record_id": "CR-f9782ddc-3a77-4df7-ba52-81a365ac165d",
+  "context_id": null,
+  "ruling": "ABSTAIN",
+  "action_eligibility": false,
+  "abstention_required": true,
+  "action_request": null,
+  "evidence": {
+    "source": null,
+    "confidence": "NOT VERIFIED",
+    "missing_critical_data": "NONE_BUT_UNVERIFIED",
+    "provenance_reference": "open-meteo:8bb80c24fe28b598",
+    "artifact_hash": "8bb80c24fe28b598dd15db831dc815688404bb7e457439e3c5501d502d4658cd",
+    "artifact_type": "sensor_reading",
+    "observation_timestamp": "2026-08-28T14:45:00.000Z",
+    "retrieval_timestamp": null,
+    "attribution": null,
+    "canonical_observation_location": {
+      "latitude": 18.718,
+      "longitude": 73.473,
+      "altitude_m": 766,
+      "gnss_status": "NOT_VERIFIED",
+      "position_accuracy_m": null
+    }
+  },
+  "provenance": {
+    "group2_decision_time": "2026-09-02T07:48:52.080Z",
+    "reason": "CONTEXT_NOT_VERIFIED",
+    "message": "Authoritative evidence threshold not met (Context not verified). Failing closed to ABSTAIN."
+  }
+}

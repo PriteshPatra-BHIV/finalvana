@@ -1,0 +1,199 @@
+{
+  "_README": "G-68 additional measurement records, emitted from already-captured and hash-verified Open-Meteo data. No new capture, no conversion.",
+  "_ruling": "Arya Barge, Group 3 Canonical Observation Contract owner, 2026-09-02",
+  "_emitted_at": "2026-09-02T07:35:57.576577+00:00",
+  "_regions": [
+    "MU",
+    "NM",
+    "VS",
+    "THN",
+    "MV"
+  ],
+  "_excluded": {
+    "TC": "raw source bytes never persisted; not recoverable without a new capture"
+  },
+  "_not_yet_ingested": "These are BUILT and VALIDATED only. Nothing has been sent to Group 1.",
+  "count": 15,
+  "records": [
+    {
+      "region": "MU",
+      "observation_id": "MU-Z01-EXT-OPENMETEO-OBS002",
+      "observation_type": "air_temperature",
+      "source_field": "temperature_2m",
+      "measurement": 27.5,
+      "unit": "°C",
+      "observation_timestamp": "2026-08-28T14:45:00Z",
+      "provenance_reference": "open-meteo:09e338bdf9fe1181",
+      "raw_artifact_sha256": "09e338bdf9fe1181bcecd9b815c31bea40a88cad10dca1bee5aaf638b5dc94c0",
+      "raw_artifact_file": "raw_artifact_09e338bdf9fe1181.json"
+    },
+    {
+      "region": "MU",
+      "observation_id": "MU-Z01-EXT-OPENMETEO-OBS003",
+      "observation_type": "relative_humidity",
+      "source_field": "relative_humidity_2m",
+      "measurement": 80,
+      "unit": "%",
+      "observation_timestamp": "2026-08-28T14:45:00Z",
+      "provenance_reference": "open-meteo:09e338bdf9fe1181",
+      "raw_artifact_sha256": "09e338bdf9fe1181bcecd9b815c31bea40a88cad10dca1bee5aaf638b5dc94c0",
+      "raw_artifact_file": "raw_artifact_09e338bdf9fe1181.json"
+    },
+    {
+      "region": "MU",
+      "observation_id": "MU-Z01-EXT-OPENMETEO-OBS004",
+      "observation_type": "wind_speed",
+      "source_field": "wind_speed_10m",
+      "measurement": 18.0,
+      "unit": "km/h",
+      "observation_timestamp": "2026-08-28T14:45:00Z",
+      "provenance_reference": "open-meteo:09e338bdf9fe1181",
+      "raw_artifact_sha256": "09e338bdf9fe1181bcecd9b815c31bea40a88cad10dca1bee5aaf638b5dc94c0",
+      "raw_artifact_file": "raw_artifact_09e338bdf9fe1181.json"
+    },
+    {
+      "region": "NM",
+      "observation_id": "NM-Z01-EXT-OPENMETEO-OBS002",
+      "observation_type": "air_temperature",
+      "source_field": "temperature_2m",
+      "measurement": 26.5,
+      "unit": "°C",
+      "observation_timestamp": "2026-08-28T14:45:00Z",
+      "provenance_reference": "open-meteo:526c84fa8deab6b7",
+      "raw_artifact_sha256": "526c84fa8deab6b7b292dbfe83801c4c23afd009e465855e0c243625e1a3cdf7",
+      "raw_artifact_file": "raw_artifact_526c84fa8deab6b7.json"
+    },
+    {
+      "region": "NM",
+      "observation_id": "NM-Z01-EXT-OPENMETEO-OBS003",
+      "observation_type": "relative_humidity",
+      "source_field": "relative_humidity_2m",
+      "measurement": 85,
+      "unit": "%",
+      "observation_timestamp": "2026-08-28T14:45:00Z",
+      "provenance_reference": "open-meteo:526c84fa8deab6b7",
+      "raw_artifact_sha256": "526c84fa8deab6b7b292dbfe83801c4c23afd009e465855e0c243625e1a3cdf7",
+      "raw_artifact_file": "raw_artifact_526c84fa8deab6b7.json"
+    },
+    {
+      "region": "NM",
+      "observation_id": "NM-Z01-EXT-OPENMETEO-OBS004",
+      "observation_type": "wind_speed",
+      "source_field": "wind_speed_10m",
+      "measurement": 7.5,
+      "unit": "km/h",
+      "observation_timestamp": "2026-08-28T14:45:00Z",
+      "provenance_reference": "open-meteo:526c84fa8deab6b7",
+      "raw_artifact_sha256": "526c84fa8deab6b7b292dbfe83801c4c23afd009e465855e0c243625e1a3cdf7",
+      "raw_artifact_file": "raw_artifact_526c84fa8deab6b7.json"
+    },
+    {
+      "region": "VS",
+      "observation_id": "VS-Z01-EXT-OPENMETEO-OBS002",
+      "observation_type": "air_temperature",
+      "source_field": "temperature_2m",
+      "measurement": 26.8,
+      "unit": "°C",
+      "observation_timestamp": "2026-08-28T14:45:00Z",
+      "provenance_reference": "open-meteo:eebcc3c2c23e0c4e",
+      "raw_artifact_sha256": "eebcc3c2c23e0c4ec5b4a8f952a61b6b0abb8c00db94794e0e8f7391a9d63ba8",
+      "raw_artifact_file": "raw_artifact_eebcc3c2c23e0c4e.json"
+    },
+    {
+      "region": "VS",
+      "observation_id": "VS-Z01-EXT-OPENMETEO-OBS003",
+      "observation_type": "relative_humidity",
+      "source_field": "relative_humidity_2m",
+      "measurement": 84,
+      "unit": "%",
+      "observation_timestamp": "2026-08-28T14:45:00Z",
+      "provenance_reference": "open-meteo:eebcc3c2c23e0c4e",
+      "raw_artifact_sha256": "eebcc3c2c23e0c4ec5b4a8f952a61b6b0abb8c00db94794e0e8f7391a9d63ba8",
+      "raw_artifact_file": "raw_artifact_eebcc3c2c23e0c4e.json"
+    },
+    {
+      "region": "VS",
+      "observation_id": "VS-Z01-EXT-OPENMETEO-OBS004",
+      "observation_type": "wind_speed",
+      "source_field": "wind_speed_10m",
+      "measurement": 18.2,
+      "unit": "km/h",
+      "observation_timestamp": "2026-08-28T14:45:00Z",
+      "provenance_reference": "open-meteo:eebcc3c2c23e0c4e",
+      "raw_artifact_sha256": "eebcc3c2c23e0c4ec5b4a8f952a61b6b0abb8c00db94794e0e8f7391a9d63ba8",
+      "raw_artifact_file": "raw_artifact_eebcc3c2c23e0c4e.json"
+    },
+    {
+      "region": "THN",
+      "observation_id": "THN-Z01-EXT-OPENMETEO-OBS002",
+      "observation_type": "air_temperature",
+      "source_field": "temperature_2m",
+      "measurement": 26.6,
+      "unit": "°C",
+      "observation_timestamp": "2026-08-28T14:45:00Z",
+      "provenance_reference": "open-meteo:5492ece45919ec02",
+      "raw_artifact_sha256": "5492ece45919ec02c2c577bdd16d58304105a80542772de2457c2a9640a06af9",
+      "raw_artifact_file": "raw_artifact_5492ece45919ec02.json"
+    },
+    {
+      "region": "THN",
+      "observation_id": "THN-Z01-EXT-OPENMETEO-OBS003",
+      "observation_type": "relative_humidity",
+      "source_field": "relative_humidity_2m",
+      "measurement": 85,
+      "unit": "%",
+      "observation_timestamp": "2026-08-28T14:45:00Z",
+      "provenance_reference": "open-meteo:5492ece45919ec02",
+      "raw_artifact_sha256": "5492ece45919ec02c2c577bdd16d58304105a80542772de2457c2a9640a06af9",
+      "raw_artifact_file": "raw_artifact_5492ece45919ec02.json"
+    },
+    {
+      "region": "THN",
+      "observation_id": "THN-Z01-EXT-OPENMETEO-OBS004",
+      "observation_type": "wind_speed",
+      "source_field": "wind_speed_10m",
+      "measurement": 9.9,
+      "unit": "km/h",
+      "observation_timestamp": "2026-08-28T14:45:00Z",
+      "provenance_reference": "open-meteo:5492ece45919ec02",
+      "raw_artifact_sha256": "5492ece45919ec02c2c577bdd16d58304105a80542772de2457c2a9640a06af9",
+      "raw_artifact_file": "raw_artifact_5492ece45919ec02.json"
+    },
+    {
+      "region": "MV",
+      "observation_id": "MV-Z01-EXT-OPENMETEO-OBS002",
+      "observation_type": "air_temperature",
+      "source_field": "temperature_2m",
+      "measurement": 21.0,
+      "unit": "°C",
+      "observation_timestamp": "2026-08-28T14:45:00Z",
+      "provenance_reference": "open-meteo:8bb80c24fe28b598",
+      "raw_artifact_sha256": "8bb80c24fe28b598dd15db831dc815688404bb7e457439e3c5501d502d4658cd",
+      "raw_artifact_file": "raw_artifact_8bb80c24fe28b598.json"
+    },
+    {
+      "region": "MV",
+      "observation_id": "MV-Z01-EXT-OPENMETEO-OBS003",
+      "observation_type": "relative_humidity",
+      "source_field": "relative_humidity_2m",
+      "measurement": 100,
+      "unit": "%",
+      "observation_timestamp": "2026-08-28T14:45:00Z",
+      "provenance_reference": "open-meteo:8bb80c24fe28b598",
+      "raw_artifact_sha256": "8bb80c24fe28b598dd15db831dc815688404bb7e457439e3c5501d502d4658cd",
+      "raw_artifact_file": "raw_artifact_8bb80c24fe28b598.json"
+    },
+    {
+      "region": "MV",
+      "observation_id": "MV-Z01-EXT-OPENMETEO-OBS004",
+      "observation_type": "wind_speed",
+      "source_field": "wind_speed_10m",
+      "measurement": 10.8,
+      "unit": "km/h",
+      "observation_timestamp": "2026-08-28T14:45:00Z",
+      "provenance_reference": "open-meteo:8bb80c24fe28b598",
+      "raw_artifact_sha256": "8bb80c24fe28b598dd15db831dc815688404bb7e457439e3c5501d502d4658cd",
+      "raw_artifact_file": "raw_artifact_8bb80c24fe28b598.json"
+    }
+  ]
+}

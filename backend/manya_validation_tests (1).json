@@ -1,0 +1,106 @@
+{
+  "test_suite": "Manya \u2014 Observation Validation",
+  "purpose": "Prevent malformed field observations from silently promoting into canonical records.",
+  "mandatory_tests": [
+    {
+      "test_id": "T01",
+      "test": "Valid observation",
+      "field_changed": "\u2014",
+      "input": "Frozen Group 3 LIDAR fixture",
+      "expected_result": "ACCEPTED",
+      "validation_outcome": "ACCEPTED",
+      "status": "PASS",
+      "evidence": "Frozen JSON Schema + semantic checks"
+    },
+    {
+      "test_id": "T02",
+      "test": "Missing timestamp",
+      "field_changed": "timestamp",
+      "input": "Field removed",
+      "expected_result": "REJECTED",
+      "validation_outcome": "REJECTED",
+      "status": "PASS",
+      "evidence": "JSON Schema required-field check"
+    },
+    {
+      "test_id": "T03",
+      "test": "Missing location",
+      "field_changed": "latitude",
+      "input": "Field removed",
+      "expected_result": "REJECTED",
+      "validation_outcome": "REJECTED",
+      "status": "PASS",
+      "evidence": "JSON Schema required-field check"
+    },
+    {
+      "test_id": "T04",
+      "test": "Unknown device",
+      "field_changed": "device_id",
+      "input": "DEV-UNKNOWN-999",
+      "expected_result": "REJECTED",
+      "validation_outcome": "REJECTED",
+      "status": "PASS",
+      "evidence": "Semantic device-registry check using current controlled fixture registry"
+    },
+    {
+      "test_id": "T05",
+      "test": "Invalid observation ID",
+      "field_changed": "observation_id",
+      "input": "not-an-id",
+      "expected_result": "REJECTED",
+      "validation_outcome": "REJECTED",
+      "status": "PASS",
+      "evidence": "JSON Schema pattern check"
+    },
+    {
+      "test_id": "T06",
+      "test": "Malformed measurement",
+      "field_changed": "measurement",
+      "input": "Object instead of number/string",
+      "expected_result": "REJECTED",
+      "validation_outcome": "REJECTED",
+      "status": "PASS",
+      "evidence": "JSON Schema type check"
+    },
+    {
+      "test_id": "T07",
+      "test": "NOT VERIFIED calibration",
+      "field_changed": "calibration_status",
+      "input": "NOT VERIFIED",
+      "expected_result": "ACCEPTED",
+      "validation_outcome": "ACCEPTED",
+      "status": "PASS",
+      "evidence": "Frozen calibration enum; NOT VERIFIED is an allowed state"
+    },
+    {
+      "test_id": "T08",
+      "test": "Missing artifact reference",
+      "field_changed": "raw_artifact_reference",
+      "input": "Field removed",
+      "expected_result": "REJECTED",
+      "validation_outcome": "REJECTED",
+      "status": "PASS",
+      "evidence": "JSON Schema required-field check"
+    },
+    {
+      "test_id": "T09",
+      "test": "Duplicate submission",
+      "field_changed": "idempotency_key",
+      "input": "Same key + same canonical payload",
+      "expected_result": "IDEMPOTENT_REPLAY / no duplicate",
+      "validation_outcome": "IDEMPOTENT_REPLAY",
+      "status": "PASS \u2014 LOCAL",
+      "evidence": "Raj API handoff: idempotency/replay/conflict locally verified; live PostgreSQL/PostGIS E2E pending"
+    }
+  ],
+  "additional_test": {
+    "test_id": "T10",
+    "test": "Blank trace ID (nullable)",
+    "field_changed": "trace_id",
+    "input": "NULL",
+    "expected_result": "ACCEPTED",
+    "validation_outcome": "ACCEPTED",
+    "status": "PASS",
+    "evidence": "Group 3 boundary is nullable; runtime returns trace_id"
+  }
+}

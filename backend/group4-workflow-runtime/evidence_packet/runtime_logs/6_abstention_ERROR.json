@@ -1,0 +1,6 @@
+{
+  "test_case": "6_abstention",
+  "description": "Explicit abstention state for a completely gnarled upstream record.",
+  "error": "Error",
+  "response": null
+}

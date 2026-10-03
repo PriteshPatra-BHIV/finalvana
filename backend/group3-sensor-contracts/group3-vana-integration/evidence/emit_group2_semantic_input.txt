@@ -1,0 +1,22 @@
+Group 3 -> Group 2 semantic input emitted -> group2_semantic_input.json
+
+SEVEN REQUESTED FIELDS
+  parameter          owner=GROUP 3                            PROVIDED
+  source_id          owner=GROUP 3                            PROVIDED
+  citation           owner=GROUP 2                            GROUP 2 FIELD - see data-quality flags below
+  validation_status  owner=GROUP 2 (scientific) / GROUP 3 (field QA) BOTH PROVIDED
+  confidence         owner=GROUP 2                            GROUP 2 FIELD
+  quality            owner=GROUP 3                            PROVIDED
+  uncertainty        owner=GROUP 3                            NOT_VERIFIED
+
+TRACEABILITY
+  leg 1  observation_id      SATISFIED - the identifier is unchanged at every hop
+  leg 2  scientific citation NOT SATISFIABLE TODAY
+
+CITATION DATA-QUALITY FLAGS (Group 2's record)
+  - source_doi = 'Thane Creek Mangrove Study 2023' is not a DOI. A DOI has the form 10.xxxx/yyyy. This appears to be a title in a DOI field.
+  - source_citation = 'ScienceDirect / Elsevier (2023)' names a platform and publisher but has no author, title or retrievable identifier, and source_url 
+  - A citation is populated on a record whose value is null and whose validation_status is GAP. Group 2's own explanation states the source does not provi
+
+Every artifact exists. The science does not. Closing this dependency
+as SATISFIED would record a traceability chain that does not hold.

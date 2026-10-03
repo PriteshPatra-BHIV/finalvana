@@ -1,0 +1,111 @@
+{
+  "_README": "Group 3 -> Group 4 handoff, TANTRA execution envelope. Format confirmed by Karan Barda (Group 4 Lead) on 2026-08-14. The four null fields are runtime-owned by his instruction and are null BY DESIGN, not by omission.",
+  "_format_ruling": {
+    "confirmed_by": "Karan Barda, Group 4 Lead",
+    "date": "2026-08-14",
+    "envelope": "TANTRA Execution Envelope (Candidate A)",
+    "runtime_owned_fields": [
+      "execution_id",
+      "trace_id",
+      "tenant_id",
+      "lineage_hash"
+    ],
+    "producer_owned_fields": [
+      "replay.idempotency_key",
+      "replay.sequence"
+    ],
+    "supersedes": "the two-candidate emitter; Candidate B is not the runtime handoff"
+  },
+  "_honesty": {
+    "is_synthetic": true,
+    "source_type": "SYNTHETIC_TEST",
+    "hardware_verified": false,
+    "canonical_store": "LOCAL - Group 1 schema v0.1 applied to PostgreSQL 16 / PostGIS",
+    "note": "No Group 3 sensor has produced a recorded reading. This observation was ingested through Group 1's schema on a LOCAL database and read back. Do not treat it as real field data or as a Group 1 instance record."
+  },
+  "_trace_convention": {
+    "canonical_format": "VANA-<12 lowercase hex>",
+    "example": "VANA-3a9fd87b337d",
+    "regex": "^VANA-[0-9a-f]{12}$",
+    "source": "Group 1 VANA MasterDB Observation API v1.0.0 handoff, Raj Prajapati 2026-08-14, target commit 92a37b337df1fb1d4b8565ada47656d182771cdf. The API returns trace_id in every ingestion, replay, conflict and duplicate response.",
+    "supersedes": "the provisional 'trace-vana-<16 hex>' form observed in a Group 4 governed execution on 2026-08-13",
+    "group3_position": "Group 3 emits null and never mints a trace. Karan's 2026-08-14 ruling on OWNERSHIP stands - the producer does not mint traces. This fixes only the FORMAT.",
+    "correlation_resolved": "Because Group 1's API returns trace_id on ingestion, Group 3 CAN now correlate its submission to the resulting trace. This closes the open question of whether the trace is returned to the producer."
+  },
+  "_still_open_with_group4": [
+    {
+      "item": "Does Group 4's runtime accept Group 1's VANA-<12 hex> trace, or mint its own?",
+      "status": "OPEN - must be settled between Groups 1 and 4",
+      "impact_on_group3": "If both mint a trace, one observation carries two identifiers and correlation breaks at the boundary. Group 3 has adopted the Group 1 format and will carry whichever the two groups agree on.",
+      "owner": "Raj / Karan"
+    },
+    {
+      "item": "Trace null in runtime/OTel logs",
+      "status": "OPEN - disclosed by Karan himself",
+      "impact_on_group3": "Correlation unproven at Group 4's layer. Not Group 3's to fix, but it means the injected trace is not yet observable end to end.",
+      "owner": "Mohit, Group 4"
+    }
+  ],
+  "_payload_sha256": "e77a26a11b65d0fc9934f68ae57e44ede2fce70a56b1e029c23b9666c4985ac9",
+  "_generated_at": "2026-08-25T11:43:58.047782+00:00",
+  "envelope": {
+    "execution_id": null,
+    "trace_id": null,
+    "tenant_id": null,
+    "lineage_hash": null,
+    "replay": {
+      "idempotency_key": "TC-Z03-F02-LIDAR-OBS001",
+      "sequence": 1
+    },
+    "payload": {
+      "observation": {
+        "observation_id": "TC-Z03-F02-LIDAR-OBS001",
+        "observation_type": "aerial",
+        "observation_date": "2026-08-13",
+        "observed_at": "2026-08-13T09:14:22Z",
+        "device_id": "G3-LIDAR-001",
+        "location": {
+          "latitude": 19.1288,
+          "longitude": 72.9421,
+          "crs": "EPSG:4326",
+          "geo_id": "GEO-TC-Z03",
+          "place_name": "Thane Creek Kanjurmarg"
+        },
+        "measurement": {
+          "measurement_id": "TC-Z03-F02-LIDAR-OBS001-M1",
+          "parameter": "canopy_height",
+          "value": 4.7,
+          "unit": "m",
+          "method": "chm_derived",
+          "accuracy": "NOT VERIFIED",
+          "calibration_status": "NOT VERIFIED"
+        },
+        "quality_status": "VALIDATED",
+        "source": {
+          "source_id": "SRC-G3-FIELD-TC-Z03-F02",
+          "source_type": "SYNTHETIC_TEST",
+          "is_synthetic": true
+        },
+        "dataset": {
+          "dataset_id": "TC-Z03-F02",
+          "dataset_name": "Thane Creek Kanjurmarg mission TC-Z03-F02",
+          "methodology": "Drone aerial survey per Group 3 Field Mission SOP",
+          "schema_version": "0.1"
+        },
+        "raw_artifact": {
+          "reference": "TC-Z03-F02/drone/pointcloud_F02_001.las",
+          "sha256": "f7254999689ae5b530a0006d0fb6765df0317973504e8c5d1b393bfa5826cf9d"
+        },
+        "provenance": {
+          "provenance_id": "TC-Z03-F02-LIDAR-OBS001-M1-P",
+          "derivation_note": "Field capture by device G3-LIDAR-001; raw artifact TC-Z03-F02/drone/pointcloud_F02_001.las"
+        }
+      },
+      "emitted_by": "group3-field-edge",
+      "contract_version": "1.2",
+      "contract_version_note": "V1.2 observation contract, ingested through Group 1 local schema v0.1. SUPERSEDED - Group 1 accepted V2.2 live on 2026-08-25. Re-run with --from-live for the current envelope.",
+      "is_synthetic": true,
+      "hardware_verified": false
+    }
+  }
+}

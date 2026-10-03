@@ -1,0 +1,107 @@
+{
+  "_README": "SAMACHAR observation built from Omkar Patil's real pipeline output, under Arya Barge's contract rulings of 2026-08-31.",
+  "_built_at": "2026-08-31T12:03:48.215914+00:00",
+  "_source_file": "samachar4.json",
+  "_source_file_note": "Leading junk stripped before parsing: '' (Swagger UI copy-paste artifact, 0 chars). Recorded, not hidden.",
+  "_source_url": "https://www.freepressjournal.in/mumbai/thane-mangrove-cell-installs-protective-fencing-at-mithbunder-wetlands-to-prevent-encroachments-and-dumping",
+  "_source_title": "Thane Mangrove Cell Installs Protective Fencing At Mithbunder Wetlands To Prevent Encroachments And Dumping",
+  "_rulings_applied": {
+    "observation_type": "news_report",
+    "unit": "score",
+    "observation_id": "SMR-Z01-EXT-SAMACHAR-OBS001",
+    "sensor_id": "SAMACHAR",
+    "device_id": "G3-EXT-SAMACHAR-01",
+    "_measurement_rule": "Omkar's news_score. credibility/confidence stay as source metadata.",
+    "_authority": "Arya Barge, Group 3 Canonical Observation Contract Owner, 2026-08-31"
+  },
+  "_timestamp_derivation": {
+    "raw_string": "Fariyal SayyedUpdated:Thursday, June 04, 2026, 05:54 PM IST",
+    "kind": "last_updated",
+    "_kind_note": "first_published and last_updated are different facts. Recorded, not flattened.",
+    "parsed_IST": "2026-06-04 17:54 IST",
+    "converted_UTC": "2026-06-04T12:24:00Z",
+    "_cross_check": "Agrees with the source's own extracted date entity: ['June 04, 2026']"
+  },
+  "_location_derivation": {
+    "_rule": "Derived from the article's own extracted place entities and mapped to an authorised register point. NEVER hardcoded, never guessed.",
+    "article_places": [
+      "Thane East"
+    ],
+    "matched_place": "Thane East",
+    "mapped_to_region": "Thane",
+    "register_coordinate": [
+      19.222,
+      72.956
+    ],
+    "coordinate_basis": "Upvan Lake Basin / Yeoor Hills boundary",
+    "_honest_caveat": "This is the REGISTERED SURVEY POINT for that region, not the article's specific site. The source supplies no coordinates. It is the subject area of the report, not a sensor position.",
+    "_defect_fixed_2026_08_31": "An earlier build hardcoded Mumbai's coordinates and placed them on a Thane East article. Caught by Omkar Patil asking how location is represented when only a place name is available."
+  },
+  "_source_metadata_NOT_used_as_measurement": {
+    "_why": "Arya's ruling - these stay source metadata, never substituted.",
+    "credibility_score": 76.1,
+    "confidence": 86,
+    "authenticity": 76.1
+  },
+  "_raw_artifact_file": "evidence/live/raw_artifact_samachar_ec58172b0f1e2ef8.json",
+  "_honest_caveat": "A news report is not a physical measurement. synthetic_state CONTROLLED, is_synthetic true, hardware_verified false. The location is the SUBJECT of the article, not a sensor position.",
+  "mission_id": "SMR-Z01-EXT",
+  "survey": "SMR",
+  "contract_version": "2.2",
+  "observations": [
+    {
+      "contract_version": "2.2",
+      "schema_version": "2.2",
+      "observation_id": "SMR-Z01-EXT-SAMACHAR-OBS001",
+      "survey_id": "SMR",
+      "zone_id": "Z01",
+      "flight_id": "EXT",
+      "sensor_id": "SAMACHAR",
+      "observation_seq": "OBS001",
+      "mission_id": "SMR-Z01-EXT",
+      "device_id": "G3-EXT-SAMACHAR-01",
+      "source_identity": "group3-field-edge",
+      "observation_type": "news_report",
+      "measurement": 0.8999999999999999,
+      "unit": "score",
+      "capture_method": "external_api",
+      "observation_timestamp": "2026-06-04T12:24:00Z",
+      "source_timestamp": "2026-06-04T12:24:00Z",
+      "ingestion_timestamp": null,
+      "location": {
+        "latitude": 19.222,
+        "longitude": 72.956,
+        "altitude_m": null,
+        "gnss_status": "NOT_VERIFIED",
+        "position_accuracy_m": null
+      },
+      "data_state": "CAPTURED",
+      "quality_state": "CAPTURED",
+      "synthetic_state": "CONTROLLED",
+      "is_synthetic": true,
+      "hardware_verified": false,
+      "calibration_state": "NOT_VERIFIED",
+      "accuracy": "NOT_VERIFIED",
+      "processing_status": "raw",
+      "raw_artifact": "https://www.freepressjournal.in/mumbai/thane-mangrove-cell-installs-protective-fencing-at-mithbunder-wetlands-to-prevent-encroachments-and-dumping",
+      "raw_artifact_integrity": {
+        "checksum_sha256": "ec58172b0f1e2ef8232d546aeff7a61ccdc89f378f448dc4a2d633d5a332a934",
+        "hash_algorithm": "sha256",
+        "artifact_type": "sensor_reading"
+      },
+      "provenance_reference": "samachar:ec58172b0f1e2ef8",
+      "provenance": {
+        "device_id": "G3-EXT-SAMACHAR-01",
+        "mission_id": "SMR-Z01-EXT",
+        "captured_at": "2026-06-04T12:24:00Z",
+        "raw_artifact": "https://www.freepressjournal.in/mumbai/thane-mangrove-cell-installs-protective-fencing-at-mithbunder-wetlands-to-prevent-encroachments-and-dumping"
+      },
+      "idempotency_key": "IK-SMR-Z01-EXT-SAMACHAR-OBS001",
+      "trace_id": null,
+      "parent_reference": null,
+      "integrity_reference": null,
+      "waypoint_id": null,
+      "tidal_state": null
+    }
+  ]
+}

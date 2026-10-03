@@ -1,0 +1,92 @@
+{
+  "_README": "ONE canonical observation, SELECTed out of Group 1's VANA-schema.sql after ingesting the Group 3 field fixture through it. Every value in 'canonical_observation' was read from the database. This is Group 1's SCHEMA, not Group 1's INSTANCE - see _honesty.",
+  "_honesty": {
+    "is_synthetic": true,
+    "source_type": "SYNTHETIC_TEST",
+    "hardware_verified": false,
+    "canonical_store": "LOCAL - Group 1 schema v0.1 applied to PostgreSQL 16 / PostGIS",
+    "not_proven": [
+      "Group 1's own database instance",
+      "the SVACS / edge transport hop",
+      "any physical sensor reading"
+    ],
+    "note": "No Group 3 sensor has produced a recorded reading. Values are illustrative and exist to prove the system path, not hardware readiness. Do not treat this as real field data."
+  },
+  "_generated": {
+    "at": "2026-08-20T18:00:29.198486+00:00",
+    "by": "integration/emit_canonical_observation.py",
+    "schema_applied": "VANA-schema-v0.1.sql",
+    "fixture": "sample_mission_package.json",
+    "observations_ingested": 3,
+    "observation_rows_after_resubmit": 3,
+    "idempotent_reread_stable": true
+  },
+  "group2_minimal_view": {
+    "observation_id": "TC-Z03-F02-LIDAR-OBS001",
+    "location": {
+      "latitude": 19.1288,
+      "longitude": 72.9421
+    },
+    "timestamp": "2026-08-13T09:14:22Z",
+    "measurement": {
+      "value": 4.7,
+      "unit": "m"
+    }
+  },
+  "canonical_observation": {
+    "observation_id": "TC-Z03-F02-LIDAR-OBS001",
+    "observation_type": "aerial",
+    "observation_date": "2026-08-13",
+    "observed_at": "2026-08-13T09:14:22Z",
+    "device_id": "G3-LIDAR-001",
+    "location": {
+      "latitude": 19.1288,
+      "longitude": 72.9421,
+      "crs": "EPSG:4326",
+      "geo_id": "GEO-TC-Z03",
+      "place_name": "Thane Creek Kanjurmarg"
+    },
+    "measurement": {
+      "measurement_id": "TC-Z03-F02-LIDAR-OBS001-M1",
+      "parameter": "canopy_height",
+      "value": 4.7,
+      "unit": "m",
+      "method": "chm_derived",
+      "accuracy": "NOT VERIFIED",
+      "calibration_status": "NOT VERIFIED"
+    },
+    "quality_status": "VALIDATED",
+    "source": {
+      "source_id": "SRC-G3-FIELD-TC-Z03-F02",
+      "source_type": "SYNTHETIC_TEST",
+      "is_synthetic": true
+    },
+    "dataset": {
+      "dataset_id": "TC-Z03-F02",
+      "dataset_name": "Thane Creek Kanjurmarg mission TC-Z03-F02",
+      "methodology": "Drone aerial survey per Group 3 Field Mission SOP",
+      "schema_version": "0.1"
+    },
+    "raw_artifact": {
+      "reference": "TC-Z03-F02/drone/pointcloud_F02_001.las",
+      "sha256": "f7254999689ae5b530a0006d0fb6765df0317973504e8c5d1b393bfa5826cf9d"
+    },
+    "provenance": {
+      "provenance_id": "TC-Z03-F02-LIDAR-OBS001-M1-P",
+      "derivation_note": "Field capture by device G3-LIDAR-001; raw artifact TC-Z03-F02/drone/pointcloud_F02_001.las"
+    }
+  },
+  "group4_handoff": {
+    "observation_id": "TC-Z03-F02-LIDAR-OBS001",
+    "idempotency_key": "TC-Z03-F02-LIDAR-OBS001",
+    "trace_id": null,
+    "trace_id_status": "NULL on this record, and correctly so. CANONICAL FORMAT is 'VANA-<12 lowercase hex>' (e.g. VANA-3a9fd87b337d), per the Group 1 VANA MasterDB Observation API v1.0.0 handoff, which returns trace_id in every ingestion, replay, conflict and duplicate response. Group 3 does NOT mint traces - it emits null and receives one back on ingestion. The trace becomes non-null only after this observation has been submitted.",
+    "identity_rule": "Identity is the whole tuple: Survey + Zone + Flight + Sensor + Observation seq, PLUS coordinates and timestamp. The OBS### fragment is NOT unique on its own - it repeats every flight.",
+    "device_registration": {
+      "device_id": "G3-LIDAR-001",
+      "intended_capability_type": "edge_robotics",
+      "status": "NOT REGISTERED - route POST /api/v1/registry/capabilities unconfirmed by Group 4"
+    },
+    "idempotency": "Re-submitting the identical package left observation count at 3. Enforced by ON CONFLICT DO NOTHING on the natural key."
+  }
+}

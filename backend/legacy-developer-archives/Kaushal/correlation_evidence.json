@@ -1,0 +1,17 @@
+{
+  "observation_id": "TC-Z03-F02-LIDAR-OBS001",
+  "canonical_record_id": "REC-20260813-TC-Z03-001",
+  "context_id": "CTX-20260813-TC-Z03-001",
+  "correlation_status": "VERIFIED",
+  "lineage": [
+    "TC-Z03-F02-LIDAR-OBS001",
+    "REC-20260813-TC-Z03-001",
+    "CTX-20260813-TC-Z03-001"
+  ],
+  "provenance": [
+    "10.1016/j.rsma.2023.103207",
+    "10.5281/zenodo.6894273"
+  ],
+  "evidence_state": "CONTROLLED",
+  "note": "Note: ctx-tc-001 is a NON-CANONICAL LOCAL TEST FIXTURE and is excluded from this evidence."
+}

@@ -1,0 +1,37 @@
+VALID OBSERVATIONS FROM THE MISSION PACKAGE
+  [PASS] TC-Z03-F02-LIDAR-OBS001                        expect accept  got accepted
+  [PASS] TC-Z03-F02-IMX500-OBS002                       expect accept  got accepted
+  [PASS] TC-Z03-F02-IMX500-OBS003                       expect accept  got accepted
+
+MALFORMED OBSERVATIONS — must be rejected
+  [PASS] missing timestamp                              expect REJECT  got rejected
+  [PASS] missing latitude                               expect REJECT  got rejected
+  [PASS] null location but quality_status VALIDATED     expect REJECT  got rejected
+  [PASS] missing device_id                              expect REJECT  got rejected
+  [PASS] observation_id is the bare sequence fragment   expect REJECT  got rejected
+  [PASS] malformed observation_id                       expect REJECT  got rejected
+  [PASS] numeric measurement with no unit               expect REJECT  got rejected
+  [PASS] accuracy null instead of 'NOT VERIFIED'        expect REJECT  got rejected
+  [PASS] accuracy as free text                          expect REJECT  got rejected
+  [PASS] calibration_status outside the enum            expect REJECT  got rejected
+  [PASS] quality_status outside the enum                expect REJECT  got rejected
+  [PASS] missing raw artifact reference                 expect REJECT  got rejected
+  [PASS] missing provenance                             expect REJECT  got rejected
+  [PASS] latitude out of range                          expect REJECT  got rejected
+  [PASS] timestamp: impossible date, valid shape        expect REJECT  got rejected
+  [PASS] timestamp: 30 February                         expect REJECT  got rejected
+  [PASS] timestamp: wrong format entirely               expect REJECT  got rejected
+  [PASS] timestamp: no timezone                         expect REJECT  got rejected
+  [PASS] device_id: whitespace only                     expect REJECT  got rejected
+  [PASS] device_id: empty string                        expect REJECT  got rejected
+  [PASS] processing_status: empty string                expect REJECT  got rejected
+  [PASS] raw artifact: empty path                       expect REJECT  got rejected
+  [PASS] latitude: string instead of number             expect REJECT  got rejected
+  [PASS] latitude: boolean instead of number            expect REJECT  got rejected
+  [PASS] provenance: string instead of object           expect REJECT  got rejected
+  [PASS] trace_id: non-conforming format                expect REJECT  got rejected
+  [PASS] unexpected extra field                         expect REJECT  got rejected
+
+30/30 checks passed
+
+A malformed or incomplete field observation cannot silently become a valid canonical record.

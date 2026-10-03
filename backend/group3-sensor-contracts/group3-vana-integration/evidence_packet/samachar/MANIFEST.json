@@ -1,0 +1,105 @@
+{
+  "_bundle": "SAMACHAR evidence - for Arya's final REVIEW_PACKET",
+  "_built_at": "2026-08-31T12:04:46.669042+00:00",
+  "_built_by": "integration/build_samachar_evidence_bundle.py",
+  "requested_items": {
+    "final V2.2 payload under approved rulings": "api_samples/SAMACHAR_payload_as_built.json",
+    "structural validation evidence": "runtime_logs/validation_run.txt - PASS, 0 errors",
+    "semantic validation evidence": "runtime_logs/validation_run.txt - PASS, 0 errors",
+    "actual G1 POST request/response": "NOT AVAILABLE - runtime_logs/POST_STATUS_HELD.json",
+    "canonical_record_id + GET": "NOT AVAILABLE - depends on the POST",
+    "G-40 500 evidence": "evidence_packet/runtime_logs/ - three exchanges on the same new-survey path, using Mumbai. NOT SAMACHAR's own POST",
+    "runtime logs": "runtime_logs/",
+    "screenshots": "screenshots/README.md - none, and why",
+    "focused code packet": "code_packet/ - 4 files"
+  },
+  "rulings_applied": {
+    "observation_type": "news_report",
+    "unit": "score",
+    "observation_id": "SMR-Z01-EXT-SAMACHAR-OBS001",
+    "sensor_id": "SAMACHAR",
+    "device_id": "G3-EXT-SAMACHAR-01",
+    "_measurement_rule": "Omkar's news_score. credibility/confidence stay as source metadata.",
+    "_authority": "Arya Barge, Group 3 Canonical Observation Contract Owner, 2026-08-31"
+  },
+  "timestamp_derivation": {
+    "raw_string": "Fariyal SayyedUpdated:Thursday, June 04, 2026, 05:54 PM IST",
+    "kind": "last_updated",
+    "_kind_note": "first_published and last_updated are different facts. Recorded, not flattened.",
+    "parsed_IST": "2026-06-04 17:54 IST",
+    "converted_UTC": "2026-06-04T12:24:00Z",
+    "_cross_check": "Agrees with the source's own extracted date entity: ['June 04, 2026']"
+  },
+  "source": {
+    "file": "samachar4.json",
+    "url": "https://www.freepressjournal.in/mumbai/thane-mangrove-cell-installs-protective-fencing-at-mithbunder-wetlands-to-prevent-encroachments-and-dumping",
+    "title": "Thane Mangrove Cell Installs Protective Fencing At Mithbunder Wetlands To Prevent Encroachments And Dumping"
+  },
+  "honest_caveat": "A news report is not a physical measurement. synthetic_state CONTROLLED, is_synthetic true, hardware_verified false. The location is the SUBJECT of the article, not a sensor position.",
+  "_updated_at": "2026-09-01T10:07:19.227431+00:00",
+  "file_count": 12,
+  "_count_note": "12 files hashed; 13 in total including this manifest, which cannot hash itself.",
+  "_status": "INGESTED - canonical CR-c3d2e7cc-3ddc-41d6-a85c-b782cf43801d, POST 201 / GET 200, 2026-09-01",
+  "files": [
+    {
+      "path": "INGESTION_RESULT.md",
+      "sha256": "e02f6e94fcadd82d60505178f6cdd41b199ca490394f8eaccfcee8199e67b695",
+      "bytes": 2107
+    },
+    {
+      "path": "api_samples/SAMACHAR_payload_as_built.json",
+      "sha256": "cb8bdcf4baf92b7533b07062824cc5a2194fad403e6d2c4791e0e7cc454b069d",
+      "bytes": 5166
+    },
+    {
+      "path": "api_samples/SOURCE_samachar4.json",
+      "sha256": "33fe7998d397ddf91651ecc4970e7eeaadbcc457d7ed205a7b428c58f271d9b5",
+      "bytes": 48751
+    },
+    {
+      "path": "api_samples/raw_artifact_samachar_ec58172b0f1e2ef8.json",
+      "sha256": "ec58172b0f1e2ef8232d546aeff7a61ccdc89f378f448dc4a2d633d5a332a934",
+      "bytes": 34124
+    },
+    {
+      "path": "code_packet/emit_samachar_observation.py",
+      "sha256": "5ebacaba050e52271feb03bba6242ea09dfbac39cdde25484b00d12ea06c38ae",
+      "bytes": 13470
+    },
+    {
+      "path": "code_packet/observation.schema.v2.2.json",
+      "sha256": "5e1bfc5875d6ed8049f9282973f5550d8c385bc771704ce2787b4f9910cdb868",
+      "bytes": 50182
+    },
+    {
+      "path": "code_packet/post_single_frozen_observation.py",
+      "sha256": "5ebf27486ba43dd48ff76b7f37c36c8de2325d790ff3993f7a7a5d170f7d48f7",
+      "bytes": 9085
+    },
+    {
+      "path": "code_packet/validate_semantic_v22.py",
+      "sha256": "5e6d31ec516e975604037b490f77f35114ceace75f68e60b75763d724bcf4d40",
+      "bytes": 25006
+    },
+    {
+      "path": "runtime_logs/POST_STATUS_HELD.json",
+      "sha256": "4d19093f3b4957a661ce3c0cf23c456920fd442924c1ddaaa554e84c967322b3",
+      "bytes": 1582
+    },
+    {
+      "path": "runtime_logs/SINGLE_POST_SMR-Z01-EXT-SAMACHAR-OBS001_20260901T100042Z.json",
+      "sha256": "ddb8aaf14ce9d733f89432699d43a7984644328686624a16a0e7ebd47eeb75f9",
+      "bytes": 4950
+    },
+    {
+      "path": "runtime_logs/validation_run.txt",
+      "sha256": "6ade94d714852bc7875d8b9c20b7a629a231279a776a558cb2f1b17dcda7e135",
+      "bytes": 816
+    },
+    {
+      "path": "screenshots/README.md",
+      "sha256": "e570f501b724d2d2327c627e1f72b36665805b15746436639c2587465d6c7d27",
+      "bytes": 339
+    }
+  ]
+}
