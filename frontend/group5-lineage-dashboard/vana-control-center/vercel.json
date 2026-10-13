@@ -2,6 +2,10 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "rewrites": [
     {
+      "source": "/proxy/auth/:path*",
+      "destination": "http://163.128.209.18:8010/auth/:path*"
+    },
+    {
       "source": "/proxy/g1/:path*",
       "destination": "http://163.128.209.18:8013/:path*"
     },
@@ -20,7 +24,7 @@
       "headers": [
         { "key": "Access-Control-Allow-Origin", "value": "*" },
         { "key": "Access-Control-Allow-Methods", "value": "GET, POST, OPTIONS" },
-        { "key": "Access-Control-Allow-Headers", "value": "Content-Type, Authorization, X-Requested-With" }
+        { "key": "Access-Control-Allow-Headers", "value": "Content-Type, Authorization, X-Requested-With, Idempotency-Key, X-Product-Id, X-API-Key" }
       ]
     }
   ]

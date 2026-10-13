@@ -99,9 +99,149 @@ document.addEventListener("DOMContentLoaded", async () => {
   console.log("[VANA Control Center] Initializing Executive Surface...");
   startClock();
   initLeafletMap();
+
+  // Restore authenticated session from token storage before initiating protected pipeline
+  if (window.VANA_AUTH) {
+    try {
+      await window.VANA_AUTH.restoreSession();
+    } catch (e) {
+      console.warn("[VANA Control Center] Auth session restore failed:", e);
+    }
+    initDashboardAuthUI();
+    window.VANA_AUTH.onAuthChange(() => {
+      initDashboardAuthUI();
+    });
+  }
+
   await loadDefaultEvidencePack();
   await fetchLive();
 });
+
+// =============================================================================
+// DASHBOARD AUTHENTICATION UI & EVENT HANDLERS
+// =============================================================================
+function initDashboardAuthUI() {
+  const auth = window.VANA_AUTH;
+  const user = auth ? auth.getCurrentUser() : null;
+
+  const roleBadge = document.getElementById("dashRoleBadge");
+  const authBtn = document.getElementById("dashAuthBtn");
+  const authBtnText = document.getElementById("dashAuthBtnText");
+
+  // Sidebar Minister / Persona card
+  const ministerName = document.querySelector(".minister-name");
+  const ministerRole = document.querySelector(".minister-role");
+  const ministerAvatar = document.querySelector(".minister-avatar");
+
+  if (user && auth && auth.isAuthenticated()) {
+    // Authenticated state
+    if (roleBadge) {
+      roleBadge.textContent = user.roleLabel || user.role;
+      roleBadge.className = "auth-role-badge " + (user.role || "").toLowerCase();
+      roleBadge.style.display = "inline-flex";
+    }
+    if (authBtn) {
+      authBtn.title = `Signed in as ${user.name} (${user.roleLabel || user.role}) · Click to Sign Out`;
+      authBtn.style.background = "var(--bg-surface)";
+      authBtn.style.borderColor = "var(--border-subtle)";
+      authBtn.style.color = "var(--text-secondary)";
+      authBtn.onclick = handleDashboardLogout;
+    }
+    if (authBtnText) {
+      authBtnText.textContent = "Sign Out";
+    }
+
+    if (ministerName) ministerName.textContent = user.name || "Authenticated Official";
+    if (ministerRole) ministerRole.textContent = `${user.roleLabel || user.role} · VANA`;
+    if (ministerAvatar) {
+      const initials = (user.name || "AU").split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase();
+      ministerAvatar.textContent = initials;
+      ministerAvatar.style.background = user.roleColor || "var(--brand)";
+    }
+  } else {
+    // Unauthenticated state
+    if (roleBadge) {
+      roleBadge.style.display = "none";
+    }
+    if (authBtn) {
+      authBtn.title = "Sign in to authenticate governed execution actions";
+      authBtn.style.background = "var(--brand)";
+      authBtn.style.borderColor = "transparent";
+      authBtn.style.color = "#fff";
+      authBtn.onclick = openDashboardLoginModal;
+    }
+    if (authBtnText) {
+      authBtnText.textContent = "Sign In";
+    }
+
+    if (ministerName) ministerName.textContent = "State Surveillance";
+    if (ministerRole) ministerRole.textContent = "Dept of Environment & Forest";
+    if (ministerAvatar) {
+      ministerAvatar.textContent = "MH";
+      ministerAvatar.style.background = "var(--brand)";
+    }
+  }
+}
+
+function openDashboardLoginModal() {
+  const modal = document.getElementById("dashboardLoginModal");
+  const errEl = document.getElementById("dashLoginError");
+  if (errEl) { errEl.style.display = "none"; errEl.textContent = ""; }
+  if (modal) modal.style.display = "flex";
+  const emailInput = document.getElementById("dashEmailInput");
+  if (emailInput) emailInput.focus();
+}
+
+function closeDashboardLoginModal() {
+  const modal = document.getElementById("dashboardLoginModal");
+  if (modal) modal.style.display = "none";
+}
+
+async function handleDashboardLogin(event) {
+  if (event) event.preventDefault();
+  const emailInput = document.getElementById("dashEmailInput");
+  const passInput = document.getElementById("dashPasswordInput");
+  const submitBtn = document.getElementById("dashLoginSubmitBtn");
+  const errEl = document.getElementById("dashLoginError");
+
+  if (!emailInput || !passInput) return;
+  const email = emailInput.value.trim();
+  const pass = passInput.value;
+
+  if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = "Signing In..."; }
+  if (errEl) { errEl.style.display = "none"; errEl.textContent = ""; }
+
+  if (!window.VANA_AUTH) {
+    if (errEl) { errEl.textContent = "Authentication module unavailable."; errEl.style.display = "block"; }
+    if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = "Sign In"; }
+    return;
+  }
+
+  const res = await window.VANA_AUTH.login(email, pass);
+  if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = "Sign In"; }
+
+  if (res.success) {
+    passInput.value = "";
+    closeDashboardLoginModal();
+    initDashboardAuthUI();
+    // Re-run pipeline to execute authenticated Group 4 step
+    await fetchLive();
+  } else {
+    if (errEl) {
+      errEl.textContent = res.error || "Authentication failed. Please verify credentials.";
+      errEl.style.display = "block";
+    }
+  }
+}
+
+function handleDashboardLogout() {
+  if (window.VANA_AUTH) {
+    window.VANA_AUTH.logout();
+    initDashboardAuthUI();
+    // Re-run live pipeline to refresh unauthenticated execution gate state
+    fetchLive();
+  }
+}
 
 // =============================================================================
 // REAL-TIME CLOCK (IST & UTC)
@@ -356,64 +496,124 @@ async function fetchLive() {
   // ---------------------------------------------------------------------------
   // STEP 3: GROUP 4 (GOVERNED EXECUTION & ABSTENTION GATE)
   // STRICT FAIL-CLOSED: Executed ONLY if Group 1 AND Group 2 both succeeded
+  // Authenticated Admin users are authorized to execute; Participants receive 403.
   // ---------------------------------------------------------------------------
   if (g1Success && g2Success) {
-    try {
-      console.log("[VANA Live Path] Querying Group 4:", g4Endpoint);
-      const g4Payload = {
-        observation_id: OBSERVATION_ID,
-        canonical_record_id: data.canonical_record_id,
-        context_id: data.context_id,
-        ruling: g2Ruling,
-        action_eligibility: g2ActionEligibility,
-        abstention_required: g2AbstentionRequired,
-        action_request: g2ActionRequest
+    const isAuth = window.VANA_AUTH && window.VANA_AUTH.isAuthenticated();
+    const isLive = window.VANA_AUTH && typeof window.VANA_AUTH.isLiveValidated === "function" ? window.VANA_AUTH.isLiveValidated() : true;
+    if (!isAuth) {
+      console.warn("[VANA Live Path] Execution halted: Protected governed execution requires an authenticated session.");
+      data.group4 = {
+        failed: true,
+        requires_auth: true,
+        http_status: 401,
+        fail_reason: "Authentication Required: Protected governed execution requires an authenticated session. Sign in to authorize execution."
       };
-
-      const g4Res = await vanaFetch(g4Endpoint, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(g4Payload),
-        credentials: "omit"
-      });
-
-      if (g4Res.ok) {
-        const json = await g4Res.json();
-        const ev = json.evidence || {};
-        
-        // Critical: Check both nested evidence.status (e.g. BLOCKED) and top-level status
-        const outcomeRuling = ev.ruling || json.ruling || g2Ruling || "ABSTAIN";
-        const realStatus = ev.status || json.status || "governed_abstention";
-
-        data.group4 = {
-          http_status: g4Res.status,
-          status: realStatus,
-          event_type: ev.event_type || json.event_type || null,
-          ruling: outcomeRuling,
-          decision_action: ev.decision_action || json.decision_action || null,
-          abstention_record_id: ev.abstention_record_id || json.abstention_record_id || null,
-          event_id: ev.event_id || json.event_id || null,
-          execution_id: ev.execution_id || json.execution_id || null,
-          governance_allowed: ev.governance_allowed !== undefined ? ev.governance_allowed : null,
-          recorded_at: json.recorded_at || ev.recorded_at || null,
-          decision_reason: json.decision_reason || ev.decision_reason || null
+      g4Success = false;
+    } else if (!isLive) {
+      console.warn("[VANA Live Path] Execution halted: Session not validated live against backend runtime (network error / degraded state).");
+      data.group4 = {
+        failed: true,
+        unverified_session: true,
+        http_status: 403,
+        fail_reason: "Validation Required: Cached session cannot dispatch privileged execution without active backend validation. Reconnect or sign in again."
+      };
+      g4Success = false;
+    } else {
+      try {
+        console.log("[VANA Live Path] Querying Group 4 with bearer authorization:", g4Endpoint);
+        const g4Payload = {
+          observation_id: OBSERVATION_ID,
+          canonical_record_id: data.canonical_record_id,
+          context_id: data.context_id,
+          ruling: g2Ruling,
+          action_eligibility: g2ActionEligibility,
+          abstention_required: g2AbstentionRequired,
+          action_request: g2ActionRequest
         };
-        data.abstention_record_id = data.group4.abstention_record_id;
-        g4Success = true;
-      } else {
-        let errMsg = `HTTP ${g4Res.status} from Group 4 runtime`;
-        try {
-          const errJson = await g4Res.json();
-          if (errJson.message) errMsg += `: ${errJson.message}`;
-        } catch (_) {}
-        console.warn("[VANA Live Path] Group 4 failed:", errMsg);
-        data.group4 = { failed: true, fail_reason: errMsg };
+
+        const g4Headers = Object.assign(
+          { "Content-Type": "application/json", "Accept": "application/json" },
+          window.VANA_AUTH ? window.VANA_AUTH.getAuthHeader() : {}
+        );
+
+        const g4Res = await vanaFetch(g4Endpoint, {
+          method: "POST",
+          headers: g4Headers,
+          body: JSON.stringify(g4Payload),
+          credentials: "omit"
+        });
+
+        if (g4Res.ok) {
+          const json = await g4Res.json();
+          const ev = json.evidence || {};
+
+          // Critical: Check both nested evidence.status (e.g. BLOCKED) and top-level status
+          const outcomeRuling = ev.ruling || json.ruling || g2Ruling || "ABSTAIN";
+          const realStatus = ev.status || json.status || "governed_abstention";
+
+          data.group4 = {
+            http_status: g4Res.status,
+            status: realStatus,
+            event_type: ev.event_type || json.event_type || null,
+            ruling: outcomeRuling,
+            decision_action: ev.decision_action || json.decision_action || null,
+            abstention_record_id: ev.abstention_record_id || json.abstention_record_id || null,
+            event_id: ev.event_id || json.event_id || null,
+            execution_id: ev.execution_id || json.execution_id || null,
+            governance_allowed: ev.governance_allowed !== undefined ? ev.governance_allowed : null,
+            recorded_at: json.recorded_at || ev.recorded_at || null,
+            decision_reason: json.decision_reason || ev.decision_reason || null
+          };
+          data.abstention_record_id = data.group4.abstention_record_id;
+          g4Success = true;
+        } else if (g4Res.status === 403) {
+          // Participant / Forbidden response from backend RBAC
+          console.warn("[VANA Live Path] Group 4 returned 403 Forbidden: Insufficient execution permissions.");
+          let errMsg = "Execution Forbidden (HTTP 403): Approved Consumer role does not have execution dispatch privileges. Backend authorization enforced.";
+          try {
+            const errJson = await g4Res.json();
+            if (errJson.detail || errJson.message) {
+              errMsg = `Execution Forbidden (HTTP 403): ${errJson.detail || errJson.message}`;
+            }
+          } catch (_) {}
+
+          data.group4 = {
+            failed: true,
+            forbidden: true,
+            http_status: 403,
+            fail_reason: errMsg
+          };
+          g4Success = false;
+        } else if (g4Res.status === 401) {
+          // Expired or invalid token
+          console.warn("[VANA Live Path] Group 4 returned 401 Unauthorized: Session invalid or expired.");
+          if (window.VANA_AUTH) {
+            window.VANA_AUTH.logout();
+            initDashboardAuthUI();
+          }
+          data.group4 = {
+            failed: true,
+            unauthorized: true,
+            http_status: 401,
+            fail_reason: "Session Expired (HTTP 401): Please sign in again to dispatch governed execution."
+          };
+          g4Success = false;
+        } else {
+          let errMsg = `HTTP ${g4Res.status} from Group 4 runtime`;
+          try {
+            const errJson = await g4Res.json();
+            if (errJson.message || errJson.detail) errMsg += `: ${errJson.message || errJson.detail}`;
+          } catch (_) {}
+          console.warn("[VANA Live Path] Group 4 failed:", errMsg);
+          data.group4 = { failed: true, http_status: g4Res.status, fail_reason: errMsg };
+          g4Success = false;
+        }
+      } catch (e) {
+        console.error("[VANA Live Path] Group 4 exception:", e);
+        data.group4 = { failed: true, fail_reason: `Fetch failed: ${e.message}` };
         g4Success = false;
       }
-    } catch (e) {
-      console.error("[VANA Live Path] Group 4 exception:", e);
-      data.group4 = { failed: true, fail_reason: `Fetch failed: ${e.message}` };
-      g4Success = false;
     }
   } else {
     // Fail-Closed: Group 4 not called because upstream stage failed
@@ -990,7 +1190,7 @@ function renderLineageRail(data) {
 
     <!-- STAGE 4: GROUP 4 GOVERNED OUTCOME -->
     <div class="lineage-stage-node ${g4Failed ? 'blocked' : ''}">
-      <div class="stage-dot">${g4Failed ? '✕' : '4'}</div>
+      <div class="stage-dot">${g4Failed ? (g4.forbidden ? '🔒' : (g4.requires_auth ? '🔑' : '✕')) : '4'}</div>
       <div class="stage-card">
         <div class="stage-card-head">
           <div>
@@ -998,13 +1198,13 @@ function renderLineageRail(data) {
             <div class="stage-title">Governed Abstention Enforcement</div>
             <div class="stage-id-line mono">abstention_record_id: <strong>${data.abstention_record_id || '<span style="color:var(--text-muted)">null</span>'}</strong></div>
           </div>
-          <span class="badge ${g4Failed ? 'BLOCKED' : 'BLOCKED'}"><span class="badge-swatch"></span>${g4Failed ? (g4.skipped ? 'SKIPPED' : 'FAILED') : 'GOVERNED NOOP'}</span>
+          <span class="badge ${g4Failed ? (g4.forbidden ? 'CONTROLLED' : (g4.requires_auth ? 'CONTROLLED' : 'BLOCKED')) : 'BLOCKED'}"><span class="badge-swatch"></span>${g4Failed ? (g4.forbidden ? 'RESTRICTED (403)' : (g4.requires_auth ? 'AUTH REQUIRED' : (g4.skipped ? 'SKIPPED' : 'FAILED'))) : 'GOVERNED NOOP'}</span>
         </div>
 
         ${g4Failed ? `
-          <div class="decision-block BLOCK">
-            <div class="decision-label">${g4.skipped ? 'Fail-Closed Execution Gate Halted' : 'Group 4 Execution Error'}</div>
-            <div class="decision-outcome">${g4.skipped ? 'EXECUTION BLOCKED BY FAIL-CLOSED INVARIANT' : 'GOVERNED EXECUTION FAILED'}</div>
+          <div class="decision-block ${g4.forbidden || g4.requires_auth ? 'ABSTAIN' : 'BLOCK'}">
+            <div class="decision-label">${g4.forbidden ? 'Backend RBAC Restriction' : (g4.requires_auth ? 'Session Authentication Required' : (g4.skipped ? 'Fail-Closed Execution Gate Halted' : 'Group 4 Execution Error'))}</div>
+            <div class="decision-outcome">${g4.forbidden ? 'READ-ONLY ACCESS — PRIVILEGED EXECUTION RESTRICTED' : (g4.requires_auth ? 'SIGN IN REQUIRED TO DISPATCH EXECUTION' : (g4.skipped ? 'EXECUTION BLOCKED BY FAIL-CLOSED INVARIANT' : 'GOVERNED EXECUTION FAILED'))}</div>
             <div class="decision-reason">${g4.fail_reason || 'Unknown error'}</div>
           </div>
         ` : `

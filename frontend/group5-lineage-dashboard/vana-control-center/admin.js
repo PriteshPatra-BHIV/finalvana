@@ -60,14 +60,33 @@ function _pushAuditEntry(action, resource, result) {
 }
 
 // ── ADMIN FETCH HELPER ──────────────────────────────────────────────────
-// Mirrors vanaFetch() from app.js. Defined here so admin.html doesn't need app.js.
+// Mirrors vanaFetch() from app.js. Enforces timeout and attaches bearer token
+// for authenticated VANA backend calls without leaking tokens to external origins.
 async function adminFetch(url, options) {
   const timeoutMs = (window.VANA_CONFIG && window.VANA_CONFIG.REQUEST_TIMEOUT_MS) || 10000;
   const controller = new AbortController();
   const timerId = setTimeout(function () { controller.abort(); }, timeoutMs);
   options = options || {};
+
+  var headers = Object.assign({}, options.headers || {});
+
+  // Attach Authorization header if authenticated and targeting a VANA endpoint
+  if (window.VANA_AUTH && window.VANA_AUTH.isAuthenticated()) {
+    var isVanaEndpoint = url.startsWith("/") ||
+      (window.VANA_CONFIG && window.VANA_CONFIG.AUTH_BASE && url.startsWith(window.VANA_CONFIG.AUTH_BASE)) ||
+      (window.VANA_CONFIG && window.VANA_CONFIG.G4_ENDPOINT && url.startsWith(window.VANA_CONFIG.G4_ENDPOINT));
+    if (isVanaEndpoint) {
+      Object.assign(headers, window.VANA_AUTH.getAuthHeader());
+    }
+  }
+
   try {
-    const response = await fetch(url, Object.assign({}, options, { signal: controller.signal }));
+    const response = await fetch(url, Object.assign({}, options, { headers: headers, signal: controller.signal }));
+    if (response.status === 401 && window.VANA_AUTH && window.VANA_AUTH.isAuthenticated()) {
+      console.warn("[VANA Admin] 401 Unauthorized encountered on protected request — clearing session.");
+      window.VANA_AUTH.logout();
+      _initAuthUI();
+    }
     return response;
   } catch (err) {
     if (err.name === "AbortError") {
@@ -80,42 +99,170 @@ async function adminFetch(url, options) {
 }
 
 // ── INITIALIZATION ──────────────────────────────────────────────────────
-document.addEventListener("DOMContentLoaded", function () {
+document.addEventListener("DOMContentLoaded", async function () {
   console.log("[VANA Admin] Initializing Administration Control Plane...");
+  // Restore session from token storage before rendering protected data
+  await window.VANA_AUTH.restoreSession();
   _initAuthUI();
-  _renderAllSections();
-  adminNav("system-health", document.getElementById("nav-system-health"));
   _pushAuditEntry("ADMIN_SESSION_START", "admin.html", "OK");
+
+  // Subscribe to auth changes to keep UI synchronized
+  window.VANA_AUTH.onAuthChange(function () {
+    _initAuthUI();
+  });
 });
 
 function _initAuthUI() {
   const auth = window.VANA_AUTH;
   const user = auth.getCurrentUser();
 
-  // Update role badge in header
   const badge = document.getElementById("adminRoleBadge");
   const label = document.getElementById("adminUserLabel");
-  if (badge && user) {
+  const loginBtn = document.getElementById("adminLoginBtn");
+  const logoutBtn = document.getElementById("adminLogoutBtn");
+  const barrierOverlay = document.getElementById("adminBarrierOverlay");
+  const barrierContent = document.getElementById("adminBarrierContent");
+
+  if (!user) {
+    // ── UNAUTHENTICATED STATE ──
+    if (badge) {
+      badge.textContent = "Unauthenticated";
+      badge.className = "admin-role-badge";
+      badge.style.background = "rgba(107, 114, 128, 0.2)";
+      badge.style.color = "#9ca3af";
+    }
+    if (label) label.textContent = "Sign in to access control plane";
+    if (loginBtn) loginBtn.style.display = "inline-block";
+    if (logoutBtn) logoutBtn.style.display = "none";
+
+    // Show authentication barrier overlay
+    if (barrierOverlay && barrierContent) {
+      barrierContent.innerHTML = [
+        '<div class="admin-denied-icon">',
+        '  <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="color:var(--brand)">',
+        '    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>',
+        '    <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>',
+        '  </svg>',
+        '</div>',
+        '<div class="admin-denied-title">Authentication Required</div>',
+        '<div class="admin-denied-msg">',
+        '  The Administration Control Plane requires an authenticated session.<br>',
+        '  Please sign in with authorized administrative credentials.',
+        '</div>',
+        '<div style="display:flex;justify-content:center;gap:10px;margin-top:18px;">',
+        '  <a href="index.html" class="admin-btn secondary" style="text-decoration:none;">Operational Dashboard</a>',
+        '  <button class="admin-btn primary" onclick="adminOpenLoginModal()">Sign In</button>',
+        '</div>',
+      ].join("\n");
+      barrierOverlay.style.display = "flex";
+    }
+    return;
+  }
+
+  // ── AUTHENTICATED STATE ──
+  if (loginBtn) loginBtn.style.display = "none";
+  if (logoutBtn) logoutBtn.style.display = "inline-block";
+
+  if (badge) {
     badge.textContent = user.roleLabel || user.role;
-    badge.className = "admin-role-badge " + user.role;
+    badge.className = "admin-role-badge " + (user.role || "").toLowerCase();
+    badge.style.background = "";
+    badge.style.color = user.roleColor || "";
   }
-  if (label && user) {
-    label.textContent = user.isDev ? "[DEV session]" : user.name;
+  if (label) {
+    label.textContent = user.name + (user.email ? " · " + user.email : "");
   }
 
-  // Dev banner visibility
-  const banner = document.getElementById("devModeBanner");
-  if (banner) banner.style.display = auth.DEV_MODE ? "flex" : "none";
+  // Session integrity check: Cached offline session cannot access admin plane without live validation
+  if (typeof window.VANA_AUTH.isLiveValidated === "function" && !window.VANA_AUTH.isLiveValidated()) {
+    if (barrierOverlay && barrierContent) {
+      barrierContent.innerHTML = [
+        '<div class="admin-denied-icon">',
+        '  <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="color:#f59e0b">',
+        '    <circle cx="12" cy="12" r="10"></circle>',
+        '    <line x1="12" y1="8" x2="12" y2="12"></line>',
+        '    <line x1="12" y1="16" x2="12.01" y2="16"></line>',
+        '  </svg>',
+        '</div>',
+        '<div class="admin-denied-title">Live Session Validation Required</div>',
+        '<div class="admin-denied-msg">',
+        '  The backend authentication service is unreachable or live session validation is pending.<br>',
+        '  Cached offline profiles cannot access administrative controls without live verification.',
+        '</div>',
+        '<div style="display:flex;justify-content:center;gap:10px;margin-top:18px;">',
+        '  <a href="index.html" class="admin-btn secondary" style="text-decoration:none;">Operational Dashboard</a>',
+        '  <button class="admin-btn primary" onclick="adminOpenLoginModal()">Re-authenticate</button>',
+        '</div>',
+      ].join("\n");
+      barrierOverlay.style.display = "flex";
+    }
+    return;
+  }
 
-  // Sync dev role selector to current session role
-  const sel = document.getElementById("devRoleSelect");
-  if (sel && auth.DEV_MODE && user) sel.value = user.role;
+  // Role restriction: Approved Consumer (Participant) is strictly denied
+  if (user.role === auth.ROLES.APPROVED_CONSUMER) {
+    if (barrierOverlay && barrierContent) {
+      barrierContent.innerHTML = [
+        '<div class="admin-denied-icon">',
+        '  <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="color:#ef4444">',
+        '    <circle cx="12" cy="12" r="10"></circle>',
+        '    <line x1="4.93" y1="4.93" x2="19.07" y2="19.07"></line>',
+        '  </svg>',
+        '</div>',
+        '<div class="admin-denied-title">Access Restricted (403 Forbidden)</div>',
+        '<div class="admin-denied-msg">',
+        '  Your authenticated role (<strong>Approved Consumer</strong>) is not authorized to access the Administration Control Plane.<br>',
+        '  Privileged administration is restricted to Platform Administrators and Authorized Auditors.',
+        '</div>',
+        '<div style="display:flex;justify-content:center;gap:10px;margin-top:18px;">',
+        '  <a href="index.html" class="admin-btn primary" style="text-decoration:none;">Return to Operational Dashboard</a>',
+        '  <button class="admin-btn secondary" onclick="adminLogout()">Sign Out</button>',
+        '</div>',
+      ].join("\n");
+      barrierOverlay.style.display = "flex";
+    }
+    return;
+  }
 
-  // Re-render all sections when role changes
-  auth.onAuthChange(function (newUser) {
-    if (badge) { badge.textContent = newUser.roleLabel || newUser.role; badge.className = "admin-role-badge " + newUser.role; }
-    if (label) label.textContent = newUser.isDev ? "[DEV session]" : newUser.name;
+  // Role restriction: Auditor / Judge allowed access to Audit Log only
+  if (user.role === auth.ROLES.AUDITOR) {
+    if (barrierOverlay) barrierOverlay.style.display = "none";
+    _configureAuditorNav();
     _renderAllSections();
+    adminNav("audit-activity", document.getElementById("nav-audit-activity"));
+    return;
+  }
+
+  // Platform Admin: Full Control Plane access
+  if (barrierOverlay) barrierOverlay.style.display = "none";
+  _enableAllAdminNav();
+  _renderAllSections();
+  adminNav("system-health", document.getElementById("nav-system-health"));
+  runHealthCheck();
+}
+
+function _configureAuditorNav() {
+  document.querySelectorAll(".admin-nav-item").forEach(function (btn) {
+    if (btn.id === "nav-audit-activity") {
+      btn.style.display = "flex";
+      btn.disabled = false;
+    } else {
+      btn.style.display = "none";
+    }
+  });
+  document.querySelectorAll(".admin-nav-group").forEach(function (grp) {
+    var hasAudit = grp.querySelector("#nav-audit-activity");
+    grp.style.display = hasAudit ? "block" : "none";
+  });
+}
+
+function _enableAllAdminNav() {
+  document.querySelectorAll(".admin-nav-item").forEach(function (btn) {
+    btn.style.display = "flex";
+    btn.disabled = false;
+  });
+  document.querySelectorAll(".admin-nav-group").forEach(function (grp) {
+    grp.style.display = "block";
   });
 }
 
@@ -138,6 +285,59 @@ function _renderAllSections() {
   renderAuditActivity();
 }
 
+// ── MODAL & AUTH ACTION HANDLERS ────────────────────────────────────────
+function adminOpenLoginModal() {
+  var modal = document.getElementById("adminLoginModal");
+  var errEl = document.getElementById("adminLoginError");
+  if (errEl) { errEl.style.display = "none"; errEl.textContent = ""; }
+  if (modal) modal.style.display = "flex";
+  var emailInput = document.getElementById("adminEmailInput");
+  if (emailInput) emailInput.focus();
+}
+
+function adminCloseLoginModal() {
+  var modal = document.getElementById("adminLoginModal");
+  if (modal) modal.style.display = "none";
+}
+
+async function adminSubmitLogin(event) {
+  if (event) event.preventDefault();
+  var emailInput = document.getElementById("adminEmailInput");
+  var passInput = document.getElementById("adminPasswordInput");
+  var submitBtn = document.getElementById("adminLoginSubmitBtn");
+  var errEl = document.getElementById("adminLoginError");
+
+  if (!emailInput || !passInput) return;
+  var email = emailInput.value.trim();
+  var pass = passInput.value;
+
+  if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = "Signing In..."; }
+  if (errEl) { errEl.style.display = "none"; errEl.textContent = ""; }
+
+  var res = await window.VANA_AUTH.login(email, pass);
+  if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = "Sign In"; }
+
+  if (res.success) {
+    passInput.value = "";
+    adminCloseLoginModal();
+    _initAuthUI();
+  } else {
+    if (errEl) {
+      errEl.textContent = res.error || "Authentication failed. Please verify credentials.";
+      errEl.style.display = "block";
+    }
+  }
+}
+
+function adminLogout() {
+  window.VANA_AUTH.logout();
+  _initAuthUI();
+}
+
+function adminSetDevRole(role) {
+  console.warn("[VANA Admin] Dev role switching is disabled in production RBAC mode.");
+}
+
 // ── NAVIGATION ──────────────────────────────────────────────────────────
 function adminNav(sectionKey, navEl) {
   // Deactivate all sections and nav items
@@ -149,13 +349,6 @@ function adminNav(sectionKey, navEl) {
   if (navEl) navEl.classList.add("active");
 
   _pushAuditEntry("NAVIGATE", "admin/" + sectionKey, "OK");
-}
-
-function adminSetDevRole(role) {
-  window.VANA_AUTH.setDevRole(role);
-  _pushAuditEntry("DEV_ROLE_CHANGE", role, "OK");
-  // Re-render audit so the new entry is visible immediately if on that section
-  renderAuditActivity();
 }
 
 // ── SECTION HELPER ──────────────────────────────────────────────────────
@@ -185,9 +378,6 @@ async function renderSystemHealth() {
     "Live Check",
     "live"
   ) + '<div id="healthServiceRows">' + _buildHealthPlaceholders() + '</div><div style="margin-top:12px"><button class="admin-btn primary" onclick="runHealthCheck()" id="btnHealthCheck"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg> Run Health Check</button></div>';
-
-  // Run check immediately on load
-  runHealthCheck();
 }
 
 function _buildHealthPlaceholders() {
@@ -696,15 +886,15 @@ function renderAuditActivity() {
 
   el.innerHTML = _sectionHeader(
     "Administrative Activity",
-    "Session-scoped audit log. Records all admin navigation and actions for this browser session only. Not persisted.",
-    "Session only · DEV"
-  ) + '<div class="admin-card" style="border-color:var(--status-warn-bg)">' +
-    '<div class="admin-card-head"><span class="admin-card-title">Session Audit Log</span><span class="admin-card-tag" style="color:var(--status-warn);border-color:var(--status-warn)">DEV — Not persisted</span></div>' +
+    "Session-scoped administrative activity log. Records navigation and inspection actions for this browser session only.",
+    "Session Audit Log"
+  ) + '<div class="admin-card">' +
+    '<div class="admin-card-head"><span class="admin-card-title">Session Audit Trace</span><span class="admin-card-tag">RBAC: Admin &amp; Auditor</span></div>' +
     '<table class="admin-table"><thead><tr><th>Time</th><th>User</th><th>Role</th><th>Action</th><th>Resource</th><th>Result</th></tr></thead><tbody>' + rows + '</tbody></table></div>' +
     _boundaryNotice(
-      "Persistent Audit Logging",
-      "Production audit logging requires a backend audit service. All administrative actions should be logged server-side with immutable records. Frontend session log is for DEV convenience only.",
-      "Required: POST /api/admin/audit → { userId, role, action, resource, before, after, result }\nPersistence: Immutable append-only audit store\nCurrently: session-scoped in-memory array only"
+      "Authoritative Backend Audit Boundary",
+      "Local session audit entries reflect current administrative UI navigation only. Authoritative backend audit logs are persisted on the unified runtime with immutable append-only governance records, accessible by Platform Admins and Auditors per backend RBAC contract.",
+      "Access Rule: Permitted for PLATFORM_ADMIN and AUDITOR (Judge).\nEnforcement: Backend-validated access control.\nLocal Table: In-memory session audit trace only."
     );
 }
 

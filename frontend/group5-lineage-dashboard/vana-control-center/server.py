@@ -27,11 +27,22 @@ import sys
 PORT = 8080
 DIRECTORY = os.path.dirname(os.path.abspath(__file__))
 
+# Unified runtime base URL for authentication and governed execution.
+# Default is http://localhost:8000 as confirmed by the backend contract.
+UNIFIED_BACKEND = os.environ.get(
+    "VANA_BACKEND_URL",
+    os.environ.get("VITE_API_URL", "http://localhost:8000")
+).rstrip("/")
+
 TARGETS = {
-    "/proxy/g1": "http://163.128.209.18:8013",
-    "/proxy/g2": "https://niyantran.blackholeinfiverse.com",
-    "/proxy/g4": "http://163.128.209.18:8010",
+    "/proxy/auth": UNIFIED_BACKEND + "/auth",
+    "/proxy/g1": os.environ.get("VANA_G1_URL", "http://163.128.209.18:8013"),
+    "/proxy/g2": os.environ.get("VANA_G2_URL", "https://niyantran.blackholeinfiverse.com"),
+    "/proxy/g4": os.environ.get("VANA_G4_URL", UNIFIED_BACKEND),
 }
+
+# Explicitly allowed subpaths for authentication to prevent open proxy misuse
+ALLOWED_AUTH_SUBPATHS = {"/login", "/register", "/me"}
 
 class VANAHandler(http.server.SimpleHTTPRequestHandler):
     def __init__(self, *args, **kwargs):
@@ -40,7 +51,7 @@ class VANAHandler(http.server.SimpleHTTPRequestHandler):
     def end_headers(self):
         self.send_header("Access-Control-Allow-Origin", "*")
         self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS, PUT, DELETE")
-        self.send_header("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Requested-With, traceparent")
+        self.send_header("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Requested-With, traceparent, Idempotency-Key, X-Product-Id, X-API-Key")
         super().end_headers()
 
     def do_OPTIONS(self):
@@ -63,7 +74,22 @@ class VANAHandler(http.server.SimpleHTTPRequestHandler):
         if not subpath.startswith("/"):
             subpath = "/" + subpath
 
+        # Prevent path traversal and enforce security boundaries
+        parsed = urllib.parse.urlparse(subpath)
+        clean_path = os.path.normpath(parsed.path).replace("\\", "/")
+        if ".." in clean_path or clean_path.startswith("../"):
+            self.send_error(400, "Bad Request: Path traversal prohibited")
+            return True
+
+        # Restrict /proxy/auth to explicitly expected authentication routes
+        if matched_prefix == "/proxy/auth":
+            base_subpath = clean_path.rstrip("/")
+            if base_subpath not in ALLOWED_AUTH_SUBPATHS:
+                self.send_error(404, "Endpoint not found on auth proxy")
+                return True
+
         target_url = target_base + subpath
+        # Log method and path ONLY — NEVER log authorization header or tokens
         print(f"[VANA PROXY] {method} {self.path} -> {target_url}")
 
         content_len = int(self.headers.get("Content-Length", 0))
@@ -72,6 +98,21 @@ class VANAHandler(http.server.SimpleHTTPRequestHandler):
         req = urllib.request.Request(target_url, data=body, method=method)
         req.add_header("Content-Type", self.headers.get("Content-Type", "application/json"))
         req.add_header("User-Agent", "VANA-Control-Center-Proxy/2.2")
+
+        # Forward Authorization header safely without logging
+        auth_header = self.headers.get("Authorization")
+        if auth_header:
+            req.add_header("Authorization", auth_header)
+
+        # Forward Accept and custom VANA governance headers
+        accept_header = self.headers.get("Accept")
+        if accept_header:
+            req.add_header("Accept", accept_header)
+
+        for custom_hdr in ["Idempotency-Key", "X-Product-Id", "X-API-Key"]:
+            hdr_val = self.headers.get(custom_hdr)
+            if hdr_val:
+                req.add_header(custom_hdr, hdr_val)
 
         try:
             with urllib.request.urlopen(req, timeout=10) as resp:
@@ -117,9 +158,10 @@ def run():
         print(f"============================================================")
         print(f"  VANA Control Center Server Running at http://localhost:{PORT}")
         print(f"  Proxy Gateways:")
-        print(f"    G1 -> http://localhost:{PORT}/proxy/g1 (163.128.209.18:8013)")
-        print(f"    G2 -> http://localhost:{PORT}/proxy/g2 (niyantran.blackholeinfiverse.com)")
-        print(f"    G4 -> http://localhost:{PORT}/proxy/g4 (163.128.209.18:8010)")
+        print(f"    Auth -> http://localhost:{PORT}/proxy/auth ({TARGETS['/proxy/auth']})")
+        print(f"    G1   -> http://localhost:{PORT}/proxy/g1 ({TARGETS['/proxy/g1']})")
+        print(f"    G2   -> http://localhost:{PORT}/proxy/g2 ({TARGETS['/proxy/g2']})")
+        print(f"    G4   -> http://localhost:{PORT}/proxy/g4 ({TARGETS['/proxy/g4']})")
         print(f"============================================================")
         try:
             httpd.serve_forever()

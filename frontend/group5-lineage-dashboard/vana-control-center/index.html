@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="vite-api-url" content="">
   <title>VANA — Environmental Governance Monitoring System</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -164,6 +165,15 @@
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
           <span class="hide-on-mobile">Fetch Live</span>
         </button>
+
+        <!-- User Authentication Widget -->
+        <div class="user-auth-pill" id="dashUserAuthPill" style="display:flex;align-items:center;gap:6px;">
+          <div class="auth-role-badge" id="dashRoleBadge" style="display:none;">—</div>
+          <button class="btn-header" id="dashAuthBtn" onclick="openDashboardLoginModal()" title="Sign in with VANA credentials" style="background:var(--brand);color:#fff;">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+            <span id="dashAuthBtnText">Sign In</span>
+          </button>
+        </div>
       </div>
     </header>
 
@@ -691,9 +701,43 @@
   </main>
 </div>
 
-<!-- Leaflet JS for geographic mapping -->
+<!-- LOGIN MODAL FOR OPERATIONAL DASHBOARD -->
+<div class="modal-backdrop" id="dashboardLoginModal" style="display:none;" role="dialog" aria-modal="true" aria-labelledby="dashLoginTitle">
+  <div class="modal-card">
+    <div class="modal-card-header">
+      <div class="modal-card-title" id="dashLoginTitle">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--brand)">
+          <path d="M12 2L3 7v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V7l-9-5z"/>
+        </svg>
+        VANA Sign In
+      </div>
+      <div class="modal-card-sub">Environmental Governance &amp; Execution Authorization</div>
+    </div>
+    <form id="dashLoginForm" onsubmit="handleDashboardLogin(event)">
+      <div id="dashLoginError" class="login-error-alert" style="display:none;"></div>
+      <div class="form-field">
+        <label for="dashEmailInput">Email Address</label>
+        <input type="email" id="dashEmailInput" class="form-input" placeholder="user@vana.gov.in" required autocomplete="username">
+      </div>
+      <div class="form-field">
+        <label for="dashPasswordInput">Password</label>
+        <input type="password" id="dashPasswordInput" class="form-input" placeholder="••••••••••••" required autocomplete="current-password">
+      </div>
+      <div class="form-actions">
+        <button type="button" class="btn-form secondary" onclick="closeDashboardLoginModal()">Close</button>
+        <button type="submit" id="dashLoginSubmitBtn" class="btn-form primary">Sign In</button>
+      </div>
+    </form>
+    <div class="modal-card-footer mono">
+      Role-Based Access Control · Tokens stored tab-scoped
+    </div>
+  </div>
+</div>
+
+<!-- Scripts loaded in dependency order: Leaflet → config → auth → geospatial → app -->
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 <script src="config.js"></script>
+<script src="admin-auth.js"></script>
 <script src="geospatial.js"></script>
 <script src="app.js"></script>
 </body>
