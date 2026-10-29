@@ -1,5 +1,5 @@
 /**
- * VANA Control Center — Unified Authentication & RBAC Engine
+ * VANA Control Center: Unified Authentication & RBAC Engine
  * ==========================================================
  *
  * Single shared authentication module for both:
@@ -32,7 +32,7 @@
 })(typeof window !== "undefined" ? window : globalThis, function () {
   "use strict";
 
-  // Production deployment switch — simulator permanently disabled
+  // Production deployment switch: simulator permanently disabled
   var DEV_MODE = false;
 
   // Storage keys (tab-scoped)
@@ -380,7 +380,7 @@
 
       // 1. Backend-provided permissions object check (primary authority)
       if (_currentUser._permsHelper && _currentUser._permsHelper.list.length > 0) {
-        // Backend provided an explicit permissions list/object — fail closed if omitted
+        // Backend provided an explicit permissions list/object: fail closed if omitted
         return _currentUser._permsHelper.has(permission);
       }
 
@@ -576,7 +576,7 @@
 
         // If backend explicitly rejected token (401 Unauthorized), purge session
         if (meRes.status === 401) {
-          console.warn("[VANA Auth] Stored token rejected with 401 Unauthorized — clearing session.");
+          console.warn("[VANA Auth] Stored token rejected with 401 Unauthorized: clearing session.");
           _isSessionLiveValidated = false;
           self.clearSession();
           return null;
@@ -644,6 +644,6 @@
     },
   };
 
-  console.log("[VANA Auth] Initialized — Production RBAC boundary active (Backend enforced)");
+  console.log("[VANA Auth] Initialized: Production RBAC boundary active (Backend enforced)");
   return Object.freeze(vanaAuth);
 });

@@ -1,12 +1,12 @@
 /**
- * VANA Control Center — API Configuration
+ * VANA Control Center: API Configuration
  *
  * Single source of truth for all backend endpoint configuration.
  * Loaded before app.js. Defines window.VANA_CONFIG.
  *
  * Deployment model:
- *   Local dev  — Python proxy on :8080 rewrites /proxy/* → real backends
- *   Production — Vercel rewrites /proxy/* → real backends (server-side, no mixed-content)
+ *   Local dev : Python proxy on :8080 rewrites /proxy/* → real backends
+ *   Production: Vercel rewrites /proxy/* → real backends (server-side, no mixed-content)
  *
  * No secrets, API keys, or direct backend IPs belong here.
  * All routes use /proxy/* so this file is identical in every environment.
@@ -44,19 +44,24 @@
     AUTH_ME: envApiUrl ? envApiUrl + "/auth/me" : "/proxy/auth/me",
 
     // -------------------------------------------------------------------------
-    // Group 1 — Canonical Observation Retrieval
+    // Group 1: Canonical Observation Retrieval & Statutory Datasets
     // Route: GET /proxy/g1/observations/{observation_id}
+    // Route: POST /proxy/g1/observations
+    // Route: GET /proxy/g1/datasets/{dataset_id}/forest-cover
     // -------------------------------------------------------------------------
     G1_BASE: "/proxy/g1",
+    G1_OBSERVATIONS: "/proxy/g1/observations",
+    G1_DATASETS: "/proxy/g1/datasets",
+    G1_OFFICIAL: "/proxy/g1/official",
 
     // -------------------------------------------------------------------------
-    // Group 2 — Scientific Context & Decision Resolve
+    // Group 2: Scientific Context & Decision Resolve
     // Route: POST /proxy/g2/api/group2/context/resolve
     // -------------------------------------------------------------------------
     G2_ENDPOINT: "/proxy/g2/api/group2/context/resolve",
 
     // -------------------------------------------------------------------------
-    // Group 4 — Governed Execution & Abstention Gate
+    // Group 4: Governed Execution & Abstention Gate
     // Route: POST /proxy/g4/vana/execute (served by unified runtime)
     // -------------------------------------------------------------------------
     G4_ENDPOINT: envApiUrl ? envApiUrl + "/vana/execute" : "/proxy/g4/vana/execute",

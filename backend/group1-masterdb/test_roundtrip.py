@@ -28,6 +28,7 @@ def test_roundtrip():
         cur_clean.execute("DELETE FROM measurement WHERE observation_id = ?", (oid,))
         cur_clean.execute("DELETE FROM raw_artifact WHERE observation_id = ?", (oid,))
         cur_clean.execute("DELETE FROM field_observation_meta WHERE observation_id = ?", (oid,))
+        cur_clean.execute("DELETE FROM idempotency_record WHERE observation_id = ?", (oid,))
         cur_clean.execute("DELETE FROM observation WHERE observation_id = ?", (oid,))
     conn.commit()
 
@@ -268,6 +269,7 @@ def test_roundtrip():
         cur_clean.execute("DELETE FROM measurement WHERE observation_id = ?", (oid,))
         cur_clean.execute("DELETE FROM raw_artifact WHERE observation_id = ?", (oid,))
         cur_clean.execute("DELETE FROM field_observation_meta WHERE observation_id = ?", (oid,))
+        cur_clean.execute("DELETE FROM idempotency_record WHERE observation_id = ?", (oid,))
         cur_clean.execute("DELETE FROM observation WHERE observation_id = ?", (oid,))
     conn.commit()
 

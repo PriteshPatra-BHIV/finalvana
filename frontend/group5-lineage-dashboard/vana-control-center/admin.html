@@ -4,16 +4,16 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="vite-api-url" content="">
-  <title>VANA — Administration Control Plane</title>
-  <meta name="description" content="VANA Environmental Governance System — Administrator Control Plane for system health, access control, geospatial configuration, governance policies, and audit log.">
+  <title>VANA: Administration Control Plane</title>
+  <meta name="description" content="VANA Environmental Governance System: Administrator Control Plane for system health, access control, geospatial configuration, governance policies, and audit log.">
   <meta name="robots" content="noindex, nofollow">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
   <!-- Base design tokens from operational dashboard -->
-  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="styles.css?v=2">
   <!-- Admin-specific layout and components -->
-  <link rel="stylesheet" href="admin.css">
+  <link rel="stylesheet" href="admin.css?v=2">
 </head>
 <body style="margin:0;padding:0">
 
@@ -34,13 +34,13 @@
           <path d="M12 2L3 7v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V7l-9-5z"/>
         </svg>
         <div>
-          <div class="admin-header-title-text">VANA — Administration Control Plane</div>
+          <div class="admin-header-title-text">VANA: Administration Control Plane</div>
           <div class="admin-header-title-sub">Government of Maharashtra · Dept of Environment &amp; Forest · System Administration</div>
         </div>
       </div>
     </div>
     <div class="admin-header-right" id="adminHeaderRight">
-      <div class="admin-role-badge" id="adminRoleBadge">—</div>
+      <div class="admin-role-badge" id="adminRoleBadge">--</div>
       <div id="adminUserLabel" style="font-size:11px;color:var(--text-secondary)"></div>
       <button class="admin-auth-btn" id="adminLogoutBtn" onclick="adminLogout()" style="display:none;" title="Sign out of Admin Control Plane">Sign Out</button>
       <button class="admin-auth-btn primary" id="adminLoginBtn" onclick="adminOpenLoginModal()" title="Sign in with administrative credentials">Sign In</button>

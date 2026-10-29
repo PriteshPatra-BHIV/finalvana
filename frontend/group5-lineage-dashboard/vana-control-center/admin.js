@@ -1,5 +1,5 @@
 /**
- * VANA Control Center — Admin Control Plane UI Logic
+ * VANA Control Center: Admin Control Plane UI Logic
  * ===================================================
  * Depends on: config.js (window.VANA_CONFIG) and admin-auth.js (window.VANA_AUTH)
  * Must be loaded after both.
@@ -29,7 +29,7 @@ if (!window.VANA_AUTH) {
 // ── CONSTANTS ───────────────────────────────────────────────────────────
 const P = window.VANA_AUTH.PERMISSIONS;
 
-// Real VANA monitoring zones (from VANA architecture — same data as app.js)
+// Real VANA monitoring zones (from VANA architecture: same data as app.js)
 const ADMIN_ZONES = [
   { id: "TC-Z03-EXT-OPENMETEO-OBS001", name: "Thane Creek",  status: "CONFIRMED_LIVE",    lat: 19.1288, lon: 72.9421, alt_m: 4.0,   source: "Open-Meteo.com", license: "CC-BY 4.0" },
   { id: "MU-Z01-EXT-OPENMETEO-OBS001", name: "Mumbai",       status: "PENDING_UPSTREAM",  lat: 19.0760, lon: 72.8777, alt_m: null, source: "Pending",        license: "Pending" },
@@ -83,7 +83,7 @@ async function adminFetch(url, options) {
   try {
     const response = await fetch(url, Object.assign({}, options, { headers: headers, signal: controller.signal }));
     if (response.status === 401 && window.VANA_AUTH && window.VANA_AUTH.isAuthenticated()) {
-      console.warn("[VANA Admin] 401 Unauthorized encountered on protected request — clearing session.");
+      console.warn("[VANA Admin] 401 Unauthorized encountered on protected request: clearing session.");
       window.VANA_AUTH.logout();
       _initAuthUI();
     }
@@ -365,13 +365,13 @@ function _boundaryNotice(title, text, code) {
 }
 
 // =============================================================================
-// SYSTEM — HEALTH
+// SYSTEM: HEALTH
 // =============================================================================
 async function renderSystemHealth() {
   const el = document.getElementById("section-system-health");
   if (!el) return;
 
-  // Requires VIEW_DASHBOARD at minimum — all roles have this
+  // Requires VIEW_DASHBOARD at minimum: all roles have this
   el.innerHTML = _sectionHeader(
     "System Health",
     "Live connectivity check for Group 1, Group 2, and Group 4 backend services using the existing /proxy/* gateway.",
@@ -382,9 +382,9 @@ async function renderSystemHealth() {
 
 function _buildHealthPlaceholders() {
   var services = [
-    { key: "g1", label: "Group 1 — Canonical Observation Retrieval", proxy: window.VANA_CONFIG.G1_BASE },
-    { key: "g2", label: "Group 2 — Scientific Context & Decision Resolve", proxy: window.VANA_CONFIG.G2_ENDPOINT },
-    { key: "g4", label: "Group 4 — Governed Execution & Abstention Gate", proxy: window.VANA_CONFIG.G4_ENDPOINT },
+    { key: "g1", label: "Group 1: Canonical Observation Retrieval", proxy: window.VANA_CONFIG.G1_BASE },
+    { key: "g2", label: "Group 2: Scientific Context & Decision Resolve", proxy: window.VANA_CONFIG.G2_ENDPOINT },
+    { key: "g4", label: "Group 4: Governed Execution & Abstention Gate", proxy: window.VANA_CONFIG.G4_ENDPOINT },
   ];
   return '<div class="admin-card"><div class="admin-card-head"><span class="admin-card-title">Backend API Services</span><span class="admin-card-tag">via /proxy/* gateway</span></div>' +
     services.map(function (s) {
@@ -392,7 +392,7 @@ function _buildHealthPlaceholders() {
         '<div class="admin-status-dot pending" id="health-dot-' + s.key + '"></div>' +
         '<div class="admin-status-name">' + s.label + '</div>' +
         '<div class="admin-status-detail mono" id="health-detail-' + s.key + '">Checking...</div>' +
-        '<div class="admin-status-badge" id="health-badge-' + s.key + '">—</div>' +
+        '<div class="admin-status-badge" id="health-badge-' + s.key + '">--</div>' +
         '</div>';
     }).join("") + '</div>';
 }
@@ -421,7 +421,7 @@ async function runHealthCheck() {
       var res = await adminFetch(c.url, { method: "GET", headers: { "Accept": "application/json" } });
       var latency = Date.now() - t0;
       if (res.ok || res.status === 404 || res.status === 405) {
-        // 404/405 means server responded — it's reachable even if /health doesn't exist
+        // 404/405 means server responded: it's reachable even if /health doesn't exist
         var statusLabel = res.ok ? "ONLINE" : "REACHABLE (" + res.status + ")";
         if (dot) { dot.className = "admin-status-dot ok"; }
         if (detail) detail.innerHTML = '<span class="health-latency">' + latency + "ms</span> · HTTP " + res.status;
@@ -449,7 +449,7 @@ async function runHealthCheck() {
 }
 
 // =============================================================================
-// SYSTEM — BACKEND SERVICES
+// SYSTEM: BACKEND SERVICES
 // =============================================================================
 function renderSystemServices() {
   const el = document.getElementById("section-system-services");
@@ -473,7 +473,7 @@ function renderSystemServices() {
 }
 
 // =============================================================================
-// SYSTEM — CONFIGURATION
+// SYSTEM: CONFIGURATION
 // =============================================================================
 function renderSystemConfig() {
   const el = document.getElementById("section-system-config");
@@ -486,7 +486,7 @@ function renderSystemConfig() {
   var cfg = window.VANA_CONFIG;
   el.innerHTML = _sectionHeader(
     "Configuration",
-    "Current VANA_CONFIG values loaded from config.js. Edit config.js to change these values. No restart required — reload the page.",
+    "Current VANA_CONFIG values loaded from config.js. Edit config.js to change these values. No restart required: reload the page.",
     window.VANA_AUTH.hasPermission(P.MANAGE_SYSTEM_CONFIG) ? "View" : "Read-only"
   ) + '<div class="admin-card"><div class="admin-card-head"><span class="admin-card-title">VANA_CONFIG (window.VANA_CONFIG)</span><span class="admin-card-tag">config.js</span></div>' +
     '<table class="admin-table"><thead><tr><th>Key</th><th>Value</th><th>Description</th></tr></thead><tbody>' +
@@ -503,7 +503,7 @@ function renderSystemConfig() {
 }
 
 // =============================================================================
-// ACCESS CONTROL — USERS
+// ACCESS CONTROL: USERS
 // =============================================================================
 function renderAccessUsers() {
   const el = document.getElementById("section-access-users");
@@ -524,7 +524,7 @@ function renderAccessUsers() {
 
   el.innerHTML += _boundaryNotice(
     "Backend Integration Required",
-    "User management requires a backend user directory (e.g., /api/admin/users). No user store exists in this version. The UI below shows the integration boundary — wire it to your backend.",
+    "User management requires a backend user directory (e.g., /api/admin/users). No user store exists in this version. The UI below shows the integration boundary: wire it to your backend.",
     "Required: GET  /api/admin/users → [{ id, name, email, role }]\n          POST /api/admin/users → create user\n          PUT  /api/admin/users/:id → update role\n          DEL  /api/admin/users/:id → deactivate"
   ) + '<div class="admin-card"><div class="admin-card-head"><span class="admin-card-title">User Directory</span><span class="admin-card-tag">Backend pending</span></div>' +
     '<table class="admin-table"><thead><tr><th>User ID</th><th>Name</th><th>Role</th><th>Status</th></tr></thead><tbody>' +
@@ -533,7 +533,7 @@ function renderAccessUsers() {
 }
 
 // =============================================================================
-// ACCESS CONTROL — ROLES
+// ACCESS CONTROL: ROLES
 // =============================================================================
 function renderAccessRoles() {
   const el = document.getElementById("section-access-roles");
@@ -560,7 +560,7 @@ function renderAccessRoles() {
 }
 
 // =============================================================================
-// ACCESS CONTROL — PERMISSIONS
+// ACCESS CONTROL: PERMISSIONS
 // =============================================================================
 function renderAccessPermissions() {
   const el = document.getElementById("section-access-permissions");
@@ -589,7 +589,7 @@ function renderAccessPermissions() {
 }
 
 // =============================================================================
-// GEOSPATIAL — MONITORING ZONES
+// GEOSPATIAL: MONITORING ZONES
 // =============================================================================
 function renderGeoZones() {
   const el = document.getElementById("section-geo-zones");
@@ -604,7 +604,7 @@ function renderGeoZones() {
       '<td>' + z.name + '</td>' +
       '<td><span class="' + (isLive ? "zone-status-live" : "zone-status-pending") + '">' + z.status + '</span></td>' +
       '<td class="mono">' + z.lat.toFixed(4) + ', ' + z.lon.toFixed(4) + '</td>' +
-      '<td>' + (z.alt_m !== null ? z.alt_m + " m" : "—") + '</td>' +
+      '<td>' + (z.alt_m !== null ? z.alt_m + " m" : "--") + '</td>' +
       '<td>' + z.source + '</td>' +
       '<td>' + z.license + '</td>' +
       '</tr>';
@@ -625,7 +625,7 @@ function renderGeoZones() {
 
 // =============================================================================
 // =============================================================================
-// GEOSPATIAL — MAP LAYERS
+// GEOSPATIAL: MAP LAYERS
 // =============================================================================
 function renderGeoLayers() {
   const el = document.getElementById("section-geo-layers");
@@ -638,9 +638,9 @@ function renderGeoLayers() {
     { name: "Authoritative Observations", type: "Telemetry Overlay", status: "ACTIVE", detail: "Bound to Group 1 canonical record CR-b4615a27..." },
     { name: "Active Alerts Overlay", type: "Exception Badges", status: "ACTIVE", detail: "ALT-001 through ALT-004 plotted at verified coordinates" },
     { name: "Administrative Boundaries", type: "Vector Polygons", status: "DISABLED", detail: "Unavailable: No authoritative boundary shapefiles in repository" },
-    { name: "Weather Satellite / Radar", type: "Raster Ingestion", status: "DISABLED", detail: "Unavailable: Future capability — no authoritative radar feed connected" },
-    { name: "Rainfall Isohyets", type: "Gauge Mesh Surface", status: "DISABLED", detail: "Unavailable: Future capability — gauge mesh unpersisted" },
-    { name: "Terrain Elevation Mesh", type: "DEM Vector Grid", status: "DISABLED", detail: "Unavailable: Future capability — no DEM raster connected" }
+    { name: "Weather Satellite / Radar", type: "Raster Ingestion", status: "DISABLED", detail: "Unavailable: Future capability: no authoritative radar feed connected" },
+    { name: "Rainfall Isohyets", type: "Gauge Mesh Surface", status: "DISABLED", detail: "Unavailable: Future capability: gauge mesh unpersisted" },
+    { name: "Terrain Elevation Mesh", type: "DEM Vector Grid", status: "DISABLED", detail: "Unavailable: Future capability: no DEM raster connected" }
   ];
 
   var rows = layerDefs.map(function (l) {
@@ -664,7 +664,7 @@ function renderGeoLayers() {
 }
 
 // =============================================================================
-// GEOSPATIAL — GEOGRAPHIC CONFIG
+// GEOSPATIAL: GEOGRAPHIC CONFIG
 // =============================================================================
 function renderGeoConfig() {
   const el = document.getElementById("section-geo-config");
@@ -734,7 +734,7 @@ function adminClearGeoKey() {
 }
 
 // =============================================================================
-// GOVERNANCE — POLICIES
+// GOVERNANCE: POLICIES
 // =============================================================================
 function renderGovPolicies() {
   const el = document.getElementById("section-gov-policies");
@@ -743,30 +743,30 @@ function renderGovPolicies() {
 
   el.innerHTML = _sectionHeader(
     "Governance Policies",
-    "Active VANA governance doctrine. The pipeline G3 → G1 → G2 → G4 is the authoritative execution path. Read-only — these are constitutional constraints.",
+    "Active VANA governance doctrine. The pipeline G3 → G1 → G2 → G4 is the authoritative execution path. Read-only: these are constitutional constraints.",
     "Read-only · Constitutional"
   ) + '<div class="admin-card"><div class="admin-card-head"><span class="admin-card-title">Active Governance Pipeline</span></div>' +
     '<div style="display:flex;align-items:center;gap:8px;padding:12px 0;font-size:13px;font-weight:700;color:var(--ink);justify-content:center">' +
-    '<span class="admin-role-badge viewer">G3 — Field Observation</span>' +
+    '<span class="admin-role-badge viewer">G3: Field Observation</span>' +
     '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>' +
-    '<span class="admin-role-badge operator">G1 — Canonical Intake</span>' +
+    '<span class="admin-role-badge operator">G1: Canonical Intake</span>' +
     '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>' +
-    '<span class="admin-role-badge analyst">G2 — Context &amp; Decision</span>' +
+    '<span class="admin-role-badge analyst">G2: Context &amp; Decision</span>' +
     '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>' +
-    '<span class="admin-role-badge administrator">G4 — Governed Execution</span>' +
+    '<span class="admin-role-badge administrator">G4: Governed Execution</span>' +
     '</div></div>' +
     '<div class="admin-card"><div class="admin-card-head"><span class="admin-card-title">Policy Invariants</span></div>' +
     '<table class="admin-table"><thead><tr><th>Policy</th><th>Value</th><th>Modifiable</th></tr></thead><tbody>' +
     '<tr><td>Pipeline mode</td><td>Strictly sequential G3→G1→G2→G4</td><td>No</td></tr>' +
     '<tr><td>Default ruling</td><td>ABSTAIN (fail-closed)</td><td>No</td></tr>' +
-    '<tr><td>Observation fabrication</td><td>Prohibited — zero-fabrication invariant</td><td>No</td></tr>' +
+    '<tr><td>Observation fabrication</td><td>Prohibited: zero-fabrication invariant</td><td>No</td></tr>' +
     '<tr><td>Canonical record override</td><td>Prohibited</td><td>No</td></tr>' +
     '<tr><td>G4 execution without G1+G2</td><td>Prohibited by Fail-Closed Invariant</td><td>No</td></tr>' +
     '</tbody></table></div>';
 }
 
 // =============================================================================
-// GOVERNANCE — FAIL-CLOSED RULES
+// GOVERNANCE: FAIL-CLOSED RULES
 // =============================================================================
 function renderGovFailClosed() {
   const el = document.getElementById("section-gov-failclosed");
@@ -774,9 +774,9 @@ function renderGovFailClosed() {
   if (!window.VANA_AUTH.requirePermission(P.MANAGE_GOVERNANCE_POLICIES, el)) return;
 
   el.innerHTML = _sectionHeader("Fail-Closed Rules", "The three enforced fail-closed invariants that govern the VANA pipeline. These are code-level constraints, not configuration.", "Enforced in app.js") +
-    '<div class="fail-closed-rule"><div class="fail-closed-rule-num">Rule 1 — G1 Gate</div><div class="fail-closed-rule-text">Group 1 failure → Group 2 must not be called</div><div class="fail-closed-rule-desc">If Group 1 (Canonical Observation Retrieval) fails for any reason (HTTP error, timeout, network failure), the pipeline halts immediately. Group 2 is skipped with status SKIPPED and fail_reason explaining the halt. Group 4 is also skipped.</div></div>' +
-    '<div class="fail-closed-rule"><div class="fail-closed-rule-num">Rule 2 — G2 Gate</div><div class="fail-closed-rule-text">Group 2 failure → Group 4 must not be called</div><div class="fail-closed-rule-desc">If Group 2 (Scientific Context & Decision Resolve) fails, or if Group 1 already failed (rule 1), Group 4 is skipped. The governed execution gate is never opened without explicit G2 authorization.</div></div>' +
-    '<div class="fail-closed-rule"><div class="fail-closed-rule-num">Rule 3 — Zero Fabrication</div><div class="fail-closed-rule-text">Missing authoritative data → NOT VERIFIED, never fabricated</div><div class="fail-closed-rule-desc">If canonical_record_id is null or not returned by Group 1, it is displayed as "NOT VERIFIED". No cached value, default value, or fabricated value is substituted. The canonical_record_id is only populated from authoritative Group 1 response data.</div></div>' +
+    '<div class="fail-closed-rule"><div class="fail-closed-rule-num">Rule 1: G1 Gate</div><div class="fail-closed-rule-text">Group 1 failure → Group 2 must not be called</div><div class="fail-closed-rule-desc">If Group 1 (Canonical Observation Retrieval) fails for any reason (HTTP error, timeout, network failure), the pipeline halts immediately. Group 2 is skipped with status SKIPPED and fail_reason explaining the halt. Group 4 is also skipped.</div></div>' +
+    '<div class="fail-closed-rule"><div class="fail-closed-rule-num">Rule 2: G2 Gate</div><div class="fail-closed-rule-text">Group 2 failure → Group 4 must not be called</div><div class="fail-closed-rule-desc">If Group 2 (Scientific Context & Decision Resolve) fails, or if Group 1 already failed (rule 1), Group 4 is skipped. The governed execution gate is never opened without explicit G2 authorization.</div></div>' +
+    '<div class="fail-closed-rule"><div class="fail-closed-rule-num">Rule 3: Zero Fabrication</div><div class="fail-closed-rule-text">Missing authoritative data → NOT VERIFIED, never fabricated</div><div class="fail-closed-rule-desc">If canonical_record_id is null or not returned by Group 1, it is displayed as "NOT VERIFIED". No cached value, default value, or fabricated value is substituted. The canonical_record_id is only populated from authoritative Group 1 response data.</div></div>' +
     _boundaryNotice(
       "Fail-Closed Rule Management",
       "These rules are enforced in app.js (fetchLive function) and cannot be disabled through configuration. Any modification requires a code change with full audit trail and review.",
@@ -785,7 +785,7 @@ function renderGovFailClosed() {
 }
 
 // =============================================================================
-// GOVERNANCE — EVIDENCE CONFIGURATION
+// GOVERNANCE: EVIDENCE CONFIGURATION
 // =============================================================================
 function renderGovEvidence() {
   const el = document.getElementById("section-gov-evidence");
@@ -804,17 +804,17 @@ function renderGovEvidence() {
 }
 
 // =============================================================================
-// OPERATIONS — ALERTS (read-only view)
+// OPERATIONS: ALERTS (read-only view)
 // =============================================================================
 function renderOpsAlerts() {
   const el = document.getElementById("section-ops-alerts");
   if (!el) return;
   if (!window.VANA_AUTH.requirePermission(P.VIEW_ALERTS, el)) return;
 
-  // Alert data (same as operational dashboard — read-only admin view)
+  // Alert data (same as operational dashboard: read-only admin view)
   var alerts = [
     { id: "ALT-001", severity: "CRITICAL",  title: "canonical_record_id Not Returned by Group 1 Live Runtime",        category: "DATA_GAP",              ts: "Live Session" },
-    { id: "ALT-002", severity: "ABSTAIN",   title: "Group 4 Abstention Gate Triggered — NOOP Enforced",               category: "GOVERNANCE_ABSTENTION", ts: "Live Session" },
+    { id: "ALT-002", severity: "ABSTAIN",   title: "Group 4 Abstention Gate Triggered: NOOP Enforced",               category: "GOVERNANCE_ABSTENTION", ts: "Live Session" },
     { id: "ALT-003", severity: "GAP",       title: "Missing Source Timestamp (observation_timestamp = null) in G1",    category: "DATA_GAP",              ts: "Live Session" },
     { id: "ALT-004", severity: "GAP",       title: "observation_type and measurement.unit Gap in Source Evidence",     category: "DATA_GAP",              ts: "Live Session" },
     { id: "ALT-005", severity: "INFO",      title: "5 Regional Surveillance Zones Pending Ingestion",                 category: "PENDING_REGIONAL_FEEDS",ts: "Live Session" },
@@ -830,7 +830,7 @@ function renderOpsAlerts() {
 }
 
 // =============================================================================
-// OPERATIONS — ALERT RULES
+// OPERATIONS: ALERT RULES
 // =============================================================================
 function renderOpsAlertRules() {
   const el = document.getElementById("section-ops-alertrules");
@@ -839,14 +839,14 @@ function renderOpsAlertRules() {
 
   el.innerHTML = _sectionHeader("Alert Rules", "Configure which conditions trigger operational alerts. Implementation pending backend alert engine.", "Future iteration") +
     _boundaryNotice(
-      "Alert Rules Engine — Not Implemented",
+      "Alert Rules Engine: Not Implemented",
       "Dynamic alert rule configuration requires a backend alert engine. Current alerts in the operational dashboard are statically defined in app.js.",
       "Required: GET/POST /api/admin/alert-rules\n          - condition: { field, operator, threshold }\n          - severity: CRITICAL | ABSTAIN | GAP | INFO\n          - action: { notify, log }\nPermission: MANAGE_ALERT_RULES"
     );
 }
 
 // =============================================================================
-// OPERATIONS — NOTIFICATION RULES
+// OPERATIONS: NOTIFICATION RULES
 // =============================================================================
 function renderOpsNotifications() {
   const el = document.getElementById("section-ops-notifications");
@@ -855,14 +855,14 @@ function renderOpsNotifications() {
 
   el.innerHTML = _sectionHeader("Notification Rules", "Configure who gets notified and how when alerts are triggered. Implementation pending.", "Future iteration") +
     _boundaryNotice(
-      "Notification Rules — Not Implemented",
+      "Notification Rules: Not Implemented",
       "Notification delivery (email, SMS, webhook) requires a backend notification service and recipient directory.",
       "Required: GET/POST /api/admin/notification-rules\n          - trigger: alert_rule_id\n          - channel: email | webhook | sms\n          - recipients: [user_id]\nPermission: MANAGE_ALERT_RULES"
     );
 }
 
 // =============================================================================
-// AUDIT — ADMINISTRATIVE ACTIVITY
+// AUDIT: ADMINISTRATIVE ACTIVITY
 // =============================================================================
 function renderAuditActivity() {
   const el = document.getElementById("section-audit-activity");

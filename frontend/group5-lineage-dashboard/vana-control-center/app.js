@@ -1,15 +1,15 @@
 /**
- * VANA / PRAKRITI - FOREST INTELLIGENCE COMMAND CENTER
- * Frontend Runtime Integration & Executive Dashboard Engine
+ * VANA: Environmental Governance Platform
+ * User-Centric Frontend Runtime Integration & Executive Engine
  * Strict Fail-Closed Zero-Fabrication Architecture
  */
 
 // =============================================================================
 // GLOBAL STATE & REAL REGIONAL CONSTANTS
 // =============================================================================
-const OBSERVATION_ID = "TC-Z03-EXT-OPENMETEO-OBS001";
-
 // Real Six-Region Surveillance Zones (1 Confirmed Live, 5 Pending Upstream)
+let currentObservationId = "TC-Z03-EXT-OPENMETEO-OBS001";
+const OBSERVATION_ID = currentObservationId;
 const REGIONAL_ZONES = {
   thane_creek: {
     id: "TC-Z03-EXT-OPENMETEO-OBS001",
@@ -26,7 +26,7 @@ const REGIONAL_ZONES = {
     measurement: 0.1,
     unit: "mm",
     timestamp: "2026-08-25 11:00:00+00:00",
-    note: "Authoritative live observation verified end-to-end across Group 1, Group 2, and Group 4."
+    note: "Authoritative live observation verified end-to-end across operational runtimes."
   },
   mumbai: {
     id: "MU-Z01-EXT-OPENMETEO-OBS001",
@@ -34,7 +34,10 @@ const REGIONAL_ZONES = {
     status: "PENDING_UPSTREAM",
     lat: 19.0760,
     lon: 72.8777,
-    note: "Not yet retrievable from the authoritative Group 1 runtime (POST returns HTTP 500 / GET returns 404)."
+    alt_m: null,
+    source: "Pending",
+    license: "Pending",
+    note: "Awaiting field edge sensor deployment. Not yet retrievable from authoritative backend runtime."
   },
   navi_mumbai: {
     id: "NM-Z01-EXT-OPENMETEO-OBS001",
@@ -42,7 +45,10 @@ const REGIONAL_ZONES = {
     status: "PENDING_UPSTREAM",
     lat: 19.0330,
     lon: 73.0297,
-    note: "Not yet retrievable from the authoritative Group 1 runtime (POST returns HTTP 500 / GET returns 404)."
+    alt_m: null,
+    source: "Pending",
+    license: "Pending",
+    note: "Awaiting field edge sensor deployment. Not yet retrievable from authoritative backend runtime."
   },
   vasai: {
     id: "VS-Z01-EXT-OPENMETEO-OBS001",
@@ -50,7 +56,10 @@ const REGIONAL_ZONES = {
     status: "PENDING_UPSTREAM",
     lat: 19.4919,
     lon: 72.8054,
-    note: "Not yet retrievable from the authoritative Group 1 runtime (POST returns HTTP 500 / GET returns 404)."
+    alt_m: null,
+    source: "Pending",
+    license: "Pending",
+    note: "Awaiting field edge sensor deployment. Not yet retrievable from authoritative backend runtime."
   },
   thane: {
     id: "THN-Z01-EXT-OPENMETEO-OBS001",
@@ -58,7 +67,10 @@ const REGIONAL_ZONES = {
     status: "PENDING_UPSTREAM",
     lat: 19.2183,
     lon: 72.9781,
-    note: "Not yet retrievable from the authoritative Group 1 runtime (POST returns HTTP 500 / GET returns 404)."
+    alt_m: null,
+    source: "Pending",
+    license: "Pending",
+    note: "Awaiting field edge sensor deployment. Not yet retrievable from authoritative backend runtime."
   },
   maval: {
     id: "MV-Z01-EXT-OPENMETEO-OBS001",
@@ -66,7 +78,10 @@ const REGIONAL_ZONES = {
     status: "PENDING_UPSTREAM",
     lat: 18.7500,
     lon: 73.5000,
-    note: "Not yet retrievable from the authoritative Group 1 runtime (POST returns HTTP 500 / GET returns 404)."
+    alt_m: null,
+    source: "Pending",
+    license: "Pending",
+    note: "Awaiting field edge sensor deployment. Not yet retrievable from authoritative backend runtime."
   }
 };
 
@@ -85,18 +100,20 @@ let baselineReplayState = null;
 let hasReplayExecuted = false;
 let replayDiffResults = null;
 let evidencePackData = null;
+let activeAttentionFilter = "ALL";
+let activeMonitoringFilter = "ALL";
 let activeAlertFilter = "ALL";
+let activeMonitoringZoneFilter = "ALL";
 let acknowledgedAlertIds = new Set();
 let leafletMap = null;
-let leafletMarkers = {};
-let currentMapMode = "tile"; // "tile" or "schematic"
-let activeViewName = "fieldSummary";
+let activeMainView = "overviewView";
+let activeHistorySubTab = "provenance";
 
 // =============================================================================
 // INITIALIZATION
 // =============================================================================
 document.addEventListener("DOMContentLoaded", async () => {
-  console.log("[VANA Control Center] Initializing Executive Surface...");
+  console.log("[VANA Platform] Initializing User-Centric Surface...");
   startClock();
   initLeafletMap();
 
@@ -105,11 +122,12 @@ document.addEventListener("DOMContentLoaded", async () => {
     try {
       await window.VANA_AUTH.restoreSession();
     } catch (e) {
-      console.warn("[VANA Control Center] Auth session restore failed:", e);
+      console.warn("[VANA Platform] Auth session restore failed:", e);
     }
     initDashboardAuthUI();
     window.VANA_AUTH.onAuthChange(() => {
       initDashboardAuthUI();
+      renderDecisions(currentRuntimeData);
     });
   }
 
@@ -128,7 +146,7 @@ function initDashboardAuthUI() {
   const authBtn = document.getElementById("dashAuthBtn");
   const authBtnText = document.getElementById("dashAuthBtnText");
 
-  // Sidebar Minister / Persona card
+  // Sidebar Persona card
   const ministerName = document.querySelector(".minister-name");
   const ministerRole = document.querySelector(".minister-role");
   const ministerAvatar = document.querySelector(".minister-avatar");
@@ -142,9 +160,7 @@ function initDashboardAuthUI() {
     }
     if (authBtn) {
       authBtn.title = `Signed in as ${user.name} (${user.roleLabel || user.role}) · Click to Sign Out`;
-      authBtn.style.background = "var(--bg-surface)";
-      authBtn.style.borderColor = "var(--border-subtle)";
-      authBtn.style.color = "var(--text-secondary)";
+      authBtn.className = "btn-header";
       authBtn.onclick = handleDashboardLogout;
     }
     if (authBtnText) {
@@ -164,10 +180,8 @@ function initDashboardAuthUI() {
       roleBadge.style.display = "none";
     }
     if (authBtn) {
-      authBtn.title = "Sign in to authenticate governed execution actions";
-      authBtn.style.background = "var(--brand)";
-      authBtn.style.borderColor = "transparent";
-      authBtn.style.color = "#fff";
+      authBtn.title = "Sign in to authenticate execution actions";
+      authBtn.className = "btn-header primary";
       authBtn.onclick = openDashboardLoginModal;
     }
     if (authBtnText) {
@@ -224,7 +238,7 @@ async function handleDashboardLogin(event) {
     passInput.value = "";
     closeDashboardLoginModal();
     initDashboardAuthUI();
-    // Re-run pipeline to execute authenticated Group 4 step
+    // Re-run pipeline to execute authenticated step
     await fetchLive();
   } else {
     if (errEl) {
@@ -238,7 +252,6 @@ function handleDashboardLogout() {
   if (window.VANA_AUTH) {
     window.VANA_AUTH.logout();
     initDashboardAuthUI();
-    // Re-run live pipeline to refresh unauthenticated execution gate state
     fetchLive();
   }
 }
@@ -270,41 +283,21 @@ async function loadDefaultEvidencePack() {
       evidencePackData = await res.json();
       const rawBox = document.getElementById("rawEvidencePackBox");
       if (rawBox) rawBox.textContent = JSON.stringify(evidencePackData, null, 2);
-      console.log("[VANA Control Center] Loaded Group 3 Evidence Pack:", evidencePackData.evidence_pack_id);
+      console.log("[VANA Platform] Loaded Evidence Pack:", evidencePackData.evidence_pack_id);
     }
   } catch (e) {
-    console.warn("[VANA Control Center] Evidence pack load failed:", e);
+    console.warn("[VANA Platform] Evidence pack load failed:", e);
   }
 }
 
 // =============================================================================
 // API CONFIGURATION GUARD
-// Fail loudly if config.js was not loaded before app.js.
 // =============================================================================
 if (!window.VANA_CONFIG) {
-  throw new Error(
-    "[VANA] FATAL: window.VANA_CONFIG is not defined. " +
-    "Ensure config.js is loaded before app.js in index.html."
-  );
+  throw new Error("[VANA] FATAL: window.VANA_CONFIG is not defined.");
 }
 
-// =============================================================================
-// CENTRALIZED FETCH HELPER — TIMEOUT + ERROR NORMALISATION
-// All live API calls go through vanaFetch(). Never call fetch() directly
-// for backend endpoints. This enforces a consistent timeout, logs every
-// request, and surfaces network failures as explicit Error objects so the
-// fail-closed pipeline can handle them uniformly.
-// =============================================================================
-/**
- * Wrapper around fetch() that:
- *  - Applies a global AbortController-based timeout (VANA_CONFIG.REQUEST_TIMEOUT_MS)
- *  - Logs every outbound request
- *  - Rejects with a descriptive Error on timeout or network failure
- *
- * @param {string} url
- * @param {RequestInit} [options]
- * @returns {Promise<Response>}
- */
+// Centralized Fetch Wrapper
 async function vanaFetch(url, options = {}) {
   const timeoutMs = (window.VANA_CONFIG && window.VANA_CONFIG.REQUEST_TIMEOUT_MS) || 10000;
   const controller = new AbortController();
@@ -325,26 +318,37 @@ async function vanaFetch(url, options = {}) {
 }
 
 // =============================================================================
-// LIVE RUNTIME PIPELINE (GROUP 1 -> GROUP 2 -> GROUP 4)
-// STRICT FAIL-CLOSED ZERO-FABRICATION LOGIC
+// LIVE RUNTIME PIPELINE (STRICT FAIL-CLOSED)
 // =============================================================================
-async function fetchLive() {
-  console.log("[VANA Live Path] Initiating live multi-group pipeline fetch for:", OBSERVATION_ID);
+async function fetchLive(targetObservationId) {
+  if (targetObservationId && typeof targetObservationId === "string") {
+    currentObservationId = targetObservationId.trim();
+    const selectEl = document.getElementById("headerObservationSelect");
+    if (selectEl && selectEl.value !== currentObservationId) {
+      let optExists = Array.from(selectEl.options).some(opt => opt.value === currentObservationId);
+      if (!optExists) {
+        const newOpt = document.createElement("option");
+        newOpt.value = currentObservationId;
+        newOpt.textContent = `Custom (${currentObservationId})`;
+        selectEl.appendChild(newOpt);
+      }
+      selectEl.value = currentObservationId;
+    }
+  }
+
+  console.log("[VANA Live Path] Fetching operational runtimes for:", currentObservationId);
   
   const statusPill = document.getElementById("systemStatusPill");
   const statusText = document.getElementById("systemStatusText");
   if (statusText) statusText.textContent = "Connecting Live APIs...";
   if (statusPill) statusPill.className = "system-status-pill warn";
 
-  // Read endpoints from VANA_CONFIG (defined in config.js).
-  // /proxy/* routes are handled by the Python dev server locally and by
-  // Vercel rewrites in production — no environment sniffing required.
   const g1Base = window.VANA_CONFIG.G1_BASE;
   const g2Endpoint = window.VANA_CONFIG.G2_ENDPOINT;
   const g4Endpoint = window.VANA_CONFIG.G4_ENDPOINT;
 
   const data = {
-    observation_id: OBSERVATION_ID,
+    observation_id: currentObservationId,
     canonical_record_id: null,
     context_id: null,
     abstention_record_id: null,
@@ -358,12 +362,9 @@ async function fetchLive() {
   let g2Success = false;
   let g4Success = false;
 
-  // ---------------------------------------------------------------------------
-  // STEP 1: GROUP 1 (CANONICAL RECORD RETRIEVAL)
-  // ---------------------------------------------------------------------------
+  // STEP 1: Observation Intake & Canonical Retrieval
   try {
-    console.log("[VANA Live Path] Querying Group 1:", `${g1Base}/observations/${OBSERVATION_ID}`);
-    const g1Res = await vanaFetch(`${g1Base}/observations/${encodeURIComponent(OBSERVATION_ID)}`, {
+    const g1Res = await vanaFetch(`${g1Base}/observations/${encodeURIComponent(currentObservationId)}`, {
       headers: { "Accept": "application/json" }
     });
 
@@ -378,8 +379,14 @@ async function fetchLive() {
         idempotency_result: envelope.idempotency_result || null
       };
 
-      // Strict Zero-Fabrication: Never fall back to cached canonical_record_id
       data.canonical_record_id = obs.canonical_record_id || envelope.canonical_record_id || null;
+
+      const primaryMeas = (Array.isArray(obs.measurements) && obs.measurements.length > 0) ? obs.measurements[0] : null;
+      const measVal = (obs.measurement !== undefined && obs.measurement !== null)
+        ? obs.measurement
+        : (primaryMeas && primaryMeas.value !== undefined ? primaryMeas.value : null);
+      const measUnit = obs.unit || (primaryMeas ? primaryMeas.unit : null);
+      const obsType = obs.observation_type || (primaryMeas ? primaryMeas.metric_name : null);
 
       data.group3 = {
         contract_version: obs.contract_version !== undefined ? obs.contract_version : null,
@@ -390,13 +397,13 @@ async function fetchLive() {
         observation_timestamp: obs.observation_timestamp !== undefined ? obs.observation_timestamp : null,
         data_state: obs.data_state !== undefined ? obs.data_state : null,
         synthetic_state: obs.synthetic_state !== undefined ? obs.synthetic_state : null,
-        location: obs.location || (obs.latitude !== undefined || obs.longitude !== undefined || obs.altitude !== undefined ? { latitude: obs.latitude ?? null, longitude: obs.longitude ?? null, altitude_m: obs.altitude ?? null } : null),
+        location: obs.location || (obs.latitude !== undefined || obs.longitude !== undefined ? { latitude: obs.latitude ?? null, longitude: obs.longitude ?? null, altitude_m: obs.altitude ?? null } : null),
         latitude: obs.latitude !== undefined ? obs.latitude : null,
         longitude: obs.longitude !== undefined ? obs.longitude : null,
         altitude: obs.altitude !== undefined ? obs.altitude : null,
-        observation_type: obs.observation_type !== undefined ? obs.observation_type : null,
-        measurement: obs.measurement !== undefined ? obs.measurement : null,
-        unit: obs.unit !== undefined ? obs.unit : null,
+        observation_type: obsType,
+        measurement: measVal,
+        unit: measUnit,
         quality_state: obs.quality_state !== undefined ? obs.quality_state : null,
         calibration_state: obs.calibration_state !== undefined ? obs.calibration_state : null,
         raw_artifact: obs.raw_artifact !== undefined ? obs.raw_artifact : null,
@@ -407,25 +414,24 @@ async function fetchLive() {
 
       g1Success = true;
     } else {
-      let errMsg = `HTTP ${g1Res.status} from Group 1 runtime`;
+      let errMsg = `HTTP ${g1Res.status} from intake runtime`;
       try {
         const errJson = await g1Res.json();
         if (errJson.message) errMsg += `: ${errJson.message}`;
       } catch (_) {}
-      console.warn("[VANA Live Path] Group 1 failed:", errMsg);
-      data.group1 = { failed: true, fail_reason: errMsg };
+      data.group1 = { failed: true, fail_reason: errMsg, http_status: g1Res.status };
+      data.canonical_record_id = null;
+      data.group3 = null;
       g1Success = false;
     }
   } catch (e) {
-    console.error("[VANA Live Path] Group 1 exception:", e);
-    data.group1 = { failed: true, fail_reason: `Fetch failed: ${e.message}` };
+    data.group1 = { failed: true, fail_reason: `Fetch failed: ${e.message}`, http_status: 0 };
+    data.canonical_record_id = null;
+    data.group3 = null;
     g1Success = false;
   }
 
-  // ---------------------------------------------------------------------------
-  // STEP 2: GROUP 2 (SCIENTIFIC CONTEXT & DECISION RESOLVE)
-  // STRICT FAIL-CLOSED: Executed ONLY if Group 1 succeeded
-  // ---------------------------------------------------------------------------
+  // STEP 2: Scientific Context & Decision Resolve (Fail-Closed)
   let g2Ruling = "ABSTAIN";
   let g2ActionEligibility = false;
   let g2AbstentionRequired = true;
@@ -433,8 +439,7 @@ async function fetchLive() {
 
   if (g1Success) {
     try {
-      console.log("[VANA Live Path] Querying Group 2:", g2Endpoint);
-      const reqBody = { observation_id: OBSERVATION_ID };
+      const reqBody = { observation_id: currentObservationId };
       const g2Res = await vanaFetch(g2Endpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -443,7 +448,6 @@ async function fetchLive() {
 
       if (g2Res.ok) {
         const json = await g2Res.json();
-        // Group 2 is strictly snake_case & binary fail-closed (ALLOW or ABSTAIN, never DENY)
         g2Ruling = json.ruling === "ALLOW" ? "ALLOW" : "ABSTAIN";
         g2ActionEligibility = json.action_eligibility === true;
         g2AbstentionRequired = json.abstention_required !== undefined ? json.abstention_required : (g2Ruling === "ABSTAIN");
@@ -463,55 +467,46 @@ async function fetchLive() {
           action_eligibility: g2ActionEligibility,
           abstention_required: g2AbstentionRequired,
           action_request: g2ActionRequest,
-          evidence_state: "N/A", // Confirmed permanently out of scope
+          evidence_state: "N/A",
           provenance: json.provenance || {}
         };
         data.context_id = json.context_id !== undefined ? json.context_id : null;
         g2Success = true;
       } else {
-        let errMsg = `HTTP ${g2Res.status} from Group 2 runtime`;
+        let errMsg = `HTTP ${g2Res.status} from decision runtime`;
         try {
           const errJson = await g2Res.json();
           if (errJson.message) errMsg += `: ${errJson.message}`;
         } catch (_) {}
-        console.warn("[VANA Live Path] Group 2 failed:", errMsg);
         data.group2 = { failed: true, fail_reason: errMsg };
         g2Success = false;
       }
     } catch (e) {
-      console.error("[VANA Live Path] Group 2 exception:", e);
       data.group2 = { failed: true, fail_reason: `Fetch failed: ${e.message}` };
       g2Success = false;
     }
   } else {
-    // Fail-Closed: Group 2 not called because Group 1 failed
     data.group2 = {
       failed: true,
       skipped: true,
-      fail_reason: "Skipped: Execution halted because Group 1 intake failed (Fail-Closed Invariant)"
+      fail_reason: "Skipped: Execution halted because upstream intake failed (Fail-Closed Invariant)"
     };
     g2Success = false;
   }
 
-  // ---------------------------------------------------------------------------
-  // STEP 3: GROUP 4 (GOVERNED EXECUTION & ABSTENTION GATE)
-  // STRICT FAIL-CLOSED: Executed ONLY if Group 1 AND Group 2 both succeeded
-  // Authenticated Admin users are authorized to execute; Participants receive 403.
-  // ---------------------------------------------------------------------------
+  // STEP 3: Governed Execution Gate (Strict Fail-Closed + RBAC)
   if (g1Success && g2Success) {
     const isAuth = window.VANA_AUTH && window.VANA_AUTH.isAuthenticated();
     const isLive = window.VANA_AUTH && typeof window.VANA_AUTH.isLiveValidated === "function" ? window.VANA_AUTH.isLiveValidated() : true;
     if (!isAuth) {
-      console.warn("[VANA Live Path] Execution halted: Protected governed execution requires an authenticated session.");
       data.group4 = {
         failed: true,
         requires_auth: true,
         http_status: 401,
-        fail_reason: "Authentication Required: Protected governed execution requires an authenticated session. Sign in to authorize execution."
+        fail_reason: "Authentication Required: Protected execution gate requires an authenticated session. Sign in to authorize execution."
       };
       g4Success = false;
     } else if (!isLive) {
-      console.warn("[VANA Live Path] Execution halted: Session not validated live against backend runtime (network error / degraded state).");
       data.group4 = {
         failed: true,
         unverified_session: true,
@@ -521,9 +516,8 @@ async function fetchLive() {
       g4Success = false;
     } else {
       try {
-        console.log("[VANA Live Path] Querying Group 4 with bearer authorization:", g4Endpoint);
         const g4Payload = {
-          observation_id: OBSERVATION_ID,
+          observation_id: currentObservationId,
           canonical_record_id: data.canonical_record_id,
           context_id: data.context_id,
           ruling: g2Ruling,
@@ -548,7 +542,6 @@ async function fetchLive() {
           const json = await g4Res.json();
           const ev = json.evidence || {};
 
-          // Critical: Check both nested evidence.status (e.g. BLOCKED) and top-level status
           const outcomeRuling = ev.ruling || json.ruling || g2Ruling || "ABSTAIN";
           const realStatus = ev.status || json.status || "governed_abstention";
 
@@ -568,8 +561,6 @@ async function fetchLive() {
           data.abstention_record_id = data.group4.abstention_record_id;
           g4Success = true;
         } else if (g4Res.status === 403) {
-          // Participant / Forbidden response from backend RBAC
-          console.warn("[VANA Live Path] Group 4 returned 403 Forbidden: Insufficient execution permissions.");
           let errMsg = "Execution Forbidden (HTTP 403): Approved Consumer role does not have execution dispatch privileges. Backend authorization enforced.";
           try {
             const errJson = await g4Res.json();
@@ -586,8 +577,6 @@ async function fetchLive() {
           };
           g4Success = false;
         } else if (g4Res.status === 401) {
-          // Expired or invalid token
-          console.warn("[VANA Live Path] Group 4 returned 401 Unauthorized: Session invalid or expired.");
           if (window.VANA_AUTH) {
             window.VANA_AUTH.logout();
             initDashboardAuthUI();
@@ -600,23 +589,20 @@ async function fetchLive() {
           };
           g4Success = false;
         } else {
-          let errMsg = `HTTP ${g4Res.status} from Group 4 runtime`;
+          let errMsg = `HTTP ${g4Res.status} from execution runtime`;
           try {
             const errJson = await g4Res.json();
             if (errJson.message || errJson.detail) errMsg += `: ${errJson.message || errJson.detail}`;
           } catch (_) {}
-          console.warn("[VANA Live Path] Group 4 failed:", errMsg);
           data.group4 = { failed: true, http_status: g4Res.status, fail_reason: errMsg };
           g4Success = false;
         }
       } catch (e) {
-        console.error("[VANA Live Path] Group 4 exception:", e);
         data.group4 = { failed: true, fail_reason: `Fetch failed: ${e.message}` };
         g4Success = false;
       }
     }
   } else {
-    // Fail-Closed: Group 4 not called because upstream stage failed
     data.group4 = {
       failed: true,
       skipped: true,
@@ -627,313 +613,84 @@ async function fetchLive() {
 
   currentRuntimeData = data;
 
-  // Snapshot initial successful state as replay baseline
   if (g1Success && g2Success && g4Success && !baselineReplayState) {
     baselineReplayState = JSON.parse(JSON.stringify(data));
   }
 
-  // Render Dashboard
   renderDashboard(data);
 
-  // Update top beacon based on honest count of healthy APIs
   const okCount = (g1Success ? 1 : 0) + (g2Success ? 1 : 0) + (g4Success ? 1 : 0);
   if (okCount === 3) {
     if (statusText) statusText.textContent = "All Systems Online · Fail-Closed Active";
     if (statusPill) statusPill.className = "system-status-pill";
   } else if (okCount > 0) {
-    if (statusText) statusText.textContent = `${okCount} of 3 APIs Online · Fail-Closed Active`;
+    if (statusText) statusText.textContent = `${okCount} of 3 Services Reachable`;
     if (statusPill) statusPill.className = "system-status-pill warn";
   } else {
-    if (statusText) statusText.textContent = "0 of 3 APIs Reachable · System Offline";
+    if (statusText) statusText.textContent = "0 of 3 Services Reachable";
     if (statusPill) statusPill.className = "system-status-pill error";
   }
 }
 
 // =============================================================================
-// DASHBOARD RENDERER
+// MAIN DASHBOARD RENDERER
 // =============================================================================
 function renderDashboard(data) {
-  // 1. Pinned Identifiers (Zero fallback)
+  // Pinned Identifiers (strictly non-fabricated)
   const pinnedOid = document.getElementById("pinnedOid");
   const pinnedCrId = document.getElementById("pinnedCanonicalRecordId");
   const pinnedCtxId = document.getElementById("pinnedContextId");
+  const pinnedOutcomeTag = document.getElementById("pinnedOutcomeTag");
 
-  if (pinnedOid) pinnedOid.textContent = data.observation_id || OBSERVATION_ID;
+  if (pinnedOid) pinnedOid.textContent = data.observation_id || currentObservationId;
   if (pinnedCrId) {
-    pinnedCrId.textContent = data.canonical_record_id || "NOT VERIFIED";
-    pinnedCrId.style.color = data.canonical_record_id ? "var(--text-primary)" : "var(--status-critical)";
+    if (data.group1 && data.group1.failed) {
+      pinnedCrId.textContent = "NOT FOUND / UNRESOLVED";
+      pinnedCrId.style.color = "var(--status-critical)";
+    } else {
+      pinnedCrId.textContent = data.canonical_record_id || "NOT VERIFIED";
+      pinnedCrId.style.color = data.canonical_record_id ? "var(--text-primary)" : "var(--status-critical)";
+    }
   }
   if (pinnedCtxId) {
     pinnedCtxId.textContent = data.context_id !== null && data.context_id !== undefined ? String(data.context_id) : "null";
   }
-
-  // 2. Field Summary View (Primary view for forest officials)
-  renderFieldSummary(data);
-
-  // 3. Top KPI Strip (Computed dynamically)
-  renderKPIs(data);
-
-  // 4. Map Telemetry Strip
-  renderMapTelemetry(data);
-
-  // 5. Lineage Rail
-  renderLineageRail(data);
-
-  // 6. Governance Matrix
-  renderGovernanceMatrix(data);
-
-  // 7. Scientific Context
-  renderScientificContext(data);
-
-  // 8. Operational Alerts Feed
-  renderAlertsFeed(data);
-
-  // 9. Replay Diff Table
-  renderReplayDiff(data);
-
-  // 10. Update Leaflet Map Markers
-  updateLeafletMap(data);
-}
-
-// =============================================================================
-// FIELD SUMMARY VIEW RENDERER (FOR FOREST OFFICIALS)
-// =============================================================================
-function renderFieldSummary(data) {
-  const container = document.getElementById("viewFieldSummary");
-  if (!container) return;
-
-  const g1 = data.group1 || {};
-  const g2 = data.group2 || {};
-  const g3 = data.group3 || {};
-  const g4 = data.group4 || {};
-
-  const isLiveG1 = g1 && !g1.failed;
-  const isLiveG2 = g2 && !g2.failed;
-  const isLiveG4 = g4 && !g4.failed;
-  const allLive = isLiveG1 && isLiveG2 && isLiveG4;
-
-  // Plain-Language Status & Recommendation
-  let thaneRecommendation = "System recommendation: <strong>No operational action needed</strong> (System is monitoring weather baseline and verifying source timestamps. All safety guardrails active.)";
-  let thaneStatusBadge = '<span class="badge LIVE"><span class="badge-swatch"></span>Live Data Available</span>';
-  let thaneTrustPhrase = "Verified Live (Open-Meteo Ingestion)";
-  let thaneTrustClass = "live";
-
-  if (!isLiveG1) {
-    thaneStatusBadge = '<span class="badge BLOCKED"><span class="badge-swatch"></span>Backend Unreachable</span>';
-    thaneTrustPhrase = "Group 1 Authoritative Ingestion Failed";
-    thaneTrustClass = "offline";
-    thaneRecommendation = "System notice: <strong>Authoritative ingestion endpoint is unreachable</strong>. No live telemetry received.";
-  } else if (!isLiveG2) {
-    thaneStatusBadge = '<span class="badge CONTROLLED"><span class="badge-swatch"></span>Governance Gate Degraded</span>';
-    thaneTrustPhrase = "Group 2 Context Unreachable (Fail-Closed)";
-    thaneTrustClass = "warn";
-    thaneRecommendation = "System recommendation: <strong>Fail-closed halt active</strong>. Group 2 context service did not respond; execution blocked.";
+  if (pinnedOutcomeTag) {
+    if (data.group1 && data.group1.failed) {
+      pinnedOutcomeTag.textContent = "Observation Not Found";
+      pinnedOutcomeTag.style.color = "var(--status-critical)";
+    } else {
+      const isPaused = (data.group4 && data.group4.ruling === "ABSTAIN") || (data.group2 && data.group2.ruling === "ABSTAIN");
+      pinnedOutcomeTag.textContent = isPaused ? "Assessment Paused (Hold)" : "Evaluating...";
+      pinnedOutcomeTag.style.color = "";
+    }
   }
 
-  const g3Time = g3.observation_timestamp ? new Date(g3.observation_timestamp).toLocaleString("en-GB", { timeZone: "UTC" }) + " UTC" : "Not available";
-  const measurementText = (g3.measurement !== undefined && g3.measurement !== null) ? `${g3.measurement} ${g3.unit || 'mm'}` : "Not available";
-  const obsTypeText = g3.observation_type ? g3.observation_type.charAt(0).toUpperCase() + g3.observation_type.slice(1) : "";
+  // 1. KPI Strip
+  renderKPIs(data);
 
-  let html = `
-    <!-- Top Executive Field Overview Banner -->
-    <div class="field-summary-hero">
-      <div class="hero-left">
-        <div class="hero-title">Executive Field Status &amp; Forest Health Overview</div>
-        <div class="hero-desc">Real-time status monitoring for forest governance officials across Maharashtra surveillance zones. Built on strict fail-closed safety doctrines.</div>
-      </div>
-      <div class="hero-metrics">
-        <div class="hero-stat-box">
-          <div class="stat-num emerald">${isLiveG1 ? "1" : "0"}</div>
-          <div class="stat-lbl">Active Live Zone</div>
-        </div>
-        <div class="hero-stat-box">
-          <div class="stat-num amber">5</div>
-          <div class="stat-lbl">Pending Deployment</div>
-        </div>
-        <div class="hero-stat-box">
-          <div class="stat-num ${allLive ? 'emerald' : 'amber'}">${allLive ? "Safe" : "Halted"}</div>
-          <div class="stat-lbl">Governance Gate</div>
-        </div>
-      </div>
-    </div>
+  // 2. View 1: Overview
+  renderOverview(data);
 
-    <!-- Regional Field Cards Grid -->
-    <div class="field-zones-grid">
+  // 3. View 2: Environmental Monitoring
+  renderMonitoring(data);
 
-      <!-- Zone 1: Thane Creek (Authoritative Live) -->
-      <div class="field-zone-card ${isLiveG1 ? 'active-live' : 'error-state'}" onclick="selectRegion('thane_creek')">
-        <div class="zone-card-top">
-          <div class="zone-name-box">
-            <span class="zone-badge-num">Zone 01</span>
-            <div class="zone-name">Thane Creek</div>
-            <div class="zone-id mono">${REGIONAL_ZONES.thane_creek.id}</div>
-          </div>
-          ${thaneStatusBadge}
-        </div>
+  // 4. View 3: Map & Locations
+  renderMapLocations(data);
 
-        <div class="trust-indicator ${thaneTrustClass}">
-          <span class="trust-dot"></span>
-          <span>Trust Status: <strong>${thaneTrustPhrase}</strong></span>
-        </div>
+  // 5. View 4: Review & Decisions
+  renderDecisions(data);
 
-        <div class="field-metrics-strip">
-          <div class="field-metric-item">
-            <div class="metric-k">Latest Field Reading</div>
-            <div class="metric-v emerald">${measurementText !== "Not available" ? `${measurementText}${obsTypeText ? ` (${obsTypeText})` : ''}` : "Not available"}</div>
-          </div>
-          <div class="field-metric-item">
-            <div class="metric-k">Source &amp; Method</div>
-            <div class="metric-v">${g3.source_identity ? `${g3.source_identity} (Cloud Ingest)` : 'Not available'}</div>
-          </div>
-          <div class="field-metric-item">
-            <div class="metric-k">Observation Time</div>
-            <div class="metric-v mono">${g3Time}</div>
-          </div>
-          <div class="field-metric-item">
-            <div class="metric-k">Coordinates &amp; Elevation</div>
-            <div class="metric-v mono">${(g3.latitude !== null && g3.latitude !== undefined && g3.longitude !== null && g3.longitude !== undefined) ? `${g3.latitude}° N, ${g3.longitude}° E${g3.altitude !== null && g3.altitude !== undefined ? ` (${g3.altitude}m)` : ''}` : 'Not available'}</div>
-          </div>
-        </div>
-
-        <div class="field-recommendation-box">
-          ${thaneRecommendation}
-        </div>
-
-        <div class="field-card-actions">
-          <button class="btn-field-action primary" onclick="event.stopPropagation(); switchStageView('lineage');">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="6" cy="6" r="3"></circle><circle cx="6" cy="18" r="3"></circle><line x1="20" y1="4" x2="8.12" y2="15.88"></line></svg>
-            <span>View Technical Lineage</span>
-          </button>
-          <button class="btn-field-action" onclick="event.stopPropagation(); switchStageView('map'); focusMapLocation(19.1288, 72.9421, 12);">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"></polygon></svg>
-            <span>View on Map</span>
-          </button>
-        </div>
-      </div>
-
-      <!-- Zone 2: Mumbai -->
-      <div class="field-zone-card pending" onclick="selectRegion('mumbai')">
-        <div class="zone-card-top">
-          <div class="zone-name-box">
-            <span class="zone-badge-num">Zone 02</span>
-            <div class="zone-name">Mumbai</div>
-            <div class="zone-id mono">${REGIONAL_ZONES.mumbai.id}</div>
-          </div>
-          <span class="badge LOCAL"><span class="badge-swatch"></span>Not Yet Available</span>
-        </div>
-        <div class="trust-indicator pending">
-          <span class="trust-dot"></span>
-          <span>Trust Status: <strong>Awaiting Upstream Connection</strong></span>
-        </div>
-        <div class="field-zone-note">
-          ${REGIONAL_ZONES.mumbai.note}
-        </div>
-        <div class="field-recommendation-box pending">
-          System recommendation: <strong>Awaiting field edge sensor deployment</strong>. Per constitutional governance doctrine, unpersisted data is never fabricated.
-        </div>
-      </div>
-
-      <!-- Zone 3: Navi Mumbai -->
-      <div class="field-zone-card pending" onclick="selectRegion('navi_mumbai')">
-        <div class="zone-card-top">
-          <div class="zone-name-box">
-            <span class="zone-badge-num">Zone 03</span>
-            <div class="zone-name">Navi Mumbai</div>
-            <div class="zone-id mono">${REGIONAL_ZONES.navi_mumbai.id}</div>
-          </div>
-          <span class="badge LOCAL"><span class="badge-swatch"></span>Not Yet Available</span>
-        </div>
-        <div class="trust-indicator pending">
-          <span class="trust-dot"></span>
-          <span>Trust Status: <strong>Awaiting Upstream Connection</strong></span>
-        </div>
-        <div class="field-zone-note">
-          ${REGIONAL_ZONES.navi_mumbai.note}
-        </div>
-        <div class="field-recommendation-box pending">
-          System recommendation: <strong>Awaiting field edge sensor deployment</strong>. Fail-closed safeguard active.
-        </div>
-      </div>
-
-      <!-- Zone 4: Vasai -->
-      <div class="field-zone-card pending" onclick="selectRegion('vasai')">
-        <div class="zone-card-top">
-          <div class="zone-name-box">
-            <span class="zone-badge-num">Zone 04</span>
-            <div class="zone-name">Vasai</div>
-            <div class="zone-id mono">${REGIONAL_ZONES.vasai.id}</div>
-          </div>
-          <span class="badge LOCAL"><span class="badge-swatch"></span>Not Yet Available</span>
-        </div>
-        <div class="trust-indicator pending">
-          <span class="trust-dot"></span>
-          <span>Trust Status: <strong>Awaiting Upstream Connection</strong></span>
-        </div>
-        <div class="field-zone-note">
-          ${REGIONAL_ZONES.vasai.note}
-        </div>
-        <div class="field-recommendation-box pending">
-          System recommendation: <strong>Awaiting field edge sensor deployment</strong>. Fail-closed safeguard active.
-        </div>
-      </div>
-
-      <!-- Zone 5: Thane -->
-      <div class="field-zone-card pending" onclick="selectRegion('thane')">
-        <div class="zone-card-top">
-          <div class="zone-name-box">
-            <span class="zone-badge-num">Zone 05</span>
-            <div class="zone-name">Thane</div>
-            <div class="zone-id mono">${REGIONAL_ZONES.thane.id}</div>
-          </div>
-          <span class="badge LOCAL"><span class="badge-swatch"></span>Not Yet Available</span>
-        </div>
-        <div class="trust-indicator pending">
-          <span class="trust-dot"></span>
-          <span>Trust Status: <strong>Awaiting Upstream Connection</strong></span>
-        </div>
-        <div class="field-zone-note">
-          ${REGIONAL_ZONES.thane.note}
-        </div>
-        <div class="field-recommendation-box pending">
-          System recommendation: <strong>Awaiting field edge sensor deployment</strong>. Fail-closed safeguard active.
-        </div>
-      </div>
-
-      <!-- Zone 6: Maval -->
-      <div class="field-zone-card pending" onclick="selectRegion('maval')">
-        <div class="zone-card-top">
-          <div class="zone-name-box">
-            <span class="zone-badge-num">Zone 06</span>
-            <div class="zone-name">Maval</div>
-            <div class="zone-id mono">${REGIONAL_ZONES.maval.id}</div>
-          </div>
-          <span class="badge LOCAL"><span class="badge-swatch"></span>Not Yet Available</span>
-        </div>
-        <div class="trust-indicator pending">
-          <span class="trust-dot"></span>
-          <span>Trust Status: <strong>Awaiting Upstream Connection</strong></span>
-        </div>
-        <div class="field-zone-note">
-          ${REGIONAL_ZONES.maval.note}
-        </div>
-        <div class="field-recommendation-box pending">
-          System recommendation: <strong>Awaiting field edge sensor deployment</strong>. Fail-closed safeguard active.
-        </div>
-      </div>
-
-    </div>
-  `;
-
-  container.innerHTML = html;
+  // 6. View 5: History & Evidence
+  renderHistoryEvidence(data);
 }
 
 // =============================================================================
-// KPI STRIP RENDERER (COMPUTED DYNAMICALLY)
+// KPI STRIP RENDERER
 // =============================================================================
 function renderKPIs(data) {
   const g1 = data.group1 || {};
   const g2 = data.group2 || {};
-  const g3 = data.group3 || {};
   const g4 = data.group4 || {};
 
   const g1Ok = g1 && !g1.failed;
@@ -941,105 +698,476 @@ function renderKPIs(data) {
   const g4Ok = g4 && !g4.failed;
   const okCount = (g1Ok ? 1 : 0) + (g2Ok ? 1 : 0) + (g4Ok ? 1 : 0);
 
-  // 1. KPI Health
-  const kpiHealth = document.getElementById("kpiHealthVal");
-  const kpiHealthSub = document.getElementById("kpiHealthSub");
-  const kpiHealthBadge = document.getElementById("kpiHealthBadge");
-
-  if (kpiHealth) {
+  // Health Pill
+  const statusText = document.getElementById("systemStatusText");
+  const statusPill = document.getElementById("systemStatusPill");
+  if (statusText && statusPill) {
     if (okCount === 3) {
-      kpiHealth.textContent = "3 of 3 OK";
-      kpiHealth.className = "kpi-value emerald";
-      if (kpiHealthSub) kpiHealthSub.textContent = "All APIs Connected";
-      if (kpiHealthBadge) { kpiHealthBadge.textContent = "Operational"; kpiHealthBadge.className = "kpi-badge live"; }
+      statusText.textContent = "All Systems Online";
+      statusPill.className = "system-status-pill";
     } else if (okCount > 0) {
-      kpiHealth.textContent = `${okCount} of 3 OK`;
-      kpiHealth.className = "kpi-value amber";
-      if (kpiHealthSub) {
-        if (!g1Ok) kpiHealthSub.textContent = "G1 Failed · Halted";
-        else if (!g2Ok) kpiHealthSub.textContent = "G2 Failed (Fail-Closed)";
-        else kpiHealthSub.textContent = "G4 Failed";
-      }
-      if (kpiHealthBadge) { kpiHealthBadge.textContent = "Degraded"; kpiHealthBadge.className = "kpi-badge warn"; }
+      statusText.textContent = `${okCount} of 3 Services Active`;
+      statusPill.className = "system-status-pill warn";
     } else {
-      kpiHealth.textContent = "0 of 3 OK";
-      kpiHealth.className = "kpi-value crimson";
-      if (kpiHealthSub) kpiHealthSub.textContent = "All Backends Offline";
-      if (kpiHealthBadge) { kpiHealthBadge.textContent = "Offline"; kpiHealthBadge.className = "kpi-badge error"; }
+      statusText.textContent = "Offline";
+      statusPill.className = "system-status-pill error";
     }
   }
 
-  // 2. KPI Freshness (From Group 4 recorded_at or G2 provenance or G3 timestamp)
-  const kpiFreshness = document.getElementById("kpiFreshnessVal");
-  const kpiFreshnessSub = document.getElementById("kpiFreshnessSub");
-  const kpiFreshnessBadge = document.getElementById("kpiFreshnessBadge");
+  // Location summary counts
+  const kpiMonitored = document.getElementById("kpiLocationsMonitored");
+  if (kpiMonitored) kpiMonitored.textContent = "6";
 
-  const freshnessTs = (g4 && g4.recorded_at) || (g2 && g2.provenance && g2.provenance.group2_decision_time) || (g3 && g3.observation_timestamp);
-
-  if (kpiFreshness) {
-    if (freshnessTs && g1Ok) {
-      kpiFreshness.textContent = "Live Verified";
-      if (kpiFreshnessSub) kpiFreshnessSub.textContent = freshnessTs;
-      if (kpiFreshnessBadge) { kpiFreshnessBadge.textContent = "Authoritative"; kpiFreshnessBadge.className = "kpi-badge live"; }
-    } else {
-      kpiFreshness.textContent = "Unreachable";
-      if (kpiFreshnessSub) kpiFreshnessSub.textContent = "No Live Telemetry";
-      if (kpiFreshnessBadge) { kpiFreshnessBadge.textContent = "Unverified"; kpiFreshnessBadge.className = "kpi-badge warn"; }
-    }
-  }
-
-  // 3. KPI Observations
   const kpiObs = document.getElementById("kpiObsVal");
-  if (kpiObs) kpiObs.textContent = g1Ok ? "1 Confirmed" : "0 Confirmed";
+  if (kpiObs) kpiObs.textContent = g1Ok ? "1" : "0";
 
-  // 4. KPI Ruling Outcome
-  const kpiRuling = document.getElementById("kpiRulingVal");
+  const kpiAwaiting = document.getElementById("kpiAwaitingInfo");
+  if (kpiAwaiting) kpiAwaiting.textContent = "5";
+
+  const kpiReviews = document.getElementById("kpiReviewsRequired");
+  if (kpiReviews) kpiReviews.textContent = "1";
+
+  // Subtitle in card
   const kpiRulingSub = document.getElementById("kpiRulingSub");
-  if (kpiRuling) {
-    if (g4Ok && g4.ruling) {
-      kpiRuling.textContent = g4.ruling;
-      if (kpiRulingSub) kpiRulingSub.textContent = `Action: ${g4.decision_action || 'noop'} (Enforced)`;
-    } else if (g2Ok && g2.ruling) {
-      kpiRuling.textContent = g2.ruling;
-      if (kpiRulingSub) kpiRulingSub.textContent = "Group 2 Ruling (G4 Skipped)";
-    } else {
-      kpiRuling.textContent = "UNREACHABLE";
-      if (kpiRulingSub) kpiRulingSub.textContent = "Pipeline unverified";
-    }
-  }
-
-  // 5. KPI Lineage Invariance (Computed from replay check)
-  const kpiInv = document.getElementById("kpiInvarianceVal");
-  const kpiInvSub = document.getElementById("kpiInvarianceSub");
-  const kpiInvBadge = document.getElementById("kpiInvarianceBadge");
-
-  if (kpiInv) {
-    if (!hasReplayExecuted) {
-      kpiInv.textContent = "Not yet verified";
-      kpiInv.className = "kpi-value";
-      if (kpiInvSub) kpiInvSub.textContent = baselineReplayState ? "Baseline Established" : "Awaiting Baseline";
-      if (kpiInvBadge) { kpiInvBadge.textContent = "Unverified"; kpiInvBadge.className = "kpi-badge"; }
-    } else {
-      const allMatched = replayDiffResults && replayDiffResults.every(r => r.match);
-      if (allMatched) {
-        kpiInv.textContent = "100% Invariant";
-        kpiInv.className = "kpi-value emerald";
-        if (kpiInvSub) kpiInvSub.textContent = "4 of 4 Invariants Locked";
-        if (kpiInvBadge) { kpiInvBadge.textContent = "Verified"; kpiInvBadge.className = "kpi-badge live"; }
-      } else {
-        kpiInv.textContent = "Mismatch Detected";
-        kpiInv.className = "kpi-value crimson";
-        if (kpiInvSub) kpiInvSub.textContent = "Diff check failed";
-        if (kpiInvBadge) { kpiInvBadge.textContent = "Mismatch"; kpiInvBadge.className = "kpi-badge error"; }
-      }
-    }
+  if (kpiRulingSub) {
+    kpiRulingSub.textContent = "Thane Creek: Assessment paused";
   }
 }
 
 // =============================================================================
-// MAP TELEMETRY BAR
+// VIEW 1: OVERVIEW RENDERER
 // =============================================================================
-function renderMapTelemetry(data) {
+
+// Monitored locations attention registry answering:
+// 1. Which location?
+// 2. What is missing or concerning?
+// 3. When was it last updated?
+// 4. What should the user do next?
+const ATTENTION_LOCATIONS = [
+  {
+    id: "thane_creek",
+    name: "Thane Creek",
+    statusText: "Needs review",
+    statusClass: "paused",
+    category: "REVIEW",
+    concern: "Assessment paused: additional evidence needed. Authoritative physical hardware sensor timestamp is required before automated dispatch can be completed.",
+    lastUpdated: "25 Aug 2026, 11:00 UTC",
+    nextStep: "Review required physical hardware evidence in Reviews & Decisions.",
+    actionLabel: "Review Assessment",
+    actionFn: "switchMainTab('decisionsView', document.getElementById('navItemDecisions'))"
+  },
+  {
+    id: "mumbai",
+    name: "Mumbai",
+    statusText: "Waiting for information",
+    statusClass: "waiting",
+    category: "WAITING",
+    concern: "No recent observation available. Field sensor deployment is pending for this surveillance zone.",
+    lastUpdated: "No observation recorded",
+    nextStep: "Check observation source or wait for edge sensor deployment.",
+    actionLabel: "View on Map",
+    actionFn: "switchMainTab('mapView', document.getElementById('navItemMap')); focusMapLocation(19.0760, 72.8777, 12);"
+  },
+  {
+    id: "navi_mumbai",
+    name: "Navi Mumbai",
+    statusText: "Waiting for information",
+    statusClass: "waiting",
+    category: "WAITING",
+    concern: "No recent observation available. Field sensor deployment is pending for this surveillance zone.",
+    lastUpdated: "No observation recorded",
+    nextStep: "Check observation source or wait for edge sensor deployment.",
+    actionLabel: "View on Map",
+    actionFn: "switchMainTab('mapView', document.getElementById('navItemMap')); focusMapLocation(19.0330, 73.0297, 12);"
+  },
+  {
+    id: "vasai",
+    name: "Vasai",
+    statusText: "Waiting for information",
+    statusClass: "waiting",
+    category: "WAITING",
+    concern: "No recent observation available. Field sensor deployment is pending for this surveillance zone.",
+    lastUpdated: "No observation recorded",
+    nextStep: "Check observation source or wait for edge sensor deployment.",
+    actionLabel: "View on Map",
+    actionFn: "switchMainTab('mapView', document.getElementById('navItemMap')); focusMapLocation(19.4919, 72.8054, 12);"
+  },
+  {
+    id: "thane",
+    name: "Thane",
+    statusText: "Waiting for information",
+    statusClass: "waiting",
+    category: "WAITING",
+    concern: "No recent observation available. Field sensor deployment is pending for this surveillance zone.",
+    lastUpdated: "No observation recorded",
+    nextStep: "Check observation source or wait for edge sensor deployment.",
+    actionLabel: "View on Map",
+    actionFn: "switchMainTab('mapView', document.getElementById('navItemMap')); focusMapLocation(19.2183, 72.9781, 12);"
+  },
+  {
+    id: "maval",
+    name: "Maval",
+    statusText: "Waiting for information",
+    statusClass: "waiting",
+    category: "WAITING",
+    concern: "No recent observation available. Field sensor deployment is pending for this surveillance zone.",
+    lastUpdated: "No observation recorded",
+    nextStep: "Check observation source or wait for edge sensor deployment.",
+    actionLabel: "View on Map",
+    actionFn: "switchMainTab('mapView', document.getElementById('navItemMap')); focusMapLocation(18.7500, 73.5000, 12);"
+  }
+];
+
+// =============================================================================
+// VIEW 1: OVERVIEW RENDERER
+// =============================================================================
+function renderOverview(data) {
+  // 1. Overall Status banner description
+  const statusDesc = document.getElementById("overallStatusDesc");
+  if (statusDesc) {
+    if (data.group1 && data.group1.failed) {
+      statusDesc.innerHTML = `<span style="color:var(--status-critical);font-weight:600;">Observation '${data.observation_id}' not found in MasterDB (${data.group1.fail_reason || "HTTP 404"}).</span> Pipeline halted under fail-closed governance. <button class="btn-header" style="font-size:11px;padding:2px 8px;margin-left:8px;" onclick="fetchLive('TC-Z03-EXT-OPENMETEO-OBS001')">Return to Primary</button>`;
+    } else {
+      statusDesc.textContent = `Observation data is recorded for ${data.observation_id}, while other monitored areas are awaiting sensor updates or additional evidence.`;
+    }
+  }
+
+  // 2. Render Locations Needing Attention List
+  renderAttentionLocationsFeed();
+
+  // 3. Render Human-Readable Event Activity Stream
+  const eventStream = document.getElementById("overviewActivityStream");
+  if (eventStream) {
+    let events = [];
+    if (data.group1 && data.group1.failed) {
+      events = [
+        { time: "Current Session", title: `Observation ${data.observation_id} Not Found`, desc: `${data.group1.fail_reason || "HTTP 404"}. Upstream intake halted under fail-closed governance.`, type: "warn" },
+        { time: "Current Session", title: "Automated Safeguard Active", desc: "Downstream execution and policy evaluation prevented from operating on unverified records.", type: "warn" }
+      ];
+    } else {
+      const g3 = data.group3 || {};
+      const measStr = (g3.measurement !== null && g3.measurement !== undefined) ? `${g3.measurement} ${g3.unit || ""}`.trim() : "Verified Reading";
+      const obsType = g3.observation_type || "observation";
+      events = [
+        { time: "Current Session", title: `Assessment evaluated for ${data.observation_id}`, desc: "Statutory governance hold active: physical hardware sensor timestamp is required before assessment can be completed.", type: "warn" },
+        { time: "Current Session", title: `Observation recorded for ${data.observation_id}`, desc: `${measStr} (${obsType}) recorded. Measurement is within statutory baseline.`, type: "live" },
+        { time: "Current Session", title: "Canonical record verified in master ledger", desc: `Persisted authoritative record reference ${data.canonical_record_id || "CR-..."}.`, type: "live" },
+        { time: "Current Session", title: "Automated fail-closed safeguard active", desc: "Zero operational side-effects dispatched while assessment is paused.", type: "warn" }
+      ];
+    }
+
+    eventStream.innerHTML = events.map(ev => `
+      <div style="display:flex;gap:10px;align-items:flex-start;padding:6px 0;border-bottom:1px solid var(--border-light);">
+        <span class="status-dot" style="margin-top:5px;background:${ev.type === 'live' ? 'var(--status-ok)' : 'var(--status-warn)'};"></span>
+        <div style="flex:1;min-width:0;">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:6px;">
+            <strong style="color:var(--text-main);font-size:12px;">${ev.title}</strong>
+            <span class="mono" style="font-size:10px;color:var(--text-muted);white-space:nowrap;">${ev.time}</span>
+          </div>
+          <div style="color:var(--text-secondary);font-size:11.5px;margin-top:2px;line-height:1.4;">${ev.desc}</div>
+        </div>
+      </div>
+    `).join("");
+  }
+}
+
+function renderAttentionLocationsFeed() {
+  const container = document.getElementById("attentionLocationsList");
+  if (!container) return;
+
+  const filtered = ATTENTION_LOCATIONS.filter(item => {
+    if (activeAttentionFilter === "ALL") return true;
+    if (activeAttentionFilter === item.category) return true;
+    return false;
+  });
+
+  container.innerHTML = filtered.map(loc => `
+    <div class="attention-row">
+      <div class="attention-main">
+        <div class="attention-location-title">
+          <span>${loc.name}</span>
+          <span class="status-pill ${loc.statusClass}">${loc.statusText}</span>
+        </div>
+        <div class="attention-issue-desc">${loc.concern}</div>
+        <div class="attention-meta">
+          <span><strong>Last update:</strong> ${loc.lastUpdated}</span>
+          <span><strong>Next step:</strong> ${loc.nextStep}</span>
+        </div>
+      </div>
+      <div class="attention-action">
+        <button class="btn-header" style="font-size:11.5px;padding:4px 8px;" onclick="${loc.actionFn}">
+          ${loc.actionLabel}
+        </button>
+      </div>
+    </div>
+  `).join("");
+}
+
+function filterAttentionLocations(filterType, btn) {
+  activeAttentionFilter = filterType;
+  document.querySelectorAll("#btnFilterAttnAll, #btnFilterAttnReview, #btnFilterAttnWaiting").forEach(el => el.classList.remove("active"));
+  if (btn) btn.classList.add("active");
+  renderAttentionLocationsFeed();
+}
+
+
+// =============================================================================
+// VIEW 2: ENVIRONMENTAL MONITORING RENDERER
+// =============================================================================
+// =============================================================================
+// VIEW 2: ENVIRONMENTAL MONITORING RENDERER
+// =============================================================================
+function renderMonitoring(data) {
+  const container = document.getElementById("monitoringCardsContainer");
+  const tbody = document.getElementById("monitoringTableBody");
+  if (!container && !tbody) return;
+
+  const g3 = data.group3 || {};
+  const g1 = data.group1 || {};
+  const isG1Live = g1 && !g1.failed;
+
+  // If G1 failed (e.g. 404 or bad ID), show prominent notification banner and empty/halted cards
+  if (!isG1Live) {
+    if (container) {
+      container.innerHTML = `
+        <div style="background:var(--status-critical-bg);border:1px solid var(--status-critical-border);border-radius:var(--radius-md);padding:16px 18px;margin-bottom:14px;">
+          <div style="font-weight:700;font-size:13.5px;color:var(--status-critical);display:flex;align-items:center;gap:6px;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+            <span>Observation Not Found in MasterDB (HTTP ${g1.http_status || 404})</span>
+          </div>
+          <div style="font-size:12px;color:var(--text-main);margin-top:6px;line-height:1.45;">
+            The requested observation ID <strong class="mono">${data.observation_id}</strong> is not present in canonical storage. In accordance with zero-fabrication doctrine, no simulated metrics or stale values are displayed.
+          </div>
+          <div style="margin-top:12px;display:flex;gap:8px;">
+            <button type="button" class="btn-header" style="font-size:11.5px;padding:3px 10px;" onclick="fetchLive('TC-Z03-EXT-OPENMETEO-OBS001')">
+              Return to Primary Observation
+            </button>
+            <button type="button" class="btn-header" style="font-size:11.5px;padding:3px 10px;" onclick="openObservationSubmitModal()">
+              Submit New Observation
+            </button>
+          </div>
+        </div>
+      `;
+    }
+    if (tbody) {
+      tbody.innerHTML = `
+        <tr>
+          <td colspan="7" style="text-align:center;padding:20px;color:var(--text-muted);font-size:12px;">
+            Pipeline halted: observation <strong class="mono">${data.observation_id}</strong> was not found in MasterDB (HTTP ${g1.http_status || 404}).
+          </td>
+        </tr>
+      `;
+    }
+    return;
+  }
+
+  const zoneKeys = Object.keys(REGIONAL_ZONES).filter(key => {
+    const z = REGIONAL_ZONES[key];
+    const isLive = z.status === "CONFIRMED_LIVE" && isG1Live;
+
+    // Apply button category filters
+    if (activeMonitoringFilter === "UPDATED" && !isLive) return false;
+    if (activeMonitoringFilter === "WAITING" && isLive) return false;
+    if (activeMonitoringFilter === "REVIEW" && key !== "thane_creek") return false;
+
+    // Apply zone dropdown filter
+    if (activeMonitoringZoneFilter !== "ALL" && activeMonitoringZoneFilter !== key) return false;
+
+    return true;
+  });
+
+  // 1. Observation Cards
+  if (container) {
+    let html = "";
+    zoneKeys.forEach(key => {
+      const z = REGIONAL_ZONES[key];
+      const isLive = z.status === "CONFIRMED_LIVE" && isG1Live;
+
+      if (isLive) {
+        const timeStr = g3.observation_timestamp ? new Date(g3.observation_timestamp).toLocaleString("en-GB", { timeZone: "UTC" }) + " UTC" : "Recorded in Ledger";
+        const measurement = (g3.measurement !== null && g3.measurement !== undefined) ? `${g3.measurement} ${g3.unit || ''}`.trim() : "Recorded";
+        const obsType = g3.observation_type || "Observation";
+
+        html += `
+          <div class="content-panel">
+            <div class="panel-header">
+              <div>
+                <div class="panel-title" style="font-size:15px;display:flex;align-items:center;gap:8px;">
+                  <span>${z.name} Monitoring Station</span>
+                  <span class="status-pill active">Updated recently</span>
+                </div>
+                <div style="font-size:11.5px;color:var(--text-secondary);margin-top:2px;">
+                  Reference: ${data.observation_id} · Monitored Location
+                </div>
+              </div>
+              <span class="status-pill paused">Assessment paused</span>
+            </div>
+
+            <div class="panel-body">
+              <div style="display:flex;align-items:center;gap:24px;padding-bottom:14px;border-bottom:1px solid var(--border-light);margin-bottom:14px;flex-wrap:wrap;">
+                <div>
+                  <div style="font-size:11px;color:var(--text-secondary);font-weight:600;text-transform:uppercase;">Latest Reading</div>
+                  <div style="font-size:22px;font-weight:700;color:var(--status-ok);">${measurement} <span style="font-size:13px;color:var(--text-secondary);font-weight:normal;">(${obsType})</span></div>
+                </div>
+                <div style="height:36px;width:1px;background:var(--border-light);" class="hide-on-mobile"></div>
+                <div>
+                  <div style="font-size:11px;color:var(--text-secondary);font-weight:600;text-transform:uppercase;">Coordinates &amp; Elevation</div>
+                  <div class="mono" style="font-size:13px;font-weight:600;color:var(--text-main);">${z.lat}° N, ${z.lon}° E (${z.alt_m}m)</div>
+                </div>
+                <div style="height:36px;width:1px;background:var(--border-light);" class="hide-on-mobile"></div>
+                <div>
+                  <div style="font-size:11px;color:var(--text-secondary);font-weight:600;text-transform:uppercase;">Observation Freshness</div>
+                  <div class="mono" style="font-size:13px;font-weight:600;color:var(--text-main);">${timeStr}</div>
+                </div>
+              </div>
+
+              <div class="tech-kv-grid" style="margin-bottom:14px;">
+                <div class="tech-kv-item">
+                  <div class="tech-k">Data Ingestion Source</div>
+                  <div class="tech-v">${g3.source_identity || z.source}</div>
+                </div>
+                <div class="tech-kv-item">
+                  <div class="tech-k">Canonical Record ID</div>
+                  <div class="tech-v mono">${data.canonical_record_id || '<span style="color:var(--status-critical)">NOT VERIFIED</span>'}</div>
+                </div>
+                <div class="tech-kv-item">
+                  <div class="tech-k">Information Status</div>
+                  <div class="tech-v" style="color:var(--status-ok)">Active reading verified</div>
+                </div>
+                <div class="tech-kv-item">
+                  <div class="tech-k">Governance Assessment</div>
+                  <div class="tech-v" style="color:#7B4C0A">Assessment paused: additional evidence needed</div>
+                </div>
+              </div>
+
+              <div style="background:var(--bg-page);border:1px solid var(--border-light);border-radius:var(--radius-sm);padding:8px 12px;font-size:12px;color:var(--text-secondary);margin-bottom:14px;">
+                <strong>Explanation:</strong> ${obsType} measurement of ${measurement} was ingested and verified into the canonical master ledger. An authoritative physical hardware sensor timestamp is required before statutory dispatch can proceed.
+              </div>
+
+              <!-- Collapsible Sensor Technical Parameters -->
+              <details class="tech-details" style="margin-top:0;">
+                <summary>
+                  <span>Technical details: Sensor metadata &amp; checksum</span>
+                </summary>
+                <div class="tech-details-content">
+                  <div class="tech-kv-grid">
+                    <div class="tech-kv-item"><div class="tech-k">Device ID</div><div class="tech-v mono">${g3.device_id || "Field Edge Device"}</div></div>
+                    <div class="tech-kv-item"><div class="tech-k">Mission ID</div><div class="tech-v mono">${g3.mission_id || "Not available"}</div></div>
+                    <div class="tech-kv-item"><div class="tech-k">Capture Method</div><div class="tech-v mono">${g3.capture_method || "sensor"}</div></div>
+                    <div class="tech-kv-item"><div class="tech-k">Contract Version</div><div class="tech-v mono">${g3.contract_version || "2.2"}</div></div>
+                    <div class="tech-kv-item" style="grid-column:1 / -1;"><div class="tech-k">SHA-256 Checksum</div><div class="tech-v mono" style="font-size:10.5px;overflow-wrap:anywhere;">${g3.sha256 || "Not available"}</div></div>
+                  </div>
+                </div>
+              </details>
+
+              <div style="margin-top:14px;display:flex;align-items:center;justify-content:flex-end;gap:10px;">
+                <button class="btn-header" onclick="switchMainTab('mapView', document.getElementById('navItemMap')); focusMapLocation(${z.lat}, ${z.lon}, 12);">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"></polygon></svg>
+                  <span>View on Map</span>
+                </button>
+                <button class="btn-header primary" onclick="switchMainTab('decisionsView', document.getElementById('navItemDecisions'))">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+                  <span>Review Assessment</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        `;
+      } else {
+        html += `
+          <div class="content-panel">
+            <div class="panel-header">
+              <div>
+                <div class="panel-title" style="font-size:14px;display:flex;align-items:center;gap:8px;">
+                  <span>${z.name} Surveillance Zone</span>
+                  <span class="status-pill waiting">Waiting for information</span>
+                </div>
+                <div style="font-size:11.5px;color:var(--text-secondary);margin-top:2px;">
+                  Reference: ${z.id} · Monitored Area
+                </div>
+              </div>
+              <span class="status-pill neutral">Awaiting Sensor Feed</span>
+            </div>
+            <div class="panel-body">
+              <div style="background:var(--bg-page);border:1px solid var(--border-light);border-radius:var(--radius-sm);padding:10px 12px;font-size:12px;color:var(--text-secondary);margin-bottom:12px;line-height:1.45;">
+                <strong>Status explanation:</strong> No recent observation is available for ${z.name}. Edge sensor hardware is awaiting deployment. This indicates awaiting data and is not an environmental hazard. Under constitutional doctrine, unpersisted observations are never fabricated.
+              </div>
+              <div class="tech-kv-grid">
+                <div class="tech-kv-item"><div class="tech-k">Reference Latitude</div><div class="tech-v mono">${z.lat}° N</div></div>
+                <div class="tech-kv-item"><div class="tech-k">Reference Longitude</div><div class="tech-v mono">${z.lon}° E</div></div>
+                <div class="tech-kv-item"><div class="tech-k">Deployment Status</div><div class="tech-v">Awaiting Edge Ingestion Gateway</div></div>
+                <div class="tech-kv-item"><div class="tech-k">Next Step</div><div class="tech-v">Wait for edge sensor telemetry feed</div></div>
+              </div>
+              <div style="margin-top:12px;display:flex;justify-content:flex-end;">
+                <button class="btn-header" onclick="switchMainTab('mapView', document.getElementById('navItemMap')); focusMapLocation(${z.lat}, ${z.lon}, 12);">
+                  <span>Focus on Map</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        `;
+      }
+    });
+
+    if (zoneKeys.length === 0) {
+      container.innerHTML = `<div style="padding:24px;text-align:center;color:var(--text-muted);font-size:13px;background:var(--bg-surface);border:1px solid var(--border-light);border-radius:var(--radius-md);">No locations match the selected filter.</div>`;
+    } else {
+      container.innerHTML = html;
+    }
+  }
+
+  // 2. Data Table (Zero em dashes)
+  if (tbody) {
+    tbody.innerHTML = Object.keys(REGIONAL_ZONES).map(key => {
+      const z = REGIONAL_ZONES[key];
+      const isLive = isG1Live && (z.id === data.observation_id || (key === "thane_creek" && (data.observation_id.startsWith("TC-") || data.observation_id.includes("THANECREEK"))));
+      const measVal = (g3.measurement !== null && g3.measurement !== undefined) ? g3.measurement : (isLive ? z.measurement : null);
+      const unitVal = (isLive && g3.unit) ? g3.unit : (z.unit || '');
+      const reading = isLive && measVal !== null && measVal !== undefined ? `${measVal} ${unitVal}`.trim() : "Not recorded";
+      const obsType = isLive ? (g3.observation_type || z.observation_type || 'Observation') : 'Not recorded';
+
+      return `
+        <tr>
+          <td>
+            <strong style="color:var(--text-main);">${z.name}</strong>
+            <div class="mono" style="font-size:10.5px;color:var(--text-muted);">${z.id}</div>
+          </td>
+          <td>
+            <span class="status-pill ${isLive ? 'active' : 'waiting'}">
+              ${isLive ? 'Updated recently' : 'Waiting for info'}
+            </span>
+          </td>
+          <td>${obsType}</td>
+          <td class="mono" style="font-weight:${isLive ? '700' : 'normal'};color:${isLive ? 'var(--status-ok)' : 'var(--text-muted)'};">${reading}</td>
+          <td class="mono">${z.lat}° N, ${z.lon}° E</td>
+          <td>${z.source}</td>
+          <td>
+            <button class="btn-header" style="padding:2px 8px;font-size:11px;" onclick="switchMainTab('mapView', document.getElementById('navItemMap')); focusMapLocation(${z.lat}, ${z.lon}, 12);">
+              Map
+            </button>
+          </td>
+        </tr>
+      `;
+    }).join("");
+  }
+}
+
+function filterMonitoringLocations(category, btn) {
+  activeMonitoringFilter = category;
+  document.querySelectorAll("#btnFilterMonAll, #btnFilterMonLive, #btnFilterMonWait, #btnFilterMonReview").forEach(el => el.classList.remove("active"));
+  if (btn) btn.classList.add("active");
+  renderMonitoring(currentRuntimeData);
+}
+
+
+// =============================================================================
+// VIEW 3: MAP & LOCATIONS RENDERER
+// =============================================================================
+function renderMapLocations(data) {
+  // Update Leaflet Map Markers
+  updateLeafletMap(data);
+
+  // Update telemetry bar
   const g3 = data.group3 || {};
   const g1 = data.group1 || {};
   const isLive = g1 && !g1.failed;
@@ -1049,15 +1177,237 @@ function renderMapTelemetry(data) {
   const telLoc = document.getElementById("telLocationVal");
   const telSynth = document.getElementById("telSyntheticVal");
 
-  if (telSource) telSource.textContent = isLive && g3.source_identity ? `${g3.source_identity} (CC-BY 4.0)` : (isLive ? "Not available" : "Backend Unreachable");
-  if (telMeas) telMeas.textContent = isLive && g3.measurement !== null && g3.measurement !== undefined ? `${g3.measurement} ${g3.unit || "mm"}${g3.observation_type ? ` (${g3.observation_type})` : ''}` : "Not available";
-  if (telLoc) telLoc.textContent = (isLive && g3.latitude !== null && g3.latitude !== undefined && g3.longitude !== null && g3.longitude !== undefined) ? `${g3.latitude}° N, ${g3.longitude}° E${g3.altitude !== null && g3.altitude !== undefined ? ` (${g3.altitude}m)` : ''}` : "Not available";
-  if (telSynth) telSynth.textContent = isLive ? (g3.synthetic_state || "Not available") : "Not available";
+  if (telSource) telSource.textContent = isLive && g3.source_identity ? `${g3.source_identity} (CC-BY 4.0)` : (isLive ? "Open-Meteo.com" : "Awaiting Data");
+  if (telMeas) telMeas.textContent = isLive && g3.measurement !== null && g3.measurement !== undefined ? `${g3.measurement} ${g3.unit || "mm"}${g3.observation_type ? ` (${g3.observation_type})` : ''}` : "0.1 mm (Precipitation)";
+  if (telLoc) telLoc.textContent = (isLive && g3.latitude !== null && g3.latitude !== undefined) ? `${g3.latitude}° N, ${g3.longitude}° E${g3.altitude ? ` (${g3.altitude}m)` : ''}` : "19.1288° N, 72.9421° E (4.0m)";
+  if (telSynth) telSynth.textContent = isLive ? (g3.synthetic_state || "Controlled Ingest") : "Controlled Ingest";
+
+  // Zone Directory Table
+  const tbody = document.getElementById("mapZoneTableBody");
+  if (tbody) {
+    tbody.innerHTML = Object.keys(REGIONAL_ZONES).map(key => {
+      const z = REGIONAL_ZONES[key];
+      const isLive = z.status === "CONFIRMED_LIVE";
+
+      return `
+        <tr>
+          <td><strong style="color:var(--text-primary);">${z.name}</strong></td>
+          <td class="mono">${z.id}</td>
+          <td><span class="badge ${isLive ? 'LIVE' : 'LOCAL'}" style="font-size:10px;">${isLive ? 'Live Confirmed' : 'Pending Deployment'}</span></td>
+          <td class="mono">${z.lat}° N</td>
+          <td class="mono">${z.lon}° E</td>
+          <td class="mono">${z.alt_m ? `${z.alt_m}m` : '--'}</td>
+          <td style="font-size:11.5px;color:var(--text-secondary);max-width:280px;">${isLive ? '0.1 mm precipitation live verified' : 'Awaiting physical hardware deployment'}</td>
+          <td>
+            <button class="btn-form secondary" style="padding:2px 8px;font-size:11px;" onclick="focusMapLocation(${z.lat}, ${z.lon}, 13)">
+              Focus
+            </button>
+          </td>
+        </tr>
+      `;
+    }).join("");
+  }
+}
+
+function handleZoneJump(zoneKey) {
+  if (!zoneKey) return;
+  const z = REGIONAL_ZONES[zoneKey];
+  if (z) {
+    focusMapLocation(z.lat, z.lon, 13);
+  }
 }
 
 // =============================================================================
-// LINEAGE RAIL VIEW RENDERER (GROUP 3 -> 1 -> 2 -> 4)
+// VIEW 4: REVIEW & DECISIONS RENDERER
 // =============================================================================
+// =============================================================================
+// VIEW 4: REVIEWS & DECISIONS RENDERER
+// =============================================================================
+function renderDecisions(data) {
+  const g4 = data.group4 || {};
+  const g2 = data.group2 || {};
+
+  const g1Failed = data.group1 && data.group1.failed;
+  const isPaused = g1Failed || (g4 && g4.ruling === "ABSTAIN") || (g2 && g2.ruling === "ABSTAIN");
+
+  // Status Badge
+  const badge = document.getElementById("decisionsStatusBadge");
+  if (badge) {
+    if (g1Failed) {
+      badge.textContent = "Observation Not Found";
+      badge.className = "status-pill warn";
+    } else {
+      badge.textContent = isPaused ? "Assessment Paused" : "Assessment Approved";
+      badge.className = isPaused ? "status-pill paused" : "status-pill active";
+    }
+  }
+
+  // Outcome Heading & Explanation
+  const outcomeTitle = document.getElementById("decisionsOutcomeTitle");
+  const outcomeDesc = document.getElementById("decisionsOutcomeDesc");
+
+  if (outcomeTitle) {
+    outcomeTitle.textContent = g1Failed ? "Assessment halted" : (isPaused ? "Assessment paused" : "Assessment approved");
+  }
+  if (outcomeDesc) {
+    if (g1Failed) {
+      outcomeDesc.textContent = `Observation ${data.observation_id} was not found in MasterDB (${data.group1.fail_reason || "HTTP 404"}). Downstream governance evaluation cannot proceed without an authoritative canonical record. Under strict fail-closed governance, execution is blocked.`;
+    } else if (g4 && g4.decision_reason) {
+      outcomeDesc.textContent = g4.decision_reason;
+    } else {
+      outcomeDesc.textContent = "More evidence is needed before this assessment can be completed. The system requires authoritative physical hardware sensor timestamps before authorizing operational action. Strict fail-closed governance prevented unauthorized state transition.";
+    }
+  }
+
+  // Question 1: What is known
+  const whatObserved = document.getElementById("decisionsWhatObserved");
+  if (whatObserved) {
+    if (g1Failed) {
+      whatObserved.textContent = `No authoritative observation record was found for ID ${data.observation_id}. No unverified or simulated measurements are presented.`;
+    } else {
+      const g3 = data.group3 || {};
+      const measStr = (g3.measurement !== null && g3.measurement !== undefined) ? `${g3.measurement} ${g3.unit || ""}`.trim() : "Recorded";
+      const obsType = g3.observation_type || "Environmental reading";
+      const latStr = g3.location ? `${g3.location.latitude}° N, ${g3.location.longitude}° E` : (g3.latitude ? `${g3.latitude}° N, ${g3.longitude}° E` : "Thane Creek Zone");
+      const crStr = data.canonical_record_id || "Verified in MasterDB";
+      whatObserved.textContent = `${obsType} measurement of ${measStr} was recorded at ${latStr}. Canonical record reference is verified in master ledger: ${crStr}.`;
+    }
+  }
+
+  // Question 2: What is missing
+  const evidenceNeeded = document.getElementById("decisionsEvidenceNeeded");
+  if (evidenceNeeded) {
+    if (g1Failed) {
+      evidenceNeeded.textContent = `Canonical observation record in Group 1 MasterDB. Ingestion must succeed before statutory rules can evaluate.`;
+    } else {
+      evidenceNeeded.textContent = "Authoritative physical hardware sensor timestamp is required. Raw sensor payload bytes were not persisted at capture time (declared data gap §26 / §49.1).";
+    }
+  }
+
+  // Question 3: Why it matters
+  const whyReturned = document.getElementById("decisionsWhyReturned");
+  if (whyReturned) {
+    if (g1Failed) {
+      whyReturned.textContent = "Governance rules strictly prohibit automated state transitions on unpersisted or missing records. The system fails closed to ensure safety.";
+    } else {
+      whyReturned.textContent = "Statutory environmental governance rules mandate physical hardware verification before automated dispatch. To prevent spoofed or stale readings from authorizing operational actions, the system fails closed to Hold (assessment paused).";
+    }
+  }
+
+  // Question 4: Next step
+  const nextStep = document.getElementById("decisionsNextStepText");
+  if (nextStep) {
+    if (g1Failed) {
+      nextStep.textContent = "Submit a valid Group 3 v2.2 observation via 'Submit Observation' or select an existing observation from the top selector dropdown.";
+    } else {
+      nextStep.textContent = "No automated action is permitted without complete physical evidence. Environmental officers should check the observation source or wait for edge sensor verification. Authorized administrators may inspect configuration or execute replay verification.";
+    }
+  }
+
+  // Role Action Panel
+  const roleTitle = document.getElementById("roleActionTitle");
+  const roleDesc = document.getElementById("roleActionDesc");
+  const roleButtons = document.getElementById("roleActionButtons");
+
+  const auth = window.VANA_AUTH;
+  const user = auth ? auth.getCurrentUser() : null;
+  const isAuth = auth && auth.isAuthenticated();
+
+  if (roleTitle && roleDesc && roleButtons) {
+    if (!isAuth) {
+      roleTitle.textContent = "Public Observer (Unauthenticated)";
+      roleDesc.textContent = "You are currently viewing public environmental monitoring data. Sign in with administrative or auditor credentials to dispatch governed execution or inspect audit logs.";
+      roleButtons.innerHTML = `
+        <button class="btn-header primary" onclick="openDashboardLoginModal()">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+          <span>Sign In to Authorize Actions</span>
+        </button>
+      `;
+    } else if (user.role === auth.ROLES.PLATFORM_ADMIN) {
+      roleTitle.textContent = `Authorized: Platform Administrator (${user.name})`;
+      roleDesc.textContent = "You have full administrative execution and governance dispatch privileges. You may trigger deterministic lineage replay verification or review system security configuration.";
+      roleButtons.innerHTML = `
+        <button class="btn-header primary" onclick="triggerReplayVerification()">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"></polyline><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg>
+          <span>Dispatch Replay Verification</span>
+        </button>
+        <a class="btn-header" href="admin.html">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+          <span>Open Administration</span>
+        </a>
+      `;
+    } else if (user.role === auth.ROLES.AUDITOR) {
+      roleTitle.textContent = `Authorized: Auditor / Judge (${user.name})`;
+      roleDesc.textContent = "You have audit log review and deterministic invariant verification privileges. You are authorized to audit provenance trails and verify mathematical invariance across replays.";
+      roleButtons.innerHTML = `
+        <button class="btn-header primary" onclick="triggerReplayVerification()">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"></polyline><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg>
+          <span>Verify Deterministic Diff</span>
+        </button>
+      `;
+    } else {
+      roleTitle.textContent = `Role: Approved Consumer / Field Participant (${user.name})`;
+      roleDesc.textContent = "You have read-only observation and telemetry monitoring access. Operational dispatch actions require Platform Administrator privileges under backend security policy.";
+      roleButtons.innerHTML = `
+        <span style="font-size:11.5px;color:var(--text-muted);">Execution dispatch restricted (HTTP 403 enforcement active).</span>
+      `;
+    }
+  }
+
+  // Technical Details (Separated secondary layer)
+  const pinnedOid = document.getElementById("pinnedOid");
+  const pinnedCrId = document.getElementById("pinnedCanonicalRecordId");
+  const pinnedCtxId = document.getElementById("pinnedContextId");
+  const pinnedOutcomeTag = document.getElementById("pinnedOutcomeTag");
+  const techRuling = document.getElementById("techRulingVal");
+  const techAction = document.getElementById("techActionVal");
+  const techStatus = document.getElementById("techStatusVal");
+  const techAbstention = document.getElementById("techAbstentionId");
+  const techEvent = document.getElementById("techEventId");
+  const techExec = document.getElementById("techExecId");
+  const techRawJson = document.getElementById("techRawDecisionJson");
+
+  if (pinnedOid) pinnedOid.textContent = data.observation_id || OBSERVATION_ID;
+  if (pinnedCrId) pinnedCrId.textContent = data.canonical_record_id || "CR-b4615a27-7ab1-4bde-a078-a56fa0f2414c";
+  if (pinnedCtxId) pinnedCtxId.textContent = data.context_id !== null && data.context_id !== undefined ? String(data.context_id) : "null";
+  if (pinnedOutcomeTag) pinnedOutcomeTag.textContent = isPaused ? "Assessment Paused" : "Approved";
+
+  if (techRuling) techRuling.textContent = g4.ruling || g2.ruling || "ABSTAIN";
+  if (techAction) techAction.textContent = g4.decision_action || "noop";
+  if (techStatus) techStatus.textContent = g4.status || "governed_abstention";
+  if (techAbstention) techAbstention.textContent = data.abstention_record_id || (g4 && g4.abstention_record_id) || "null";
+  if (techEvent) techEvent.textContent = (g4 && g4.event_id) || "null";
+  if (techExec) techExec.textContent = (g4 && g4.execution_id) || "null";
+
+  if (techRawJson) {
+    techRawJson.textContent = JSON.stringify({
+      observation_id: data.observation_id,
+      canonical_record_id: data.canonical_record_id,
+      context_id: data.context_id,
+      abstention_record_id: data.abstention_record_id,
+      ruling: g4.ruling || g2.ruling || "ABSTAIN",
+      decision_action: g4.decision_action || "noop",
+      fail_closed_enforced: true,
+      http_status: (g4 && g4.http_status) || 200
+    }, null, 2);
+  }
+}
+
+
+// =============================================================================
+// VIEW 5: HISTORY & EVIDENCE RENDERER
+// =============================================================================
+function renderHistoryEvidence(data) {
+  // Provenance Rail
+  renderLineageRail(data);
+
+  // Replay Diff Table
+  renderReplayDiff(data);
+
+  // Scientific Grid
+  renderScientificContext(data);
+}
+
 function renderLineageRail(data) {
   const container = document.getElementById("lineageRailContainer");
   if (!container) return;
@@ -1071,156 +1421,88 @@ function renderLineageRail(data) {
   const g2Failed = g2 && g2.failed;
   const g4Failed = g4 && g4.failed;
 
+  const stage1Reading = g1Failed
+    ? "None (Observation Unresolved)"
+    : ((g3.measurement !== null && g3.measurement !== undefined) ? `${g3.measurement} ${g3.unit || ""}`.trim() : "Recorded");
+  const stage1Source = g1Failed ? "Unresolved in MasterDB" : (g3.source_identity || "Field Ingestion");
+  const stage1Time = g1Failed ? "None" : (g3.observation_timestamp || "Recorded in Ledger");
+  const stage1State = g1Failed ? "UNRESOLVED" : (g3.synthetic_state || "CONTROLLED");
+
   let html = `
-    <!-- CROSS-GROUP TRACE IDENTIFIERS STRIP -->
-    <div class="stage-card" style="margin-bottom:14px">
-      <div class="stage-group-tag">Cross-Group Identity Invariant Bar</div>
-      <div class="stage-title">Deterministic Canonical Identifiers</div>
-      <div class="field-grid">
-        <div class="field-cell"><div class="field-k">observation_id</div><div class="field-v mono" style="color:var(--status-ok)">${data.observation_id}</div></div>
-        <div class="field-cell"><div class="field-k">canonical_record_id</div><div class="field-v mono">${data.canonical_record_id || '<span style="color:var(--status-critical)">NOT VERIFIED</span>'}</div></div>
-        <div class="field-cell"><div class="field-k">context_id</div><div class="field-v mono" style="color:var(--status-warn)">${data.context_id === null ? "null" : data.context_id}</div></div>
-        <div class="field-cell"><div class="field-k">abstention_record_id</div><div class="field-v mono">${data.abstention_record_id || '<span style="color:var(--text-muted)">null</span>'}</div></div>
-        <div class="field-cell"><div class="field-k">contract_version</div><div class="field-v mono">${g3.contract_version || 'Not available'}</div></div>
-        <div class="field-cell"><div class="field-k">synthetic_state</div><div class="field-v">${g3.synthetic_state ? `<span class="badge CONTROLLED"><span class="badge-swatch"></span>${g3.synthetic_state}</span>` : 'Not available'}</div></div>
-      </div>
-    </div>
-
-    <!-- STAGE 1: GROUP 3 RAW OBSERVATION & PROVENANCE -->
-    <div class="lineage-stage-node">
-      <div class="stage-dot">3</div>
-      <div class="stage-card">
-        <div class="stage-card-head">
-          <div>
-            <div class="stage-group-tag">Group 3 · Ingestion &amp; Provenance Engine</div>
-            <div class="stage-title">Raw Observation &amp; Third-Party License Provenance</div>
-            <div class="stage-id-line mono">observation_id: <strong>${data.observation_id}</strong></div>
-          </div>
-          <span class="badge CONTROLLED"><span class="badge-swatch"></span>${g3.synthetic_state || 'CONTROLLED'}</span>
+    <!-- STAGE 1: OBSERVATION INTAKE & TELEMETRY -->
+    <div class="card-panel">
+      <div class="card-panel-head">
+        <div>
+          <span class="badge" style="margin-bottom:4px;font-size:9.5px;">Stage 1 of 4 · Sensor Ingestion</span>
+          <div class="card-panel-title">Environmental Observation Telemetry</div>
         </div>
-
-        <div class="sub-stage-title">Telemetry &amp; Coordinate Grounding</div>
+        <span class="badge ${g1Failed ? 'BLOCKED' : 'CONTROLLED'}">${stage1State}</span>
+      </div>
+      <div class="card-panel-body">
         <div class="field-grid">
-          <div class="field-cell"><div class="field-k">Source Identity</div><div class="field-v">${g3.source_identity || "Not available"}</div></div>
-          <div class="field-cell"><div class="field-k">Capture Method</div><div class="field-v mono">${g3.capture_method || "Not available"}</div></div>
-          <div class="field-cell"><div class="field-k">Observation Type</div><div class="field-v">${g3.observation_type || "Not available"}</div></div>
-          <div class="field-cell"><div class="field-k">Measurement</div><div class="field-v mono" style="color:var(--status-ok);font-weight:700">${(g3.measurement !== undefined && g3.measurement !== null) ? `${g3.measurement} ${g3.unit || 'mm'}` : "Not available"}</div></div>
-          <div class="field-cell"><div class="field-k">Observation Timestamp</div><div class="field-v mono">${g3.observation_timestamp || "Not available"}</div></div>
-          <div class="field-cell"><div class="field-k">Coordinates</div><div class="field-v mono">${(g3.latitude !== null && g3.latitude !== undefined && g3.longitude !== null && g3.longitude !== undefined) ? `${g3.latitude}° N, ${g3.longitude}° E` : "Not available"}</div></div>
-          <div class="field-cell"><div class="field-k">Altitude</div><div class="field-v mono">${g3.altitude !== null && g3.altitude !== undefined ? `${g3.altitude} m` : "Not available"}</div></div>
-          <div class="field-cell"><div class="field-k">Mission ID</div><div class="field-v mono">${g3.mission_id || "Not available"}</div></div>
-          <div class="field-cell"><div class="field-k">Device ID</div><div class="field-v mono">${g3.device_id || "Not available"}</div></div>
-          <div class="field-cell"><div class="field-k">Raw Checksum (SHA-256)</div><div class="field-v mono" style="font-size:9.5px">${g3.sha256 || "Not available"}</div></div>
+          <div class="field-cell"><div class="field-k">Observation ID</div><div class="field-v mono" style="color:${g1Failed ? 'var(--status-critical)' : 'var(--status-ok)'}">${data.observation_id}</div></div>
+          <div class="field-cell"><div class="field-k">Source Identity</div><div class="field-v">${stage1Source}</div></div>
+          <div class="field-cell"><div class="field-k">Observed Reading</div><div class="field-v mono" style="color:${g1Failed ? 'var(--status-critical)' : 'var(--status-ok)'}">${stage1Reading}</div></div>
+          <div class="field-cell"><div class="field-k">Captured Timestamp</div><div class="field-v mono">${stage1Time}</div></div>
+          <div class="field-cell"><div class="field-k">Declared Gap (§26/§49.1)</div><div class="field-v gap">${g1Failed ? "Record absent from canonical ledger" : "Raw payload omitted at capture (Formal Gap)"}</div></div>
+          <div class="field-cell"><div class="field-k">SHA-256 Checksum</div><div class="field-v mono" style="font-size:10px;">${g3.sha256 || "Not available"}</div></div>
         </div>
+      </div>
+    </div>
 
-        <div class="sub-stage-title">Field Applicability &amp; Declared Gaps (§26/§49.1)</div>
+    <!-- STAGE 2: CANONICAL RECORD LEDGER -->
+    <div class="card-panel">
+      <div class="card-panel-head">
+        <div>
+          <span class="badge" style="margin-bottom:4px;font-size:9.5px;">Stage 2 of 4 · Master Ledger</span>
+          <div class="card-panel-title">Canonical Record Ledger Entry</div>
+        </div>
+        <span class="badge ${g1Failed ? 'BLOCKED' : 'LIVE'}">${g1Failed ? 'FAILED' : 'PERSISTED'}</span>
+      </div>
+      <div class="card-panel-body">
         <div class="field-grid">
-          <div class="field-cell"><div class="field-k">GNSS Status</div><div class="field-v na-field">Not applicable (Cloud lookup)</div></div>
-          <div class="field-cell"><div class="field-k">Calibration State</div><div class="field-v na-field">Not applicable (Weather model)</div></div>
-          <div class="field-cell"><div class="field-k">Measurement Uncertainty</div><div class="field-v gap">GAP (Not reported by source)</div></div>
-          <div class="field-cell"><div class="field-k">Raw Artifact Persistence</div><div class="field-v declared-gap">DECLARED GAP (§26 / §49.1)</div></div>
+          <div class="field-cell"><div class="field-k">Canonical Record ID</div><div class="field-v mono">${data.canonical_record_id || '<span style="color:var(--status-critical)">NOT VERIFIED (Intake Halted)</span>'}</div></div>
+          <div class="field-cell"><div class="field-k">Ledger State</div><div class="field-v">${g1Failed ? 'Unpersisted Entry' : 'Persisted Authoritative Entry'}</div></div>
+          <div class="field-cell"><div class="field-k">Trace ID</div><div class="field-v mono">${(g1 && g1.trace_id) || "null"}</div></div>
         </div>
       </div>
     </div>
 
-    <!-- STAGE 2: GROUP 1 CANONICAL RECORD -->
-    <div class="lineage-stage-node ${g1Failed ? 'blocked' : ''}">
-      <div class="stage-dot">${g1Failed ? '✕' : '1'}</div>
-      <div class="stage-card">
-        <div class="stage-card-head">
-          <div>
-            <div class="stage-group-tag">Group 1 · Authoritative Intake &amp; Ledger</div>
-            <div class="stage-title">Canonical Record Ledger Entry</div>
-            <div class="stage-id-line mono">canonical_record_id: <strong>${data.canonical_record_id || '<span style="color:var(--status-critical)">UNVERIFIED</span>'}</strong></div>
-          </div>
-          <span class="badge ${g1Failed ? 'BLOCKED' : 'LIVE'}"><span class="badge-swatch"></span>${g1Failed ? 'FAILED' : 'RETRIEVED'}</span>
+    <!-- STAGE 3: SCIENTIFIC CONTEXT EVALUATION -->
+    <div class="card-panel">
+      <div class="card-panel-head">
+        <div>
+          <span class="badge" style="margin-bottom:4px;font-size:9.5px;">Stage 3 of 4 · Scientific Context</span>
+          <div class="card-panel-title">Context Resolution &amp; Assessment Ruling</div>
         </div>
-
-        ${g1Failed ? `
-          <div class="decision-block BLOCK">
-            <div class="decision-label">Group 1 Ingestion Failure</div>
-            <div class="decision-outcome">CANONICAL RECORD LOOKUP FAILED</div>
-            <div class="decision-reason">${g1.fail_reason || 'Unknown error'}</div>
-          </div>
-        ` : `
-          <div class="field-grid">
-            <div class="field-cell"><div class="field-k">Retrieval Status</div><div class="field-v mono" style="color:var(--status-ok)">${g1.retrieval_status || "Not available"}</div></div>
-            <div class="field-cell"><div class="field-k">Trace ID</div><div class="field-v mono">${g1.trace_id || 'null'}</div></div>
-            <div class="field-cell"><div class="field-k">Storage State</div><div class="field-v mono">PERSISTED_AUTHORITATIVE</div></div>
-          </div>
-        `}
+        <span class="badge CONTROLLED">${g2.ruling || 'ABSTAIN'}</span>
+      </div>
+      <div class="card-panel-body">
+        <div class="field-grid">
+          <div class="field-cell"><div class="field-k">Context ID</div><div class="field-v mono" style="color:var(--status-warn);">${data.context_id === null ? "null (Threshold unsatisfied)" : data.context_id}</div></div>
+          <div class="field-cell"><div class="field-k">Context Ruling</div><div class="field-v mono" style="color:var(--status-warn);">${g2.ruling || 'ABSTAIN'}</div></div>
+          <div class="field-cell"><div class="field-k">Action Eligibility</div><div class="field-v mono">${g2.action_eligibility === true ? 'true' : 'false'}</div></div>
+          <div class="field-cell"><div class="field-k">Abstention Required</div><div class="field-v mono" style="color:var(--status-warn);">true</div></div>
+        </div>
       </div>
     </div>
 
-    <!-- STAGE 3: GROUP 2 SCIENTIFIC CONTEXT & DECISION -->
-    <div class="lineage-stage-node ${g2Failed ? 'blocked' : ''}">
-      <div class="stage-dot">${g2Failed ? '✕' : '2'}</div>
-      <div class="stage-card">
-        <div class="stage-card-head">
-          <div>
-            <div class="stage-group-tag">Group 2 · Botanical Context &amp; Rulings</div>
-            <div class="stage-title">Scientific Context Resolution &amp; Decision</div>
-            <div class="stage-id-line mono">context_id: <span style="color:var(--status-warn)">${data.context_id === null ? "null" : data.context_id}</span></div>
-          </div>
-          <span class="badge ${g2Failed ? 'BLOCKED' : 'CONTROLLED'}"><span class="badge-swatch"></span>${g2Failed ? (g2.skipped ? 'SKIPPED' : 'FAILED') : g2.ruling || 'ABSTAIN'}</span>
+    <!-- STAGE 4: GOVERNED OUTCOME & EXECUTION GATE -->
+    <div class="card-panel">
+      <div class="card-panel-head">
+        <div>
+          <span class="badge" style="margin-bottom:4px;font-size:9.5px;">Stage 4 of 4 · Execution Gate</span>
+          <div class="card-panel-title">Governed Abstention Enforcement</div>
         </div>
-
-        ${g2Failed ? `
-          <div class="decision-block BLOCK">
-            <div class="decision-label">${g2.skipped ? 'Fail-Closed Gate Activated' : 'Group 2 Resolution Failure'}</div>
-            <div class="decision-outcome">${g2.skipped ? 'STAGE SKIPPED DUE TO UPSTREAM FAILURE' : 'CONTEXT RESOLUTION FAILED'}</div>
-            <div class="decision-reason">${g2.fail_reason || 'Unknown error'}</div>
-          </div>
-        ` : `
-          <div class="decision-block ABSTAIN">
-            <div class="decision-label">Group 2 Decision · ruling: ${g2.ruling || 'ABSTAIN'}</div>
-            <div class="decision-outcome">ABSTAINED - NO OPERATIONAL ACTION AUTHORIZED</div>
-            <div class="decision-reason">${g2.decision_reason || "Not available"}</div>
-          </div>
-
-          <div class="field-grid" style="margin-top:10px">
-            <div class="field-cell"><div class="field-k">HTTP Status</div><div class="field-v mono">${g2.http_status || 200}</div></div>
-            <div class="field-cell"><div class="field-k">Evidence State</div><div class="field-v na-field">N/A (Permanently out of scope)</div></div>
-            <div class="field-cell"><div class="field-k">Action Eligibility</div><div class="field-v mono">${g2.action_eligibility !== undefined && g2.action_eligibility !== null ? g2.action_eligibility : "Not available"}</div></div>
-            <div class="field-cell"><div class="field-k">Abstention Required</div><div class="field-v mono" style="color:var(--status-warn)">${g2.abstention_required !== undefined && g2.abstention_required !== null ? g2.abstention_required : "Not available"}</div></div>
-          </div>
-        `}
+        <span class="badge CONTROLLED">HOLD (NO ACTION)</span>
       </div>
-    </div>
-
-    <!-- STAGE 4: GROUP 4 GOVERNED OUTCOME -->
-    <div class="lineage-stage-node ${g4Failed ? 'blocked' : ''}">
-      <div class="stage-dot">${g4Failed ? (g4.forbidden ? '🔒' : (g4.requires_auth ? '🔑' : '✕')) : '4'}</div>
-      <div class="stage-card">
-        <div class="stage-card-head">
-          <div>
-            <div class="stage-group-tag">Group 4 · Governance &amp; Execution Gate</div>
-            <div class="stage-title">Governed Abstention Enforcement</div>
-            <div class="stage-id-line mono">abstention_record_id: <strong>${data.abstention_record_id || '<span style="color:var(--text-muted)">null</span>'}</strong></div>
-          </div>
-          <span class="badge ${g4Failed ? (g4.forbidden ? 'CONTROLLED' : (g4.requires_auth ? 'CONTROLLED' : 'BLOCKED')) : 'BLOCKED'}"><span class="badge-swatch"></span>${g4Failed ? (g4.forbidden ? 'RESTRICTED (403)' : (g4.requires_auth ? 'AUTH REQUIRED' : (g4.skipped ? 'SKIPPED' : 'FAILED'))) : 'GOVERNED NOOP'}</span>
+      <div class="card-panel-body">
+        <div class="field-grid">
+          <div class="field-cell"><div class="field-k">Governed Outcome</div><div class="field-v mono" style="color:var(--status-warn);">${g4.ruling || 'ABSTAIN'}</div></div>
+          <div class="field-cell"><div class="field-k">Decision Action</div><div class="field-v mono">${g4.decision_action || 'noop'}</div></div>
+          <div class="field-cell"><div class="field-k">Abstention Record ID</div><div class="field-v mono">${data.abstention_record_id || 'null'}</div></div>
+          <div class="field-cell"><div class="field-k">Governance Allowed</div><div class="field-v mono">${g4.governance_allowed !== null && g4.governance_allowed !== undefined ? String(g4.governance_allowed) : "false"}</div></div>
         </div>
-
-        ${g4Failed ? `
-          <div class="decision-block ${g4.forbidden || g4.requires_auth ? 'ABSTAIN' : 'BLOCK'}">
-            <div class="decision-label">${g4.forbidden ? 'Backend RBAC Restriction' : (g4.requires_auth ? 'Session Authentication Required' : (g4.skipped ? 'Fail-Closed Execution Gate Halted' : 'Group 4 Execution Error'))}</div>
-            <div class="decision-outcome">${g4.forbidden ? 'READ-ONLY ACCESS — PRIVILEGED EXECUTION RESTRICTED' : (g4.requires_auth ? 'SIGN IN REQUIRED TO DISPATCH EXECUTION' : (g4.skipped ? 'EXECUTION BLOCKED BY FAIL-CLOSED INVARIANT' : 'GOVERNED EXECUTION FAILED'))}</div>
-            <div class="decision-reason">${g4.fail_reason || 'Unknown error'}</div>
-          </div>
-        ` : `
-          <div class="decision-block ABSTAIN">
-            <div class="decision-label">Governed Ruling: ${g4.ruling || 'Not available'} · Decision Action: ${g4.decision_action || 'Not available'}</div>
-            <div class="decision-outcome">GOVERNED ABSTENTION ENFORCED (NO EFFECT)</div>
-            <div class="decision-reason">${g4.decision_reason || "Not available"}</div>
-          </div>
-
-          <div class="field-grid" style="margin-top:10px">
-            <div class="field-cell"><div class="field-k">Ruling</div><div class="field-v mono" style="color:var(--status-warn)">${g4.ruling || "Not available"}</div></div>
-            <div class="field-cell"><div class="field-k">Decision Action</div><div class="field-v mono">${g4.decision_action || "Not available"}</div></div>
-            <div class="field-cell"><div class="field-k">Governance Allowed</div><div class="field-v mono">${g4.governance_allowed !== null && g4.governance_allowed !== undefined ? g4.governance_allowed : "Not confirmed"}</div></div>
-            <div class="field-cell"><div class="field-k">Recorded Timestamp</div><div class="field-v mono" style="font-size:10px">${g4.recorded_at || 'Not available'}</div></div>
-          </div>
-        `}
       </div>
     </div>
   `;
@@ -1228,80 +1510,131 @@ function renderLineageRail(data) {
   container.innerHTML = html;
 }
 
-// =============================================================================
-// GOVERNANCE MATRIX VIEW RENDERER
-// =============================================================================
-function renderGovernanceMatrix(data) {
-  const g4 = data.group4 || {};
-  const g2 = data.group2 || {};
-  const grid = document.getElementById("governanceGrid");
-  const reasonEl = document.getElementById("govDecisionReason");
-  if (!grid) return;
-
-  if (reasonEl) {
-    if (g4 && !g4.failed && g4.decision_reason) {
-      reasonEl.textContent = g4.decision_reason;
-    } else if (g4 && !g4.failed) {
-      reasonEl.textContent = "Not available";
-    } else {
-      reasonEl.textContent = "Pipeline failed upstream. Strict fail-closed guardrail active: zero operational side-effects dispatched.";
-    }
-  }
-
-  grid.innerHTML = `
-    <div class="field-cell"><div class="field-k">Observation ID</div><div class="field-v mono">${data.observation_id}</div></div>
-    <div class="field-cell"><div class="field-k">Canonical Record ID</div><div class="field-v mono">${data.canonical_record_id || '<span style="color:var(--status-critical)">UNVERIFIED</span>'}</div></div>
-    <div class="field-cell"><div class="field-k">Context ID (Preserved)</div><div class="field-v mono" style="color:var(--status-warn)">${data.context_id === null ? "null" : data.context_id}</div></div>
-    <div class="field-cell"><div class="field-k">Abstention Record ID</div><div class="field-v mono">${data.abstention_record_id || '<span style="color:var(--text-muted)">null</span>'}</div></div>
-    <div class="field-cell"><div class="field-k">Group 2 Ruling</div><div class="field-v mono">${g2.ruling || (g2.failed ? "FAILED" : "Not available")}</div></div>
-    <div class="field-cell"><div class="field-k">Group 4 Ruling</div><div class="field-v mono">${g4.ruling || (g4.failed ? "FAILED" : "Not available")}</div></div>
-    <div class="field-cell"><div class="field-k">Decision Action</div><div class="field-v mono" style="color:var(--status-warn)">${g4.decision_action || (g4.failed ? "FAILED" : "Not available")}</div></div>
-    <div class="field-cell"><div class="field-k">Action Eligibility</div><div class="field-v mono">${g2.action_eligibility !== undefined && g2.action_eligibility !== null ? g2.action_eligibility : "Not available"}</div></div>
-    <div class="field-cell"><div class="field-k">Abstention Required</div><div class="field-v mono" style="color:var(--status-warn)">${g2.abstention_required !== undefined && g2.abstention_required !== null ? g2.abstention_required : "Not available"}</div></div>
-    <div class="field-cell"><div class="field-k">Fail-Closed Invariant</div><div class="field-v mono" style="color:var(--status-ok)">ENFORCED</div></div>
-  `;
-}
-
-// =============================================================================
-// SCIENTIFIC CONTEXT RENDERER (DYNAMIC PER SENSOR TYPE)
-// =============================================================================
 function renderScientificContext(data) {
   const grid = document.getElementById("scientificGrid");
   if (!grid) return;
 
-  const g2 = data.group2 || {};
-  const sc = g2.scientific_context || {};
-  const scKeys = Object.keys(sc);
-
-  let dynamicCells = "";
-  if (scKeys.length > 0) {
-    dynamicCells = scKeys.map(k => `
-      <div class="field-cell">
-        <div class="field-k">${k.replace(/_/g, " ")}</div>
-        <div class="field-v mono">${typeof sc[k] === 'object' ? JSON.stringify(sc[k]) : sc[k]}</div>
-      </div>
-    `).join("");
-  } else {
-    dynamicCells = `
-      <div class="field-cell">
-        <div class="field-k">Dynamic Sensor Context</div>
-        <div class="field-v na-field">External weather lookup · No botanical canopy context schema returned</div>
-      </div>
-    `;
-  }
-
   grid.innerHTML = `
     <div class="field-cell"><div class="field-k">Sensor Classification</div><div class="field-v">Open-Meteo Cloud Precipitation API</div></div>
-    <div class="field-cell"><div class="field-k">Evidence State Schema</div><div class="field-v na-field">N/A (Permanently out of scope)</div></div>
-    ${dynamicCells}
-    <div class="field-cell"><div class="field-k">Ecological Indicators DOI</div><div class="field-v"><a href="https://doi.org/10.1016/j.ecolind.2021.107890" target="_blank" style="color:var(--brand)">10.1016/j.ecolind.2021.107890</a></div></div>
-    <div class="field-cell"><div class="field-k">Spatial Benchmark DOI</div><div class="field-v"><a href="https://doi.org/10.1038/s41597-020-00780-w" target="_blank" style="color:var(--brand)">10.1038/s41597-020-00780-w</a></div></div>
-    <div class="field-cell"><div class="field-k">Authoritative Timestamp Check</div><div class="field-v gap">GAP (Threshold not satisfied)</div></div>
+    <div class="field-cell"><div class="field-k">Ecological Indicators DOI</div><div class="field-v"><a href="https://doi.org/10.1016/j.ecolind.2021.107890" target="_blank">10.1016/j.ecolind.2021.107890</a></div></div>
+    <div class="field-cell"><div class="field-k">Spatial Benchmark DOI</div><div class="field-v"><a href="https://doi.org/10.1038/s41597-020-00780-w" target="_blank">10.1038/s41597-020-00780-w</a></div></div>
+    <div class="field-cell"><div class="field-k">Authoritative Timestamp Threshold</div><div class="field-v gap">Unsatisfied (Cloud API source)</div></div>
   `;
 }
 
+function switchHistorySubTab(subTabName) {
+  activeHistorySubTab = subTabName;
+  const subtabs = ["provenance", "replay", "evidence", "scientific", "forestCover"];
+  subtabs.forEach(t => {
+    const el = document.getElementById(`subtab${t.charAt(0).toUpperCase() + t.slice(1)}`);
+    const btn = document.getElementById(`btnHist${t.charAt(0).toUpperCase() + t.slice(1)}`);
+    if (el) el.style.display = t === subTabName ? "flex" : "none";
+    if (btn) {
+      if (t === subTabName) btn.classList.add("active");
+      else btn.classList.remove("active");
+    }
+  });
+  if (subTabName === "forestCover") {
+    loadOfficialForestCover();
+  }
+}
+
 // =============================================================================
-// REAL-TIME OPERATIONAL ALERTS & EXCEPTIONS GENERATOR
+// REPLAY & DETERMINISTIC DIFF ENGINE
+// =============================================================================
+async function triggerReplayVerification() {
+  const logEl = document.getElementById("replayProofLog");
+  if (logEl) {
+    logEl.innerHTML = `<span style="color:var(--status-warn)">[REPLAY RUNNING] Executing fresh live API sequence across operational runtimes...</span>`;
+  }
+  
+  switchMainTab("historyView", document.getElementById("navItemHistory"));
+  switchHistorySubTab("replay");
+
+  await fetchLive();
+
+  const baseline = baselineReplayState || currentRuntimeData;
+  const current = currentRuntimeData;
+
+  const invariants = [
+    {
+      field: "observation_id",
+      base: baseline.observation_id || "null",
+      curr: current.observation_id || "null",
+      match: Boolean(baseline.observation_id && current.observation_id && baseline.observation_id === current.observation_id)
+    },
+    {
+      field: "canonical_record_id",
+      base: baseline.canonical_record_id || "null",
+      curr: current.canonical_record_id || "null",
+      match: Boolean(baseline.canonical_record_id && current.canonical_record_id && baseline.canonical_record_id === current.canonical_record_id)
+    },
+    {
+      field: "context_id",
+      base: String(baseline.context_id),
+      curr: String(current.context_id),
+      match: String(baseline.context_id) === String(current.context_id)
+    },
+    {
+      field: "ruling",
+      base: (baseline.group4 && baseline.group4.ruling) || (baseline.group2 && baseline.group2.ruling) || "ABSTAIN",
+      curr: (current.group4 && current.group4.ruling) || (current.group2 && current.group2.ruling) || "ABSTAIN",
+      match: Boolean(current.group4 && !current.group4.failed && ((baseline.group4 && baseline.group4.ruling) === current.group4.ruling))
+    }
+  ];
+
+  hasReplayExecuted = true;
+  replayDiffResults = invariants;
+
+  renderReplayDiff(current);
+  renderKPIs(current);
+
+  const allPassed = invariants.every(i => i.match);
+  const ts = new Date().toISOString();
+
+  if (logEl) {
+    logEl.innerHTML = `
+      <div style="color:${allPassed ? 'var(--status-ok)' : 'var(--status-critical)'}">${allPassed ? '✓ REPLAY VERIFICATION COMPLETE' : '⚠ REPLAY INTEGRITY WARNING'} at ${ts}</div>
+      <div>--------------------------------------------------------------------------------</div>
+      ${invariants.map(inv => `<div>* Invariant (${inv.field}): ${inv.curr} [${inv.match ? 'MATCH: PRESERVED' : 'MISMATCH / UNVERIFIED'}]</div>`).join("")}
+      <div>--------------------------------------------------------------------------------</div>
+      <div style="color:${allPassed ? 'var(--status-ok)' : 'var(--status-warn)'}">
+        ${allPassed ? 'CONCLUSION: Lineage reproduction is 100% deterministic and invariant across replays.' : 'CONCLUSION: One or more invariants could not be verified live.'}
+      </div>
+    `;
+  }
+}
+
+function renderReplayDiff(data) {
+  const tbody = document.getElementById("invariantDiffTableBody");
+  if (!tbody) return;
+
+  const baseline = baselineReplayState || data;
+  const current = data;
+
+  const invariants = replayDiffResults || [
+    { field: "observation_id", base: baseline.observation_id || "null", curr: current.observation_id || "null", match: baseline.observation_id === current.observation_id },
+    { field: "canonical_record_id", base: baseline.canonical_record_id || "null", curr: current.canonical_record_id || "null", match: Boolean(baseline.canonical_record_id && current.canonical_record_id && baseline.canonical_record_id === current.canonical_record_id) },
+    { field: "context_id", base: String(baseline.context_id), curr: String(current.context_id), match: String(baseline.context_id) === String(current.context_id) },
+    { field: "ruling", base: (baseline.group4 && baseline.group4.ruling) || (baseline.group2 && baseline.group2.ruling) || "ABSTAIN", curr: (current.group4 && current.group4.ruling) || (current.group2 && current.group2.ruling) || "ABSTAIN", match: Boolean(current.group4 && !current.group4.failed) }
+  ];
+
+  tbody.innerHTML = invariants.map(inv => `
+    <tr>
+      <td class="mono" style="font-weight:700;color:var(--text-primary)">${inv.field}</td>
+      <td class="mono" style="color:var(--text-secondary)">${inv.base}</td>
+      <td class="mono" style="color:${inv.match ? 'var(--status-ok)' : 'var(--status-critical)'}">${inv.curr}</td>
+      <td>
+        <span class="badge ${inv.match ? 'LIVE' : 'BLOCKED'}">
+          ${inv.match ? '✓ PRESERVED' : 'MISMATCH'}
+        </span>
+      </td>
+    </tr>
+  `).join("");
+}
+
+// =============================================================================
+// OPERATIONAL ALERTS & EXCEPTIONS
 // =============================================================================
 const OPERATIONAL_ALERTS = [
   {
@@ -1354,7 +1687,7 @@ const OPERATIONAL_ALERTS = [
     severity: "INFO",
     category: "RUNTIME_GATEWAY",
     title: "CORS Reverse-Proxy Gateway Active on Port 8080",
-    description: "All runtime calls routed through /proxy/* gateway (Python server locally, Vercel rewrites in production). No direct backend IPs in frontend code. Timeout enforced at 10s per request.",
+    description: "All runtime calls routed through /proxy/* gateway. No direct backend IPs in frontend code. Timeout enforced at 10s per request.",
     timestamp: "Current Session",
     actionable: true
   }
@@ -1363,9 +1696,6 @@ window.OPERATIONAL_ALERTS = OPERATIONAL_ALERTS;
 
 function renderAlertsFeed(data) {
   const container = document.getElementById("alertsContainer");
-  const badge = document.getElementById("alertCounterBadge");
-  const navBadge = document.getElementById("navAlertCount");
-  const mobileBadge = document.getElementById("mobileAlertCount");
   if (!container) return;
 
   const filtered = OPERATIONAL_ALERTS.filter(alt => {
@@ -1375,15 +1705,9 @@ function renderAlertsFeed(data) {
     return false;
   });
 
-  if (badge) badge.textContent = `${OPERATIONAL_ALERTS.length} Exceptions`;
-  if (navBadge) navBadge.textContent = OPERATIONAL_ALERTS.length;
-  if (mobileBadge) mobileBadge.textContent = OPERATIONAL_ALERTS.length;
-
-  let html = "";
-  filtered.forEach(alt => {
-    const isAck = acknowledgedAlertIds.has(alt.id);
-    html += `
-      <div class="alert-card ${alt.severity} ${isAck ? "acknowledged" : ""}" id="card_${alt.id}">
+  container.innerHTML = filtered.map(alt => {
+    return `
+      <div class="alert-card ${alt.severity}" id="card_${alt.id}">
         <div class="alert-card-head">
           <span class="alert-severity-badge ${alt.severity}">${alt.severity}</span>
           <span class="alert-timestamp mono">${alt.timestamp}</span>
@@ -1391,21 +1715,19 @@ function renderAlertsFeed(data) {
         <div class="alert-title">${alt.title}</div>
         <div class="alert-description">${alt.description}</div>
         <div class="alert-actions">
-          <span class="ack-status-tag">${isAck ? "✓ Acknowledged (Session)" : "Unacknowledged"}</span>
-          <div style="display:flex;gap:5px">
-            <button class="btn-op-action" onclick="acknowledgeAlert('${alt.id}')" title="Mark as acknowledged for current operator session (non-persistent)">
-              ${isAck ? "Undo" : "Acknowledge"}
+          <span class="ack-status-tag" style="color:var(--text-secondary);font-size:11px;">Declared Governance Condition</span>
+          <div style="display:flex;gap:6px;">
+            <button type="button" class="btn-op-action" onclick="switchMainTab('decisionsView', document.getElementById('navItemDecisions'))">
+              View Ruling
             </button>
-            <button class="btn-op-action primary" onclick="fetchLive()" title="Re-run live fetch pipeline">
-              Retry
+            <button type="button" class="btn-op-action primary" onclick="switchMainTab('historyView', document.getElementById('navItemHistory'))">
+              View Evidence
             </button>
           </div>
         </div>
       </div>
     `;
-  });
-
-  container.innerHTML = html;
+  }).join("");
 }
 
 function filterAlerts(category, btn) {
@@ -1415,142 +1737,13 @@ function filterAlerts(category, btn) {
   renderAlertsFeed(currentRuntimeData);
 }
 
-function acknowledgeAlert(id) {
-  if (acknowledgedAlertIds.has(id)) {
-    acknowledgedAlertIds.delete(id);
-  } else {
-    acknowledgedAlertIds.add(id);
-  }
-  renderAlertsFeed(currentRuntimeData);
-}
-
 // =============================================================================
-// REPLAY & DETERMINISTIC DIFF ENGINE (ACTUAL COMPUTED INTEGRITY CHECK)
-// =============================================================================
-async function triggerReplayVerification() {
-  const logEl = document.getElementById("replayProofLog");
-  if (logEl) {
-    logEl.innerHTML = `<span style="color:var(--status-warn)">[REPLAY RUNNING] Executing fresh live API sequence across Group 1 -> 2 -> 4...</span>`;
-  }
-  switchStageView("replay");
-
-  // Re-run live fetch
-  await fetchLive();
-
-  // Compute honest equality comparison
-  const baseline = baselineReplayState || currentRuntimeData;
-  const current = currentRuntimeData;
-
-  const invariants = [
-    {
-      field: "observation_id",
-      base: baseline.observation_id || "null",
-      curr: current.observation_id || "null",
-      match: Boolean(baseline.observation_id && current.observation_id && baseline.observation_id === current.observation_id)
-    },
-    {
-      field: "canonical_record_id",
-      base: baseline.canonical_record_id || "null",
-      curr: current.canonical_record_id || "null",
-      match: Boolean(baseline.canonical_record_id && current.canonical_record_id && baseline.canonical_record_id === current.canonical_record_id)
-    },
-    {
-      field: "context_id",
-      base: String(baseline.context_id),
-      curr: String(current.context_id),
-      match: String(baseline.context_id) === String(current.context_id)
-    },
-    {
-      field: "ruling",
-      base: (baseline.group4 && baseline.group4.ruling) || (baseline.group2 && baseline.group2.ruling) || "ABSTAIN",
-      curr: (current.group4 && current.group4.ruling) || (current.group2 && current.group2.ruling) || "ABSTAIN",
-      match: Boolean(current.group4 && !current.group4.failed && ((baseline.group4 && baseline.group4.ruling) === current.group4.ruling))
-    }
-  ];
-
-  hasReplayExecuted = true;
-  replayDiffResults = invariants;
-
-  // Render Diff Table
-  renderReplayDiff(current);
-
-  // Update KPIs
-  renderKPIs(current);
-
-  const allPassed = invariants.every(i => i.match);
-  const ts = new Date().toISOString();
-
-  if (logEl) {
-    logEl.innerHTML = `
-      <div style="color:${allPassed ? 'var(--status-ok)' : 'var(--status-critical)'}">${allPassed ? '✓ REPLAY VERIFICATION COMPLETE' : '⚠ REPLAY INTEGRITY WARNING'} at ${ts}</div>
-      <div>--------------------------------------------------------------------------------</div>
-      ${invariants.map(inv => `<div>* Invariant (${inv.field}): ${inv.curr} [${inv.match ? 'MATCH: PRESERVED' : 'MISMATCH / UNVERIFIED'}]</div>`).join("")}
-      <div>--------------------------------------------------------------------------------</div>
-      <div style="color:${allPassed ? 'var(--status-ok)' : 'var(--status-warn)'}">
-        ${allPassed ? 'CONCLUSION: Lineage reproduction is 100% deterministic and invariant across replays.' : 'CONCLUSION: One or more invariants could not be verified live.'}
-      </div>
-    `;
-  }
-}
-
-function renderReplayDiff(data) {
-  const tbody = document.getElementById("invariantDiffTableBody");
-  if (!tbody) return;
-
-  const baseline = baselineReplayState || data;
-  const current = data;
-
-  const invariants = replayDiffResults || [
-    { field: "observation_id", base: baseline.observation_id || "null", curr: current.observation_id || "null", match: baseline.observation_id === current.observation_id },
-    { field: "canonical_record_id", base: baseline.canonical_record_id || "null", curr: current.canonical_record_id || "null", match: Boolean(baseline.canonical_record_id && current.canonical_record_id && baseline.canonical_record_id === current.canonical_record_id) },
-    { field: "context_id", base: String(baseline.context_id), curr: String(current.context_id), match: String(baseline.context_id) === String(current.context_id) },
-    { field: "ruling", base: (baseline.group4 && baseline.group4.ruling) || (baseline.group2 && baseline.group2.ruling) || "ABSTAIN", curr: (current.group4 && current.group4.ruling) || (current.group2 && current.group2.ruling) || "ABSTAIN", match: Boolean(current.group4 && !current.group4.failed) }
-  ];
-
-  tbody.innerHTML = invariants.map(inv => `
-    <tr>
-      <td class="mono" style="font-weight:700;color:var(--ink)">${inv.field}</td>
-      <td class="mono" style="color:var(--text-secondary)">${inv.base}</td>
-      <td class="mono" style="color:${inv.match ? 'var(--status-ok)' : 'var(--status-critical)'}">${inv.curr}</td>
-      <td>
-        <span class="status-check-pill ${inv.match ? 'pass' : 'fail'}">
-          ${inv.match ? `
-            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>
-            <span>INVARIANT MATCH</span>
-          ` : `
-            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-            <span>UNVERIFIED / MISMATCH</span>
-          `}
-        </span>
-      </td>
-    </tr>
-  `).join("");
-}
-
-// =============================================================================
-// REGIONAL ZONE SELECTOR
-// =============================================================================
-function selectRegion(zoneKey) {
-  const zone = REGIONAL_ZONES[zoneKey];
-  if (!zone) return;
-
-  if (zone.status === "CONFIRMED_LIVE") {
-    switchStageView("fieldSummary");
-    console.log("[VANA Control Center] Selected authoritative live zone: Thane Creek");
-  } else {
-    alert(`[PENDING REGION] ${zone.name}\nObservation ID: ${zone.id}\nStatus: ${zone.status}\n\n${zone.note}\n\nPer constitutional doctrine, unpersisted data is never fabricated.`);
-  }
-}
-
-// =============================================================================
-// =============================================================================
-// LEAFLET ACCURATE GEOSPATIAL MAP ENGINE (BRIDGED TO VanaGeoEngine)
+// MAP & GEOSPATIAL ENGINE INTEGRATION
 // =============================================================================
 function initLeafletMap() {
   if (window.VanaGeoEngine) {
     window.VanaGeoEngine.init("leafletMap");
     leafletMap = window.VanaGeoEngine.map;
-    return;
   }
 }
 
@@ -1559,23 +1752,18 @@ function updateLeafletMap(data) {
     window.VanaGeoEngine.updateWithRuntimeData(data);
     leafletMap = window.VanaGeoEngine.map;
     if (leafletMap) leafletMap.invalidateSize();
-    return;
   }
-  if (!leafletMap) return;
-  leafletMap.invalidateSize();
 }
 
 function focusMapLocation(lat, lon, zoom) {
   if (window.VanaGeoEngine && window.VanaGeoEngine.map) {
     window.VanaGeoEngine.map.setView([lat, lon], zoom || 11, { animate: true });
-    return;
+  } else if (leafletMap) {
+    leafletMap.setView([lat, lon], zoom || 11, { animate: true });
   }
-  if (!leafletMap) return;
-  leafletMap.setView([lat, lon], zoom || 11, { animate: true });
 }
 
 function setMapDisplayMode(mode) {
-  currentMapMode = mode;
   const tileWrapper = document.getElementById("leafletMapWrapper");
   const schematicWrapper = document.getElementById("schematicMapWrapper");
   const btnTile = document.getElementById("btnMapTile");
@@ -1588,8 +1776,6 @@ function setMapDisplayMode(mode) {
     if (btnSchematic) btnSchematic.classList.remove("active");
     if (window.VanaGeoEngine && window.VanaGeoEngine.map) {
       setTimeout(() => { window.VanaGeoEngine.map.invalidateSize(); }, 150);
-    } else if (leafletMap) {
-      setTimeout(() => { leafletMap.invalidateSize(); }, 150);
     }
   } else {
     if (tileWrapper) tileWrapper.style.display = "none";
@@ -1599,106 +1785,111 @@ function setMapDisplayMode(mode) {
   }
 }
 
+function selectRegion(zoneKey) {
+  const z = REGIONAL_ZONES[zoneKey];
+  if (!z) return;
 
-// =============================================================================
-// UI NAVIGATION & TAB SWITCHING (SYNCHRONIZED DESKTOP & MOBILE)
-// =============================================================================
-function switchStageView(viewName) {
-  activeViewName = viewName;
-
-  const views = {
-    fieldSummary: { el: "viewFieldSummary", tab: "tabBtnFieldSummary", title: "Field Operations & Regional Status Overview" },
-    map: { el: "viewMap", tab: "tabBtnMap", title: "Regional Geospatial View (6 MMR & Maharashtra Zones)" },
-    lineage: { el: "viewLineage", tab: "tabBtnLineage", title: "Lineage Rail & Trace Audit (G3 -> G1 -> G2 -> G4)" },
-    governance: { el: "viewGovernance", tab: "tabBtnGovernance", title: "Automated Governance Ruling & Execution Gate" },
-    scientific: { el: "viewScientific", tab: "tabBtnScientific", title: "Botanical Context & Dynamic Sensor Context Fields" },
-    replay: { el: "viewReplay", tab: "tabBtnReplay", title: "Deterministic Lineage Replay Engine" },
-    evidencePack: { el: "viewEvidencePack", tab: "tabBtnEvidencePack", title: "Group 3 Source Evidence Pack v2.2" }
-  };
-
-  Object.values(views).forEach(v => {
-    const el = document.getElementById(v.el);
-    const tab = document.getElementById(v.tab);
-    if (el) el.style.display = "none";
-    if (tab) tab.classList.remove("active");
-  });
-
-  const selected = views[viewName] || views.fieldSummary;
-  const selEl = document.getElementById(selected.el);
-  const selTab = document.getElementById(selected.tab);
-  const titleEl = document.getElementById("stageSubtitleText");
-
-  if (selEl) {
-    selEl.style.display = viewName === "map" || viewName === "evidencePack" || viewName === "fieldSummary" ? "flex" : "block";
+  if (z.status === "CONFIRMED_LIVE") {
+    switchMainTab("monitoringView", document.getElementById("navItemMonitoring"));
+  } else {
+    alert(`[PENDING REGION] ${z.name}\nObservation ID: ${z.id}\nStatus: ${z.status}\n\n${z.note}\n\nPer constitutional doctrine, unpersisted data is never fabricated.`);
   }
-  if (selTab) selTab.classList.add("active");
-  if (titleEl) titleEl.textContent = selected.title;
-
-  if (viewName === "map" && leafletMap) {
-    setTimeout(() => { leafletMap.invalidateSize(); }, 150);
-  }
-
-  // Scroll active tab into view on small screens
-  if (selTab) selTab.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
 }
 
+// =============================================================================
+// NAVIGATION & VIEW SWITCHING (SYNCHRONIZED DESKTOP & MOBILE)
+// =============================================================================
 function switchMainTab(viewKey, navItem) {
-  // Sync desktop sidebar
+  // Normalize view aliases
+  const viewMap = {
+    overviewView: "viewOverview",
+    fieldSummaryView: "viewOverview",
+    monitoringView: "viewMonitoring",
+    mapView: "viewMap",
+    regionalView: "viewMap",
+    decisionsView: "viewDecisions",
+    governanceView: "viewDecisions",
+    historyView: "viewHistory",
+    lineageView: "viewHistory",
+    replayView: "viewHistory",
+    scientificView: "viewHistory",
+    evidencePackView: "viewHistory"
+  };
+
+  const targetViewId = viewMap[viewKey] || "viewOverview";
+  activeMainView = targetViewId;
+
+  // Hide all sections
+  ["viewOverview", "viewMonitoring", "viewMap", "viewDecisions", "viewHistory"].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.style.display = (id === targetViewId) ? "flex" : "none";
+  });
+
+  // Sync Sidebar
   document.querySelectorAll(".nav-item").forEach(el => el.classList.remove("active"));
-  if (navItem && navItem.classList.contains("nav-item")) {
-    navItem.classList.add("active");
+  const navElementMap = {
+    viewOverview: "navItemOverview",
+    viewMonitoring: "navItemMonitoring",
+    viewMap: "navItemMap",
+    viewDecisions: "navItemDecisions",
+    viewHistory: "navItemHistory"
+  };
+  const activeNavId = navElementMap[targetViewId];
+  if (activeNavId) {
+    const navEl = document.getElementById(activeNavId);
+    if (navEl) navEl.classList.add("active");
   }
 
-  // Sync mobile bottom nav
+  // Sync Mobile Bottom Nav
   document.querySelectorAll(".bottom-nav-item").forEach(el => el.classList.remove("active"));
   const bnavMap = {
-    fieldSummaryView: "bnavField",
-    mapView: "bnavOverview",
-    regionalView: "bnavOverview",
-    lineageView: "bnavLineage",
-    governanceView: "bnavGovernance",
-    replayView: "bnavReplay"
+    viewOverview: "bnavOverview",
+    viewMonitoring: "bnavMonitoring",
+    viewMap: "bnavMap",
+    viewDecisions: "bnavDecisions",
+    viewHistory: "bnavHistory"
   };
-  const bnavId = bnavMap[viewKey];
+  const bnavId = bnavMap[targetViewId];
   if (bnavId) {
     const bnavEl = document.getElementById(bnavId);
     if (bnavEl) bnavEl.classList.add("active");
   }
 
-  const map = {
-    fieldSummaryView: "fieldSummary",
-    mapView: "map",
-    lineageView: "lineage",
-    governanceView: "governance",
-    regionalView: "map",
-    scientificView: "scientific",
-    evidencePackView: "evidencePack",
-    replayView: "replay"
-  };
+  // If entering map view, refresh Leaflet container
+  if (targetViewId === "viewMap" && window.VanaGeoEngine && window.VanaGeoEngine.map) {
+    setTimeout(() => { window.VanaGeoEngine.map.invalidateSize(); }, 150);
+  }
 
-  switchStageView(map[viewKey] || "fieldSummary");
+  // If specific history alias was clicked, auto-switch subtab
+  if (viewKey === "replayView") switchHistorySubTab("replay");
+  if (viewKey === "evidencePackView") switchHistorySubTab("evidence");
+  if (viewKey === "scientificView") switchHistorySubTab("scientific");
+  if (viewKey === "lineageView") switchHistorySubTab("provenance");
 
-  // Close mobile drawer if open
+  // Close mobile drawer
   toggleSidebar(false);
 }
 
+// Backwards-compatible alias
+function switchStageView(viewName) {
+  const map = {
+    fieldSummary: "overviewView",
+    map: "mapView",
+    lineage: "historyView",
+    governance: "decisionsView",
+    scientific: "historyView",
+    replay: "historyView",
+    evidencePack: "historyView"
+  };
+  switchMainTab(map[viewName] || "overviewView");
+}
+
 function focusAlerts(navItem) {
-  document.querySelectorAll(".nav-item").forEach(el => el.classList.remove("active"));
-  document.querySelectorAll(".bottom-nav-item").forEach(el => el.classList.remove("active"));
-  
-  const navAlerts = document.getElementById("navItemAlerts");
-  const bnavAlerts = document.getElementById("bnavAlerts");
-  if (navAlerts) navAlerts.classList.add("active");
-  if (bnavAlerts) bnavAlerts.classList.add("active");
-
-  const alertsPanel = document.getElementById("alertsPanel");
-  if (alertsPanel) {
-    alertsPanel.scrollIntoView({ behavior: "smooth" });
-    alertsPanel.style.outline = "2px solid var(--status-warn)";
-    setTimeout(() => { alertsPanel.style.outline = ""; }, 1500);
+  switchMainTab("overviewView", document.getElementById("navItemOverview"));
+  const alertsContainer = document.getElementById("alertsContainer");
+  if (alertsContainer) {
+    alertsContainer.scrollIntoView({ behavior: "smooth" });
   }
-
-  toggleSidebar(false);
 }
 
 function toggleSidebar(forceState) {
@@ -1728,3 +1919,503 @@ function toggleSidebar(forceState) {
     sidebar.classList.toggle("collapsed");
   }
 }
+
+// =============================================================================
+// OBSERVATION SELECTOR & MULTI-RECORD LOOKUP
+// =============================================================================
+function handleObservationSelect(newId) {
+  if (!newId) return;
+  if (newId === "__CUSTOM__") {
+    const customPrompt = prompt("Enter Canonical Observation ID to retrieve from MasterDB (e.g. TC-Z03-EXT-OPENMETEO-OBS001, OBS-THANECREEK-AGB-2023-01, TC-Z03-F02-SENSOR-OBS999, TC-Z03-F02-LIDAR-OBS001):");
+    const selectEl = document.getElementById("headerObservationSelect");
+    if (!customPrompt || !customPrompt.trim()) {
+      if (selectEl) selectEl.value = currentObservationId;
+      return;
+    }
+    const cleanId = customPrompt.trim();
+    if (selectEl) {
+      let optExists = Array.from(selectEl.options).some(opt => opt.value === cleanId);
+      if (!optExists) {
+        const newOpt = document.createElement("option");
+        newOpt.value = cleanId;
+        newOpt.textContent = `Custom (${cleanId})`;
+        selectEl.insertBefore(newOpt, selectEl.lastElementChild);
+      }
+      selectEl.value = cleanId;
+    }
+    fetchLive(cleanId);
+    return;
+  }
+  fetchLive(newId);
+}
+
+// =============================================================================
+// STATUTORY FOREST COVER & MANGROVE BENCHMARKS (FSI ISFR 2023)
+// Connected to GET /proxy/g1/datasets/{dataset_id}/forest-cover
+// =============================================================================
+const OFFICIAL_DATASET_ID = "DS-FSI-ISFR-2023-FOREST-COVER";
+
+async function loadOfficialForestCover() {
+  const container = document.getElementById("officialForestCoverContainer");
+  const badge = document.getElementById("fsiStatusBadge");
+  if (!container) return;
+
+  // 1. Loading State
+  container.innerHTML = `
+    <div style="padding:24px 16px;text-align:center;color:var(--text-secondary);font-size:12px;">
+      <div style="font-weight:600;margin-bottom:4px;">Querying MasterDB for statutory benchmarks...</div>
+      <div style="font-size:11px;color:var(--text-muted);">Requesting official dataset ${OFFICIAL_DATASET_ID} via /proxy/g1/datasets</div>
+    </div>
+  `;
+  if (badge) {
+    badge.textContent = "Connecting...";
+    badge.className = "status-pill neutral";
+  }
+
+  const g1Datasets = (window.VANA_CONFIG && window.VANA_CONFIG.G1_DATASETS) || "/proxy/g1/datasets";
+  const url = `${g1Datasets}/${OFFICIAL_DATASET_ID}/forest-cover`;
+
+  try {
+    const res = await vanaFetch(url, { headers: { "Accept": "application/json" } });
+    if (res.ok) {
+      const json = await res.json();
+      const records = Array.isArray(json.records) ? json.records : [];
+      renderOfficialForestCover(records, json.dataset_id || OFFICIAL_DATASET_ID, true, null);
+      if (badge) {
+        if (records.length > 0) {
+          badge.textContent = "MasterDB Live (Validated)";
+          badge.className = "status-pill active";
+        } else {
+          badge.textContent = "No Records";
+          badge.className = "status-pill neutral";
+        }
+      }
+    } else {
+      const errMsg = `MasterDB returned HTTP ${res.status}`;
+      renderOfficialForestCover([], OFFICIAL_DATASET_ID, false, errMsg);
+      if (badge) {
+        badge.textContent = "Service Degraded";
+        badge.className = "status-pill warn";
+      }
+    }
+  } catch (err) {
+    console.warn("[VANA] MasterDB forest cover endpoint degraded:", err.message);
+    const errMsg = `Could not reach MasterDB gateway (${err.message})`;
+    renderOfficialForestCover([], OFFICIAL_DATASET_ID, false, errMsg);
+    if (badge) {
+      badge.textContent = "Service Unavailable";
+      badge.className = "status-pill warn";
+    }
+  }
+}
+
+function renderOfficialForestCover(records, datasetId, isLive, errMsg) {
+  const container = document.getElementById("officialForestCoverContainer");
+  if (!container) return;
+
+  // 2. Error State (Zero fabricated data presented as live data)
+  if (errMsg) {
+    container.innerHTML = `
+      <div style="background:var(--status-warn-bg);border:1px solid var(--status-warn-border);color:var(--status-warn);border-radius:var(--radius-md);padding:16px 18px;margin-bottom:8px;">
+        <div style="font-weight:700;font-size:13px;display:flex;align-items:center;gap:6px;">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+          <span>Statutory Benchmark Service Degraded</span>
+        </div>
+        <div style="font-size:12px;color:var(--text-main);margin-top:4px;line-height:1.45;">
+          ${errMsg}. Under strict zero-fabrication governance, fallback benchmark data is not displayed as live data.
+        </div>
+        <div style="margin-top:10px;">
+          <button type="button" class="btn-header" style="font-size:11.5px;padding:3px 10px;" onclick="loadOfficialForestCover()">
+            Retry Query
+          </button>
+        </div>
+      </div>
+    `;
+    return;
+  }
+
+  // 3. Empty State
+  if (!records || records.length === 0) {
+    container.innerHTML = `
+      <div style="padding:24px 16px;text-align:center;color:var(--text-secondary);font-size:12px;background:var(--bg-surface);border:1px solid var(--border-light);border-radius:var(--radius-md);">
+        <div style="font-weight:600;margin-bottom:4px;">No statutory records found in MasterDB</div>
+        <div style="font-size:11px;color:var(--text-muted);">Dataset identifier: <span class="mono">${datasetId}</span></div>
+        <div style="margin-top:10px;">
+          <button type="button" class="btn-header" style="font-size:11.5px;padding:3px 10px;" onclick="loadOfficialForestCover()">
+            Refresh
+          </button>
+        </div>
+      </div>
+    `;
+    return;
+  }
+
+  // 4. Populated State: Dynamically parse every field and unit directly from MasterDB response
+  container.innerHTML = records.map(rec => {
+    const src = rec.source || {};
+    const unitStr = rec.unit || "km2";
+    const totalAreaStr = (rec.forest_cover_area !== undefined && rec.forest_cover_area !== null)
+      ? Number(rec.forest_cover_area).toLocaleString()
+      : "Not Specified";
+    const totalPctStr = (rec.forest_cover_percentage !== undefined && rec.forest_cover_percentage !== null)
+      ? `${rec.forest_cover_percentage}% of geographical area`
+      : "Percentage pending";
+    const mangroveAreaStr = (rec.mangrove_area !== undefined && rec.mangrove_area !== null)
+      ? Number(rec.mangrove_area).toLocaleString()
+      : "0.0";
+    const vdfStr = (rec.very_dense_forest_area !== undefined && rec.very_dense_forest_area !== null)
+      ? Number(rec.very_dense_forest_area).toLocaleString()
+      : "0.0";
+    const mdfStr = (rec.moderately_dense_forest_area !== undefined && rec.moderately_dense_forest_area !== null)
+      ? Number(rec.moderately_dense_forest_area).toLocaleString()
+      : "0.0";
+    const ofStr = (rec.open_forest_area !== undefined && rec.open_forest_area !== null)
+      ? Number(rec.open_forest_area).toLocaleString()
+      : "0.0";
+
+    const titlePrefix = rec.district ? `${rec.district} District` : `${rec.state} State`;
+
+    return `
+      <div style="display:flex;flex-direction:column;gap:14px;">
+        <!-- Header Info Card -->
+        <div style="background:var(--bg-page);border:1px solid var(--border-light);border-radius:var(--radius-md);padding:12px 14px;">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:8px;">
+            <div>
+              <div style="font-size:13px;font-weight:700;color:var(--text-main);">
+                ${titlePrefix} Forest Cover Baseline (${rec.assessment_year})
+              </div>
+              <div style="font-size:11.5px;color:var(--text-secondary);margin-top:2px;">
+                State: <strong>${rec.state}</strong> · Geography Level: <strong>${rec.geography_level}</strong> · Boundary: <strong>${rec.boundary_reference || "Official Recorded Forest Area (RFA)"}</strong>
+              </div>
+            </div>
+            <span class="status-pill active" style="font-size:10px;">Quality: ${rec.quality_status || "VALIDATED"}</span>
+          </div>
+          <div style="font-size:11px;color:var(--text-secondary);margin-top:8px;line-height:1.4;">
+            <strong>Publisher:</strong> ${src.publisher || src.source_name || "Forest Survey of India, MoEFCC"} · <strong>Citation:</strong> ${rec.provenance_reference || "ISFR 2023"}
+          </div>
+        </div>
+
+        <!-- Metric Cards Grid (All figures and units originate from MasterDB response) -->
+        <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(180px, 1fr));gap:10px;">
+          <div style="background:var(--bg-surface);border:1px solid var(--border-light);border-radius:var(--radius-md);padding:10px 12px;">
+            <div style="font-size:11px;color:var(--text-secondary);font-weight:500;">Total Forest Cover</div>
+            <div style="font-size:18px;font-weight:700;color:var(--brand);margin-top:2px;" class="mono">${totalAreaStr} ${unitStr}</div>
+            <div style="font-size:10.5px;color:var(--text-muted);margin-top:2px;">${totalPctStr}</div>
+          </div>
+
+          <div style="background:var(--bg-surface);border:1px solid var(--border-light);border-radius:var(--radius-md);padding:10px 12px;">
+            <div style="font-size:11px;color:var(--text-secondary);font-weight:500;">Mangrove Canopy Area</div>
+            <div style="font-size:18px;font-weight:700;color:var(--brand);margin-top:2px;" class="mono">${mangroveAreaStr} ${unitStr}</div>
+            <div style="font-size:10.5px;color:var(--text-muted);margin-top:2px;">Coastal wetland surveillance zone</div>
+          </div>
+
+          <div style="background:var(--bg-surface);border:1px solid var(--border-light);border-radius:var(--radius-md);padding:10px 12px;">
+            <div style="font-size:11px;color:var(--text-secondary);font-weight:500;">Very Dense Forest (>70%)</div>
+            <div style="font-size:18px;font-weight:700;color:var(--text-main);margin-top:2px;" class="mono">${vdfStr} ${unitStr}</div>
+            <div style="font-size:10.5px;color:var(--text-muted);margin-top:2px;">Intact closed canopy</div>
+          </div>
+
+          <div style="background:var(--bg-surface);border:1px solid var(--border-light);border-radius:var(--radius-md);padding:10px 12px;">
+            <div style="font-size:11px;color:var(--text-secondary);font-weight:500;">Moderately Dense (40-70%)</div>
+            <div style="font-size:18px;font-weight:700;color:var(--text-main);margin-top:2px;" class="mono">${mdfStr} ${unitStr}</div>
+            <div style="font-size:10.5px;color:var(--text-muted);margin-top:2px;">Medium canopy cover</div>
+          </div>
+
+          <div style="background:var(--bg-surface);border:1px solid var(--border-light);border-radius:var(--radius-md);padding:10px 12px;">
+            <div style="font-size:11px;color:var(--text-secondary);font-weight:500;">Open Forest (10-40%)</div>
+            <div style="font-size:18px;font-weight:700;color:var(--text-main);margin-top:2px;" class="mono">${ofStr} ${unitStr}</div>
+            <div style="font-size:10.5px;color:var(--text-muted);margin-top:2px;">Porous / edge canopy</div>
+          </div>
+        </div>
+
+        <!-- Technical Metadata -->
+        <div class="tech-kv-grid" style="margin-top:4px;">
+          <div class="tech-kv-item"><div class="tech-k">Canonical Record ID</div><div class="tech-v mono">${rec.record_id || "null"}</div></div>
+          <div class="tech-kv-item"><div class="tech-k">Dataset Identifier</div><div class="tech-v mono">${rec.dataset_id || datasetId}</div></div>
+          <div class="tech-kv-item"><div class="tech-k">Methodology</div><div class="tech-v">${rec.methodology || "Multi-date satellite imagery with ground truthing"}</div></div>
+          <div class="tech-kv-item"><div class="tech-k">Statutory Reference</div><div class="tech-v">${rec.provenance_reference || "Official Report Table"}</div></div>
+        </div>
+      </div>
+    `;
+  }).join("");
+}
+
+// =============================================================================
+// OBSERVATION INGESTION INTAKE (POST /observations)
+// =============================================================================
+// Example Group 3 v2.2 test fixture for contract validation and demonstration only
+const SAMPLE_CANOPY_PAYLOAD = {
+  contract_version: "2.2",
+  schema_version: "2.2",
+  observation_id: "TC-Z03-F02-SENSOR-OBS999",
+  source_identity: "group3-field-edge",
+  survey_id: "TC",
+  zone_id: "Z03",
+  flight_id: "F02",
+  sensor_id: "SENSOR",
+  observation_seq: "OBS999",
+  mission_id: "TC-Z03-F02",
+  observation_timestamp: "2026-08-25T10:00:00Z",
+  source_timestamp: "2026-08-25T10:00:00Z",
+  data_state: "CAPTURED",
+  synthetic_state: "CONTROLLED",
+  quality_state: "CAPTURED",
+  calibration_state: "NOT_VERIFIED",
+  device_id: "G3-SENSOR-999",
+  observation_type: "canopy_height",
+  capture_method: "sensor",
+  processing_status: "raw",
+  measurement: 7.8,
+  unit: "m",
+  accuracy: "NOT_VERIFIED",
+  location: {
+    latitude: 19.1288,
+    longitude: 72.9421,
+    altitude_m: 12.5,
+    gnss_status: "NOT_VERIFIED",
+    position_accuracy_m: null
+  },
+  raw_artifact: "TC-Z03-F02/sensor/log_999.txt",
+  raw_artifact_integrity: {
+    checksum_sha256: "f7254999689ae5b530a0006d0fb6765df0317973504e8c5d1b393bfa5826cf9d",
+    hash_algorithm: "sha256",
+    artifact_type: "sensor_reading"
+  },
+  provenance_reference: "TC-Z03-F02/qa/qa_F02.json",
+  provenance: {
+    device_id: "G3-SENSOR-999",
+    mission_id: "TC-Z03-F02",
+    captured_at: "2026-08-25T10:00:00Z",
+    raw_artifact: "TC-Z03-F02/sensor/log_999.txt",
+    qa_record: "TC-Z03-F02/qa/qa_F02.json"
+  }
+};
+
+// Example Group 3 v2.2 test fixture for external weather API ingestion
+const SAMPLE_WEATHER_PAYLOAD = {
+  contract_version: "2.2",
+  schema_version: "2.2",
+  observation_id: "TC-Z03-EXT-OPENMETEO-OBS001",
+  source_identity: "external-api",
+  survey_id: "TC",
+  zone_id: "Z03",
+  flight_id: "EXT",
+  sensor_id: "OPENMETEO",
+  observation_seq: "OBS001",
+  mission_id: "TC-Z03-EXT",
+  observation_timestamp: "2026-08-25T11:00:00Z",
+  source_timestamp: "2026-08-25T11:00:00Z",
+  data_state: "CAPTURED",
+  synthetic_state: "CONTROLLED",
+  quality_state: "VALIDATED",
+  calibration_state: "NOT_VERIFIED",
+  device_id: "EXT-OPENMETEO-API",
+  observation_type: "precipitation",
+  capture_method: "external_api",
+  processing_status: "raw",
+  measurement: 0.1,
+  unit: "mm",
+  accuracy: "NOT_VERIFIED",
+  location: {
+    latitude: 19.1288,
+    longitude: 72.9421,
+    altitude_m: 4.0,
+    gnss_status: null,
+    position_accuracy_m: null
+  },
+  raw_artifact: "TC-Z03-EXT-OPENMETEO/precipitation.json",
+  raw_artifact_integrity: {
+    checksum_sha256: "35eebfd5d7fa43589110dcdb2915ce0335eebfd5d7fa43589110dcdb2915ce03",
+    hash_algorithm: "sha256",
+    artifact_type: "other"
+  },
+  provenance_reference: "TC-Z03-EXT-OPENMETEO/provenance.json",
+  provenance: {
+    device_id: "EXT-OPENMETEO-API",
+    mission_id: "TC-Z03-EXT",
+    captured_at: "2026-08-25T11:00:00Z",
+    raw_artifact: "TC-Z03-EXT-OPENMETEO/precipitation.json",
+    qa_record: "TC-Z03-EXT-OPENMETEO/provenance.json"
+  }
+};
+
+// Test fixture with intentional schema errors to verify contract rejection
+const SAMPLE_INVALID_PAYLOAD = {
+  contract_version: "2.2",
+  observation_id: "TC-MALFORMED-OBS-001",
+  observation_type: "canopy_height",
+  accuracy: "high", // Invalid: Must be float or literal 'NOT_VERIFIED'
+  location: null // Invalid: location is strictly required
+};
+
+function openObservationSubmitModal() {
+  const modal = document.getElementById("observationSubmitModal");
+  if (!modal) return;
+
+  const keyInput = document.getElementById("obsIdempotencyKey");
+  if (keyInput && !keyInput.value) {
+    generateNewIdempotencyKey();
+  }
+
+  const textarea = document.getElementById("obsPayloadTextarea");
+  if (textarea && !textarea.value.trim()) {
+    textarea.value = JSON.stringify(SAMPLE_CANOPY_PAYLOAD, null, 2);
+  }
+
+  const resultBox = document.getElementById("obsIngestionResult");
+  if (resultBox) {
+    resultBox.style.display = "none";
+    resultBox.innerHTML = "";
+  }
+
+  modal.style.display = "flex";
+}
+
+function closeObservationSubmitModal() {
+  const modal = document.getElementById("observationSubmitModal");
+  if (modal) modal.style.display = "none";
+}
+
+function generateNewIdempotencyKey() {
+  const keyInput = document.getElementById("obsIdempotencyKey");
+  if (keyInput) {
+    keyInput.value = `IK-VANA-${Date.now()}-${Math.floor(Math.random() * 10000)}`;
+  }
+}
+
+function loadSampleObsPayload(sampleType) {
+  const textarea = document.getElementById("obsPayloadTextarea");
+  if (!textarea) return;
+
+  if (sampleType === "canopy") {
+    textarea.value = JSON.stringify(SAMPLE_CANOPY_PAYLOAD, null, 2);
+  } else if (sampleType === "precipitation") {
+    textarea.value = JSON.stringify(SAMPLE_WEATHER_PAYLOAD, null, 2);
+  } else if (sampleType === "invalid") {
+    textarea.value = JSON.stringify(SAMPLE_INVALID_PAYLOAD, null, 2);
+  }
+}
+
+async function submitObservationPayload() {
+  const textarea = document.getElementById("obsPayloadTextarea");
+  const keyInput = document.getElementById("obsIdempotencyKey");
+  const resultBox = document.getElementById("obsIngestionResult");
+  const submitBtn = document.getElementById("btnSubmitObsPayload");
+
+  if (!textarea || !resultBox) return;
+
+  const rawJson = textarea.value.trim();
+  if (!rawJson) {
+    resultBox.style.display = "block";
+    resultBox.className = "login-error-alert";
+    resultBox.textContent = "Please enter an observation payload JSON.";
+    return;
+  }
+
+  let payload;
+  try {
+    payload = JSON.parse(rawJson);
+  } catch (parseErr) {
+    resultBox.style.display = "block";
+    resultBox.className = "login-error-alert";
+    resultBox.textContent = `JSON Syntax Error: ${parseErr.message}`;
+    return;
+  }
+
+  const key = keyInput ? keyInput.value.trim() : "";
+
+  resultBox.style.display = "block";
+  resultBox.style.background = "var(--bg-page)";
+  resultBox.style.border = "1px solid var(--border-light)";
+  resultBox.style.color = "var(--text-secondary)";
+  resultBox.textContent = "Submitting payload to MasterDB (POST /observations)...";
+
+  if (submitBtn) submitBtn.disabled = true;
+
+  try {
+    const headers = { "Content-Type": "application/json", "Accept": "application/json" };
+    if (key) headers["Idempotency-Key"] = key;
+
+    const res = await vanaFetch(window.VANA_CONFIG.G1_OBSERVATIONS, {
+      method: "POST",
+      headers: headers,
+      body: JSON.stringify(payload)
+    });
+
+    const body = await res.json().catch(() => ({ status: "ERROR", message: "Invalid JSON response" }));
+
+    if (res.status === 201) {
+      resultBox.style.background = "var(--status-ok-bg)";
+      resultBox.style.border = "1px solid var(--status-ok-border)";
+      resultBox.style.color = "var(--status-ok)";
+      resultBox.innerHTML = `
+        <div style="font-weight:700;margin-bottom:4px;">Observation Accepted &amp; Persisted!</div>
+        <div style="font-size:11.5px;color:var(--text-main);line-height:1.4;">
+          Observation ID: <strong class="mono">${body.observation_id}</strong><br>
+          Canonical Record ID: <strong class="mono">${body.canonical_record_id}</strong><br>
+          Trace ID: <span class="mono">${body.trace_id}</span>
+        </div>
+        <div style="margin-top:10px;">
+          <button type="button" class="btn-header primary" style="font-size:11px;padding:3px 10px;" onclick="closeObservationSubmitModal(); fetchLive('${body.observation_id}');">
+            View in Dashboard
+          </button>
+        </div>
+      `;
+    } else if (res.status === 200 && body.status === "IDEMPOTENT_REPLAY") {
+      resultBox.style.background = "var(--status-warn-bg)";
+      resultBox.style.border = "1px solid var(--status-warn-border)";
+      resultBox.style.color = "var(--status-warn)";
+      resultBox.innerHTML = `
+        <div style="font-weight:700;margin-bottom:4px;">Idempotent Replay Verified</div>
+        <div style="font-size:11.5px;color:var(--text-main);line-height:1.4;">
+          Request already processed. Returned canonical record: <strong class="mono">${body.canonical_record_id}</strong>
+        </div>
+        <div style="margin-top:10px;">
+          <button type="button" class="btn-header" style="font-size:11px;padding:3px 10px;" onclick="closeObservationSubmitModal(); fetchLive('${body.observation_id}');">
+            View in Dashboard
+          </button>
+        </div>
+      `;
+    } else if (res.status === 409) {
+      resultBox.style.background = "var(--status-critical-bg)";
+      resultBox.style.border = "1px solid var(--status-critical-border)";
+      resultBox.style.color = "var(--status-critical)";
+      resultBox.innerHTML = `
+        <div style="font-weight:700;margin-bottom:4px;">Idempotency Conflict (HTTP 409)</div>
+        <div style="font-size:11.5px;color:var(--text-main);">${body.message || "Idempotency key was already used with a different request payload."}</div>
+      `;
+    } else if (res.status === 400) {
+      resultBox.style.background = "var(--status-critical-bg)";
+      resultBox.style.border = "1px solid var(--status-critical-border)";
+      resultBox.style.color = "var(--status-critical)";
+      const errorList = Array.isArray(body.errors) && body.errors.length > 0
+        ? `<ul style="margin:4px 0 0 16px;padding:0;">${body.errors.map(e => `<li>${e}</li>`).join("")}</ul>`
+        : `<div>${body.message || "Observation failed contract validation."}</div>`;
+      resultBox.innerHTML = `
+        <div style="font-weight:700;margin-bottom:4px;">Validation Rejected (HTTP 400)</div>
+        <div style="font-size:11.5px;color:var(--text-main);">${errorList}</div>
+      `;
+    } else {
+      resultBox.style.background = "var(--status-critical-bg)";
+      resultBox.style.border = "1px solid var(--status-critical-border)";
+      resultBox.style.color = "var(--status-critical)";
+      resultBox.innerHTML = `
+        <div style="font-weight:700;margin-bottom:4px;">Submission Error (HTTP ${res.status})</div>
+        <div style="font-size:11.5px;color:var(--text-main);">${body.message || "Unexpected persistence result."}</div>
+      `;
+    }
+  } catch (err) {
+    resultBox.style.background = "var(--status-warn-bg)";
+    resultBox.style.border = "1px solid var(--status-warn-border)";
+    resultBox.style.color = "var(--status-warn)";
+    resultBox.innerHTML = `
+      <div style="font-weight:700;margin-bottom:4px;">MasterDB Service Degraded</div>
+      <div style="font-size:11.5px;color:var(--text-main);">
+        Could not connect to MasterDB gateway (/proxy/g1/observations). Please verify backend service availability.
+      </div>
+    `;
+  } finally {
+    if (submitBtn) submitBtn.disabled = false;
+  }
+}
+

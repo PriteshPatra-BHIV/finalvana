@@ -4,14 +4,15 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <meta name="vite-api-url" content="">
-  <title>VANA — Environmental Governance Monitoring System</title>
+  <title>VANA: Environmental Governance Platform</title>
+  <meta name="description" content="Autonomous environmental surveillance, statutory governance assessments, and multi-agency compliance verification across Maharashtra monitoring zones.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
   <!-- Leaflet CSS for accurate geographic tile mapping -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
-  <link rel="stylesheet" href="styles.css">
-  <link rel="stylesheet" href="geospatial.css">
+  <link rel="stylesheet" href="styles.css?v=2">
+  <link rel="stylesheet" href="geospatial.css?v=2">
 </head>
 <body>
 
@@ -27,7 +28,7 @@
     <div>
       <div class="sidebar-header">
         <div class="emblem-icon">
-          <!-- State Institutional Emblem / Seal SVG -->
+          <!-- Institutional Seal SVG -->
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M12 2L3 7v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V7l-9-5z"/>
             <path d="M12 6v12"/>
@@ -44,71 +45,53 @@
       </div>
 
       <nav class="nav-menu">
-        <!-- Section 1: Plain-Language Field Monitoring (Default for Officials) -->
-        <div class="nav-section-label">Field Operations &amp; Monitoring</div>
+        <!-- Section 1: User-Centric Monitoring & Surveillance -->
+        <div class="nav-section-label">Operations</div>
 
-        <a class="nav-item active" id="navItemFieldSummary" onclick="switchMainTab('fieldSummaryView', this)" title="Field Summary View for Forest Officials">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="21" x2="9" y2="9"></line></svg>
-          <span>Field Summary</span>
-          <span class="nav-badge live">Primary</span>
+        <a class="nav-item active" id="navItemOverview" onclick="switchMainTab('overviewView', this)" title="Environmental Overview and Status Summary">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+          <span>Overview</span>
+          <span class="nav-badge live">Live</span>
         </a>
 
-        <a class="nav-item" id="navItemOverview" onclick="switchMainTab('mapView', this)" title="Geospatial Map of All 6 Regional Zones">
+        <a class="nav-item" id="navItemMonitoring" onclick="switchMainTab('monitoringView', this)" title="Environmental Monitoring and Field Conditions">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
+          <span>Environmental Monitoring</span>
+        </a>
+
+        <a class="nav-item" id="navItemMap" onclick="switchMainTab('mapView', this)" title="Map & Surveillance Locations">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"></polygon><line x1="8" y1="2" x2="8" y2="18"></line><line x1="16" y1="6" x2="16" y2="22"></line></svg>
-          <span>Regional Map</span>
+          <span>Map &amp; Locations</span>
           <span class="nav-badge">6 Zones</span>
         </a>
 
-        <a class="nav-item" id="navItemAlerts" onclick="focusAlerts(this)" title="Active Operational Exceptions & Gaps">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
-          <span>Alerts &amp; Exceptions</span>
-          <span class="nav-badge alert-badge" id="navAlertCount">6</span>
-        </a>
-
-        <!-- Section 2: Advanced Engineering & Governance Runtimes -->
-        <div class="nav-section-label advanced">Advanced / Technical Audit</div>
-
-        <a class="nav-item" id="navItemLineage" onclick="switchMainTab('lineageView', this)" title="Four-Stage Lineage Rail Trace Audit">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="6" cy="6" r="3"></circle><circle cx="6" cy="18" r="3"></circle><line x1="20" y1="4" x2="8.12" y2="15.88"></line><line x1="14.47" y1="14.48" x2="20" y2="20"></line><line x1="8.12" y1="8.12" x2="12" y2="12"></line></svg>
-          <span>Lineage Rail</span>
-          <span class="nav-badge">4 Stages</span>
-        </a>
-
-        <a class="nav-item" id="navItemGovernance" onclick="switchMainTab('governanceView', this)" title="Automated Governance Decision Matrix">
+        <a class="nav-item" id="navItemDecisions" onclick="switchMainTab('decisionsView', this)" title="Reviews & Decisions">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
-          <span>Governance Matrix</span>
-          <span class="nav-badge" style="background:var(--status-warn-bg);color:var(--status-warn)">ABSTAIN</span>
+          <span>Reviews &amp; Decisions</span>
+          <span class="nav-badge alert-badge" id="navDecisionBadge">On Hold</span>
         </a>
 
-        <a class="nav-item" id="navItemScientific" onclick="switchMainTab('scientificView', this)" title="Botanical Model Context & Research DOI References">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M10 2v7.31"></path><path d="M14 2v7.31"></path><path d="M8.5 2h7"></path><path d="M14 9.3a6.5 6.5 0 1 1-4 0"></path></svg>
-          <span>Scientific Context</span>
-        </a>
+        <!-- Section 2: Audit & Provenance -->
+        <div class="nav-section-label">Audit &amp; Evidence</div>
 
-        <a class="nav-item" id="navItemEvidencePack" onclick="switchMainTab('evidencePackView', this)" title="Group 3 JSON Source Evidence Pack">
+        <a class="nav-item" id="navItemHistory" onclick="switchMainTab('historyView', this)" title="History & Evidence">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>
-          <span>Evidence Pack</span>
-          <span class="nav-badge">v2.2</span>
+          <span>History &amp; Evidence</span>
+          <span class="nav-badge live">Verified</span>
         </a>
 
-        <a class="nav-item" id="navItemReplay" onclick="switchMainTab('replayView', this)" title="Deterministic Lineage Replay & Diff Engine">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="23 4 23 10 17 10"></polyline><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg>
-          <span>Replay &amp; Diff</span>
-          <span class="nav-badge live" id="navReplayBadge">Verified</span>
-        </a>
+        <!-- Section 3: Administration Control Plane -->
+        <div class="nav-section-label admin-label">Administration</div>
 
-        <!-- Section 3: System Administration & Governance Control Plane -->
-        <div class="nav-section-label">Administration</div>
-
-        <a class="nav-item" id="navItemAdmin" href="admin.html" title="VANA Administration &amp; Control Plane">
+        <a class="nav-item" id="navItemAdmin" href="admin.html" title="VANA Administration Control Plane">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
           <span>Administration</span>
-          <span class="nav-badge" style="background: rgba(99,102,241,0.15); color: #818cf8;">Control Plane</span>
+          <span class="nav-badge">Control Plane</span>
         </a>
       </nav>
     </div>
 
-    <!-- Minister / Executive Persona Card -->
+    <!-- Official / Executive Persona Card -->
     <div class="sidebar-footer">
       <div class="minister-card">
         <div class="minister-avatar">MH</div>
@@ -132,13 +115,13 @@
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
         </button>
         <div class="header-emblem-badge hide-on-mobile">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M12 2L3 7v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V7l-9-5z"/>
           </svg>
         </div>
         <div class="header-title-group">
-          <h1>VANA — Environmental Governance Monitoring System</h1>
-          <div class="header-subtitle">Government of Maharashtra · Department of Environment &amp; Climate Change · Operational Surveillance Surface</div>
+          <h1>VANA: Environmental Governance Platform</h1>
+          <div class="header-subtitle">Department of Environment &amp; Climate Change · Operational Surveillance Surface</div>
         </div>
       </div>
 
@@ -152,24 +135,38 @@
 
         <!-- System Health Beacon -->
         <div class="system-status-pill" id="systemStatusPill">
-          <div class="pulse-dot"></div>
-          <span id="systemStatusText" class="hide-on-mobile">Testing Systems...</span>
+          <div class="status-dot"></div>
+          <span id="systemStatusText" class="hide-on-mobile">Connecting...</span>
         </div>
 
-        <!-- Action Controls -->
-        <button class="btn-header hide-on-small" onclick="triggerReplayVerification()" title="Re-fetch all live APIs and verify deterministic invariant preservation">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"></polyline><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg>
-          <span>Replay Lineage</span>
+        <!-- Observation Selector / Lookup -->
+        <div class="header-select-group hide-on-mobile" style="display:flex;align-items:center;gap:6px;">
+          <label for="headerObservationSelect" style="font-size:11px;color:var(--text-secondary);font-weight:500;">Observation:</label>
+          <select id="headerObservationSelect" class="form-input" style="height:28px;padding:2px 8px;font-size:11.5px;max-width:220px;background:var(--bg-surface);color:var(--text-main);border-color:var(--border-light);" onchange="handleObservationSelect(this.value)">
+            <option value="TC-Z03-EXT-OPENMETEO-OBS001">Thane Creek (Open-Meteo Precipitation)</option>
+            <option value="OBS-THANECREEK-AGB-2023-01">Thane Creek (Biomass Benchmark)</option>
+            <option value="TC-Z03-F02-SENSOR-OBS999">Field Edge (Canopy Sensor)</option>
+            <option value="TC-Z03-F02-LIDAR-OBS001">Aerial LiDAR (Canopy Height)</option>
+            <option value="__CUSTOM__">Lookup Custom ID...</option>
+          </select>
+        </div>
+
+        <!-- Observation Intake Modal Button -->
+        <button class="btn-header" id="btnOpenSubmitObsModal" onclick="openObservationSubmitModal()" title="Submit Group 3 Observation Payload to MasterDB">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+          <span class="hide-on-mobile">Submit Observation</span>
         </button>
-        <button class="btn-header secondary" onclick="fetchLive()" title="Direct fetch from live Group 1, Group 2, and Group 4 runtimes">
+
+        <!-- Action Controls -->
+        <button class="btn-header" onclick="fetchLive()" title="Direct fetch from live operational runtimes">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
-          <span class="hide-on-mobile">Fetch Live</span>
+          <span class="hide-on-mobile">Refresh Data</span>
         </button>
 
         <!-- User Authentication Widget -->
         <div class="user-auth-pill" id="dashUserAuthPill" style="display:flex;align-items:center;gap:6px;">
-          <div class="auth-role-badge" id="dashRoleBadge" style="display:none;">—</div>
-          <button class="btn-header" id="dashAuthBtn" onclick="openDashboardLoginModal()" title="Sign in with VANA credentials" style="background:var(--brand);color:#fff;">
+          <div class="auth-role-badge" id="dashRoleBadge" style="display:none;">Guest</div>
+          <button class="btn-header primary" id="dashAuthBtn" onclick="openDashboardLoginModal()" title="Sign in with authorized VANA credentials">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
             <span id="dashAuthBtnText">Sign In</span>
           </button>
@@ -177,531 +174,694 @@
       </div>
     </header>
 
-    <!-- Pinned Invariant Identity Bar -->
-    <div class="pinned-identity-bar">
-      <div class="pinned-identity-left">
-        <span class="pinned-tag">CANONICAL OBSERVATION ID</span>
-        <span class="pinned-oid mono" id="pinnedOid">TC-Z03-EXT-OPENMETEO-OBS001</span>
-        <span class="pinned-rule hide-on-mobile">(Strictly pinned - never replaced downstream)</span>
-      </div>
-      <div class="pinned-identity-right">
-        <div class="pinned-identity-item">
-          <span class="pinned-k">Canonical Record ID:</span>
-          <span class="mono pinned-v" id="pinnedCanonicalRecordId">NOT VERIFIED</span>
-        </div>
-        <div class="pinned-identity-item">
-          <span class="pinned-k">Context ID:</span>
-          <span class="mono pinned-v" id="pinnedContextId" style="color:var(--status-warn)">null</span>
-        </div>
-      </div>
-    </div>
-
     <!-- Scrollable Main Viewport Area -->
     <div class="viewport-scroll-container">
 
       <!-- =========================================================================
-           EXECUTIVE TOP KPI STRIP (6 LIVE RUNTIME CARDS)
+           VIEW 1: OVERVIEW (DEFAULT LANDING PAGE)
            ========================================================================= -->
-      <section class="kpi-strip">
-        <!-- KPI 1: System Health -->
-        <div class="kpi-card highlight">
-          <div class="kpi-header">
-            <span class="kpi-title">System Health</span>
-            <svg class="kpi-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
-          </div>
-          <div class="kpi-value emerald" id="kpiHealthVal">Connecting...</div>
-          <div class="kpi-footer">
-            <span class="kpi-subtext" id="kpiHealthSub">Testing API status</span>
-            <span class="kpi-badge live" id="kpiHealthBadge">Checking</span>
+      <section class="view-section" id="viewOverview">
+
+        <!-- A. Page Introduction -->
+        <div class="section-intro">
+          <h2 class="section-title">Environmental Overview</h2>
+          <p class="section-subtitle">
+            See the latest environmental observations, locations that need attention, and assessments awaiting review.
+          </p>
+          <div class="section-updated-stamp" id="overviewLastUpdated">
+            Reporting period: Current operational window · Last update: 25 Aug 2026, 11:00 UTC
           </div>
         </div>
 
-        <!-- KPI 2: Evidence Freshness -->
-        <div class="kpi-card">
-          <div class="kpi-header">
-            <span class="kpi-title">Data Freshness</span>
-            <svg class="kpi-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+        <!-- B. Overall Status Summary -->
+        <div class="overall-status-banner" id="overallStatusBanner">
+          <div class="overall-status-content">
+            <div class="overall-status-label">
+              <span class="status-dot" style="background:var(--brand)"></span>
+              <span id="overallStatusTitle">Information available, some locations need attention</span>
+            </div>
+            <div class="overall-status-desc" id="overallStatusDesc">
+              Observation data is recorded for Thane Creek, while other monitored areas are awaiting sensor updates or additional evidence.
+            </div>
           </div>
-          <div class="kpi-value" id="kpiFreshnessVal">Unverified</div>
-          <div class="kpi-footer">
-            <span class="kpi-subtext mono" id="kpiFreshnessSub">Awaiting telemetry</span>
-            <span class="kpi-badge" id="kpiFreshnessBadge">Unverified</span>
+          <button class="btn-header" onclick="switchMainTab('monitoringView', document.getElementById('navItemMonitoring'))">
+            <span>View All Monitoring</span>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
+          </button>
+        </div>
+
+        <!-- C. Location Summary (Compact Metrics) -->
+        <div class="metric-summary-grid">
+          <div class="metric-card" onclick="switchMainTab('monitoringView', document.getElementById('navItemMonitoring'))" style="cursor:pointer">
+            <div class="metric-label">Locations Monitored</div>
+            <div class="metric-count" id="kpiLocationsMonitored">6</div>
+            <div class="metric-explanation">All configured surveillance zones</div>
+          </div>
+
+          <div class="metric-card" onclick="switchMainTab('monitoringView', document.getElementById('navItemMonitoring'))" style="cursor:pointer">
+            <div class="metric-label">Recent Observations</div>
+            <div class="metric-count" id="kpiObsVal" style="color:var(--status-ok);">1</div>
+            <div class="metric-explanation">Thane Creek (0.1 mm precipitation)</div>
+          </div>
+
+          <div class="metric-card" onclick="switchMainTab('monitoringView', document.getElementById('navItemMonitoring'))" style="cursor:pointer">
+            <div class="metric-label">Awaiting Updated Info</div>
+            <div class="metric-count" id="kpiAwaitingInfo" style="color:var(--status-warn);">5</div>
+            <div class="metric-explanation">Mumbai, Navi Mumbai, Vasai, Thane, Maval</div>
+          </div>
+
+          <div class="metric-card" onclick="switchMainTab('decisionsView', document.getElementById('navItemDecisions'))" style="cursor:pointer">
+            <div class="metric-label">Assessments Requiring Review</div>
+            <div class="metric-count" id="kpiReviewsRequired" style="color:var(--status-warn);">1</div>
+            <div class="metric-explanation" id="kpiRulingSub">Thane Creek: Assessment paused</div>
           </div>
         </div>
 
-        <!-- KPI 3: Observations Count -->
-        <div class="kpi-card">
-          <div class="kpi-header">
-            <span class="kpi-title">Observations</span>
-            <svg class="kpi-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+        <!-- Main Overview Grid: D (Locations Needing Attention) & E/F (Latest Observations & Recent Activity) -->
+        <div style="display:grid;grid-template-columns:1.2fr 1fr;gap:var(--space-md);align-items:start;">
+
+          <!-- D. Locations Needing Attention -->
+          <div class="content-panel">
+            <div class="panel-header" style="flex-wrap:wrap;gap:10px;">
+              <div>
+                <div class="panel-title">Locations Needing Attention</div>
+                <div style="font-size:11.5px;color:var(--text-secondary);margin-top:2px;">
+                  Real-time status of monitored zones requiring action or awaiting edge feeds.
+                </div>
+              </div>
+              <div class="filter-bar" style="padding:0;border:none;background:transparent;flex-wrap:nowrap;gap:6px;">
+                <button class="filter-btn active" id="btnFilterAttnAll" onclick="filterAttentionLocations('ALL', this)">All (6)</button>
+                <button class="filter-btn" id="btnFilterAttnReview" onclick="filterAttentionLocations('REVIEW', this)">Needs Review (1)</button>
+                <button class="filter-btn" id="btnFilterAttnWaiting" onclick="filterAttentionLocations('WAITING', this)">Waiting for Info (5)</button>
+              </div>
+            </div>
+
+            <div class="attention-list" id="attentionLocationsList">
+              <!-- Dynamically populated by renderOverview -->
+            </div>
           </div>
-          <div class="kpi-value" id="kpiObsVal">1 Confirmed</div>
-          <div class="kpi-footer">
-            <span class="kpi-subtext">5 Pending Upstream</span>
-            <span class="kpi-badge live">Thane Creek</span>
+
+          <!-- E & F. Latest Observations & Recent Activity -->
+          <div style="display:flex;flex-direction:column;gap:var(--space-md);">
+
+            <!-- E. Latest Observations -->
+            <div class="content-panel">
+              <div class="panel-header">
+                <div>
+                  <div class="panel-title">Latest Observations</div>
+                  <div style="font-size:11.5px;color:var(--text-secondary);margin-top:2px;">
+                    Authoritative field measurements received from operational sources.
+                  </div>
+                </div>
+                <span class="status-pill active">1 Live Reading</span>
+              </div>
+              <div class="panel-body" id="latestObservationsBody">
+                <div style="display:flex;flex-direction:column;gap:12px;">
+                  <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px;">
+                    <div>
+                      <div style="font-size:14px;font-weight:700;color:var(--text-main);">Thane Creek Monitoring Station</div>
+                      <div style="font-size:11.5px;color:var(--text-secondary);margin-top:2px;">
+                        Latitude: 19.1288° N · Longitude: 72.9421° E · Elevation: 4.0m
+                      </div>
+                    </div>
+                    <div style="text-align:right;">
+                      <div style="font-size:20px;font-weight:700;color:var(--status-ok);">0.1 mm</div>
+                      <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;">Precipitation</div>
+                    </div>
+                  </div>
+
+                  <div style="background:var(--bg-page);border:1px solid var(--border-light);border-radius:var(--radius-sm);padding:8px 10px;font-size:11.5px;color:var(--text-secondary);line-height:1.4;">
+                    <strong>Observation explanation:</strong> Light precipitation recorded during current operational window. Measurement is within statutory baseline and does not trigger flood alert thresholds.
+                  </div>
+
+                  <div style="display:flex;justify-content:space-between;align-items:center;font-size:11px;color:var(--text-muted);padding-top:4px;">
+                    <span>Source: Open-Meteo Cloud API (CC-BY 4.0)</span>
+                    <span>Observed: 25 Aug 2026, 11:00 UTC</span>
+                  </div>
+
+                  <div style="display:flex;gap:8px;margin-top:4px;">
+                    <button class="btn-header" style="flex:1;justify-content:center;" onclick="switchMainTab('mapView', document.getElementById('navItemMap')); focusMapLocation(19.1288, 72.9421, 13);">
+                      <span>View on Map</span>
+                    </button>
+                    <button class="btn-header primary" style="flex:1;justify-content:center;" onclick="switchMainTab('decisionsView', document.getElementById('navItemDecisions'))">
+                      <span>Review Assessment</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- F. Recent Activity -->
+            <div class="content-panel">
+              <div class="panel-header">
+                <div>
+                  <div class="panel-title">Recent Activity</div>
+                  <div style="font-size:11.5px;color:var(--text-secondary);margin-top:2px;">
+                    Human-readable timeline of observations and governance events.
+                  </div>
+                </div>
+                <span class="status-pill neutral">Operational Log</span>
+              </div>
+              <div class="panel-body" style="padding:10px 14px;">
+                <div id="overviewActivityStream" style="display:flex;flex-direction:column;gap:10px;font-size:12px;">
+                  <!-- Dynamically populated -->
+                </div>
+              </div>
+            </div>
+
+          </div>
+
+        </div>
+
+      </section>
+
+      <!-- =========================================================================
+           VIEW 2: ENVIRONMENTAL MONITORING
+           ========================================================================= -->
+      <section class="view-section" id="viewMonitoring" style="display:none">
+        <div class="section-intro">
+          <h2 class="section-title">Environmental Monitoring</h2>
+          <p class="section-subtitle">
+            Field observations across monitored surveillance locations. Filter by observation status to review recent readings or pending updates.
+          </p>
+        </div>
+
+        <!-- Filter Bar -->
+        <div class="filter-bar">
+          <span style="font-size:12px;font-weight:600;color:var(--text-main);">Filter locations:</span>
+          <button class="filter-btn active" id="btnFilterMonAll" onclick="filterMonitoringLocations('ALL', this)">All locations (6)</button>
+          <button class="filter-btn" id="btnFilterMonLive" onclick="filterMonitoringLocations('UPDATED', this)">Updated recently (1)</button>
+          <button class="filter-btn" id="btnFilterMonWait" onclick="filterMonitoringLocations('WAITING', this)">Waiting for information (5)</button>
+          <button class="filter-btn" id="btnFilterMonReview" onclick="filterMonitoringLocations('REVIEW', this)">Needs review (1)</button>
+          <div style="margin-left:auto;display:flex;align-items:center;gap:6px;">
+            <label for="obsZoneFilterSelect" style="font-size:11.5px;color:var(--text-secondary);">Select zone:</label>
+            <select class="filter-select" id="obsZoneFilterSelect" onchange="filterObservationsByZone(this.value)">
+              <option value="ALL">All Zones (6)</option>
+              <option value="thane_creek">Thane Creek (Updated recently)</option>
+              <option value="mumbai">Mumbai (Waiting for information)</option>
+              <option value="navi_mumbai">Navi Mumbai (Waiting for information)</option>
+              <option value="vasai">Vasai (Waiting for information)</option>
+              <option value="thane">Thane (Waiting for information)</option>
+              <option value="maval">Maval (Waiting for information)</option>
+            </select>
           </div>
         </div>
 
-        <!-- KPI 4: Active Exceptions / Alerts -->
-        <div class="kpi-card" onclick="focusAlerts()" style="cursor:pointer">
-          <div class="kpi-header">
-            <span class="kpi-title">Exceptions &amp; Gaps</span>
-            <svg class="kpi-icon" style="color:var(--status-warn)" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
-          </div>
-          <div class="kpi-value amber" id="kpiAlertsVal">6 Active</div>
-          <div class="kpi-footer">
-            <span class="kpi-subtext">Categorized Triage</span>
-            <span class="kpi-badge warn">Governed</span>
-          </div>
+        <!-- Monitoring Cards Grid -->
+        <div id="monitoringCardsContainer" style="display:flex;flex-direction:column;gap:var(--space-md);">
+          <!-- Dynamically populated -->
         </div>
 
-        <!-- KPI 5: Governed Ruling Outcome -->
-        <div class="kpi-card" onclick="switchMainTab('governanceView', document.getElementById('navItemGovernance'))" style="cursor:pointer">
-          <div class="kpi-header">
-            <span class="kpi-title">Governed Ruling</span>
-            <svg class="kpi-icon" style="color:var(--status-warn)" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+        <!-- Comprehensive Data Table View -->
+        <div class="content-panel" style="margin-top:var(--space-xs);">
+          <div class="panel-header">
+            <div>
+              <div class="panel-title">Regional Surveillance Directory Table</div>
+              <div style="font-size:11.5px;color:var(--text-secondary);margin-top:2px;">
+                Structured inventory of all 6 monitoring zones in Maharashtra.
+              </div>
+            </div>
+            <span class="status-pill neutral">6 Monitored Areas</span>
           </div>
-          <div class="kpi-value amber" id="kpiRulingVal">ABSTAIN</div>
-          <div class="kpi-footer">
-            <span class="kpi-subtext" id="kpiRulingSub">Action: noop (Enforced)</span>
-            <span class="kpi-badge warn">Fail-Closed</span>
-          </div>
-        </div>
-
-        <!-- KPI 6: Lineage & Identity Invariance -->
-        <div class="kpi-card highlight" onclick="switchMainTab('replayView', document.getElementById('navItemReplay'))" style="cursor:pointer">
-          <div class="kpi-header">
-            <span class="kpi-title">Lineage Integrity</span>
-            <svg class="kpi-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"></path><path d="M2 17l10 5 10-5"></path><path d="M2 12l10 5 10-5"></path></svg>
-          </div>
-          <div class="kpi-value emerald" id="kpiInvarianceVal">Not yet verified</div>
-          <div class="kpi-footer">
-            <span class="kpi-subtext" id="kpiInvarianceSub">Baseline Recorded</span>
-            <span class="kpi-badge" id="kpiInvarianceBadge">Unverified</span>
+          <div class="table-responsive">
+            <table class="plain-table">
+              <thead>
+                <tr>
+                  <th>Location Name</th>
+                  <th>Information Status</th>
+                  <th>Observation Type</th>
+                  <th>Latest Reading</th>
+                  <th>Coordinates &amp; Elevation</th>
+                  <th>Source Information</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="monitoringTableBody">
+                <!-- Dynamically populated -->
+              </tbody>
+            </table>
           </div>
         </div>
       </section>
 
       <!-- =========================================================================
-           MAIN EXECUTIVE DECK (SPLIT STAGE: PRIMARY VIEW + ALERTS PANEL)
+           VIEW 3: MAP & LOCATIONS
            ========================================================================= -->
-      <div class="content-deck">
+      <section class="view-section" id="viewMap" style="display:none">
+        <div class="section-intro">
+          <h2 class="section-title">Map &amp; Locations</h2>
+          <p class="section-subtitle">
+            Geographic distribution of environmental surveillance stations across Maharashtra.
+          </p>
+        </div>
 
-        <!-- Left Main Stage Panel -->
-        <section class="main-stage-panel">
-          <div class="stage-tab-bar">
-            <div class="tab-group">
-              <button class="stage-tab active" id="tabBtnFieldSummary" onclick="switchStageView('fieldSummary')">
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="21" x2="9" y2="9"></line></svg>
-                <span>Field Summary</span>
-              </button>
-              <button class="stage-tab" id="tabBtnMap" onclick="switchStageView('map')">
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"></polygon></svg>
-                <span>Regional Map</span>
-              </button>
-              <button class="stage-tab" id="tabBtnLineage" onclick="switchStageView('lineage')">
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="6" cy="6" r="3"></circle><circle cx="6" cy="18" r="3"></circle><line x1="20" y1="4" x2="8.12" y2="15.88"></line></svg>
-                <span>Lineage Rail</span>
-              </button>
-              <button class="stage-tab" id="tabBtnGovernance" onclick="switchStageView('governance')">
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
-                <span>Governance</span>
-              </button>
-              <button class="stage-tab" id="tabBtnScientific" onclick="switchStageView('scientific')">
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 2v7.31"></path><path d="M14 2v7.31"></path><path d="M8.5 2h7"></path><path d="M14 9.3a6.5 6.5 0 1 1-4 0"></path></svg>
-                <span>Scientific</span>
-              </button>              <button class="stage-tab" id="tabBtnReplay" onclick="switchStageView('replay')">
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"></polyline><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg>
-                <span>Replay &amp; Diff</span>
-              </button>
-              <button class="stage-tab" id="tabBtnEvidencePack" onclick="switchStageView('evidencePack')">
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path></svg>
-                <span>Evidence Pack</span>
-              </button>
-            </div>
-
-            <div class="stage-subtitle-box hide-on-mobile">
-              <span id="stageSubtitleText">Field Operations &amp; Regional Status Overview</span>
-            </div>
-          </div>
-
-          <div class="stage-view-content" id="stageViewContainer">
-
-            <!-- STAGE VIEW 0: PLAIN-LANGUAGE FIELD SUMMARY (DEFAULT FOR FOREST OFFICIALS) -->
-            <div class="field-summary-wrapper" id="viewFieldSummary">
-              <!-- Populated dynamically by app.js -->
-            </div>
-
-            <!-- STAGE VIEW 1: REGIONAL MAP & GEOSPATIAL CONTROL SURFACE -->
-            <div class="map-view-wrapper" id="viewMap" style="display:none">
-              <div class="geo-control-wrapper" id="geoControlWrapper">
-                <!-- Geospatial Toolbar -->
-                <div class="geo-toolbar">
-                  <div class="geo-toolbar-left">
-                    <!-- Map Mode Toggle (Tile Map vs Schematic Overview) -->
-                    <div class="geo-mode-group">
-                      <button class="geo-mode-btn active" id="btnMapTile" onclick="setMapDisplayMode('tile')">
-                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"></polygon></svg>
-                        <span>Geospatial Control Map</span>
-                      </button>
-                      <button class="geo-mode-btn" id="btnMapSchematic" onclick="setMapDisplayMode('schematic')">
-                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>
-                        <span>Schematic Overview</span>
-                      </button>
-                    </div>
-
-                    <!-- Zone Quick-Selector -->
-                    <select class="geo-select" id="geoZoneSelect" onchange="window.VanaGeoEngine && window.VanaGeoEngine.flyToZone(this.value)" title="Quick-jump to surveillance zone">
-                      <option value="">Jump to Zone...</option>
-                      <option value="thane_creek">Thane Creek (Confirmed Observation)</option>
-                      <option value="mumbai">Mumbai (Regional Reference Location)</option>
-                      <option value="navi_mumbai">Navi Mumbai (Regional Reference Location)</option>
-                      <option value="vasai">Vasai (Regional Reference Location)</option>
-                      <option value="thane">Thane (Regional Reference Location)</option>
-                      <option value="maval">Maval (Regional Reference Location)</option>
-                    </select>
-                  </div>
-
-                  <div class="geo-toolbar-right">
-                    <!-- Map Status Indicator -->
-                    <div class="geo-status-badge" id="mapStatusPill">
-                      <div class="geo-status-indicator online" id="geoStatusIndicator"></div>
-                      <span id="geoStatusText"><strong>Map Provider Online</strong> · VANA Data: Partial</span>
-                    </div>
-
-                    <!-- Fullscreen Toggle Button -->
-                    <button class="geo-btn-icon" id="btnMapFullscreen" onclick="window.VanaGeoEngine && window.VanaGeoEngine.toggleFullscreen()" title="Toggle Fullscreen Projection">
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 3 21 3 21 9"></polyline><polyline points="9 21 3 21 3 15"></polyline><line x1="21" y1="3" x2="14" y2="10"></line><line x1="3" y1="21" x2="10" y2="14"></line></svg>
-                      <span>Fullscreen</span>
-                    </button>
-                  </div>
-                </div>
-
-                <!-- Leaflet Map Viewport Container -->
-                <div class="geo-map-viewport" id="leafletMapWrapper">
-                  <div id="leafletMap"></div>
-                </div>
-
-              <!-- Fallback SVG Schematic Viewport -->
-              <div class="map-viewport" id="schematicMapWrapper" style="display:none">
-                <!-- Explicit Honesty Notice Required on Schematic -->
-                <div class="schematic-disclaimer-banner">
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
-                  <span>Schematic representation — not to scale</span>
-                </div>
-
-                <svg class="map-svg-container" viewBox="0 0 800 480" preserveAspectRatio="xMidYMid meet">
-                  <g class="map-grid-layer">
-                    <line x1="80" y1="0" x2="80" y2="480" />
-                    <line x1="180" y1="0" x2="180" y2="480" />
-                    <line x1="280" y1="0" x2="280" y2="480" />
-                    <line x1="380" y1="0" x2="380" y2="480" />
-                    <line x1="480" y1="0" x2="480" y2="480" />
-                    <line x1="580" y1="0" x2="580" y2="480" />
-                    <line x1="680" y1="0" x2="680" y2="480" />
-                    <line x1="0" y1="60" x2="800" y2="60" />
-                    <line x1="0" y1="160" x2="800" y2="160" />
-                    <line x1="0" y1="260" x2="800" y2="260" />
-                    <line x1="0" y1="360" x2="800" y2="360" />
-                  </g>
-
-                  <!-- Maharashtra Stylized Silhouette -->
-                  <path class="state-boundary" d="M 120 220 L 140 180 L 180 140 L 250 110 L 340 90 L 440 95 L 530 115 L 620 145 L 710 185 L 750 240 L 730 310 L 680 370 L 590 410 L 490 430 L 390 420 L 290 410 L 220 380 L 170 330 L 135 270 Z" />
-
-                  <!-- Regional District Polygons -->
-                  <path class="district-path highlight-zone" d="M 140 180 L 200 170 L 230 220 L 220 280 L 160 300 L 135 270 L 120 220 Z" onclick="selectRegion('thane_creek')" />
-                  <path class="district-path" d="M 200 170 L 310 150 L 340 230 L 290 320 L 220 280 L 230 220 Z" onclick="selectRegion('maval')" />
-                  <path class="district-path" d="M 180 140 L 250 110 L 340 90 L 310 150 L 200 170 Z" onclick="selectRegion('vasai')" />
-                  <path class="district-path" d="M 340 90 L 440 95 L 490 190 L 450 290 L 340 230 L 310 150 Z" />
-                  <path class="district-path" d="M 440 95 L 530 115 L 620 145 L 710 185 L 750 240 L 730 310 L 650 300 L 580 230 L 490 190 Z" />
-
-                  <!-- Radar Ring at Thane Creek -->
-                  <circle cx="178" cy="245" r="38" fill="none" stroke="rgba(201,130,43,0.3)" stroke-width="1" stroke-dasharray="3 3" />
-
-                  <!-- Marker 1: CONFIRMED LIVE - THANE CREEK -->
-                  <g class="map-marker" transform="translate(178, 245)" onclick="selectRegion('thane_creek')">
-                    <circle cx="0" cy="0" r="10" fill="rgba(58, 143, 92, 0.25)" />
-                    <circle cx="0" cy="0" r="5" fill="#3A8F5C" stroke="#EDEFF3" stroke-width="1.5" />
-                    <text x="13" y="-3" class="marker-label">Thane Creek</text>
-                    <text x="13" y="9" class="marker-label-sub">TC-Z03-EXT-OPENMETEO-OBS001 · LIVE</text>
-                  </g>
-
-                  <!-- Marker 2: PENDING - MUMBAI -->
-                  <g class="map-marker" transform="translate(154, 275)" onclick="selectRegion('mumbai')">
-                    <circle cx="0" cy="0" r="5" fill="none" stroke="#C9822B" stroke-width="1.5" stroke-dasharray="3 2" />
-                    <circle cx="0" cy="0" r="1.8" fill="#C9822B" />
-                    <text x="10" y="3" class="marker-label" fill="#8D96A8">Mumbai</text>
-                    <text x="10" y="13" class="marker-label-sub">MU-Z01 · Not yet retrievable</text>
-                  </g>
-
-                  <!-- Marker 3: PENDING - NAVI MUMBAI -->
-                  <g class="map-marker" transform="translate(196, 278)" onclick="selectRegion('navi_mumbai')">
-                    <circle cx="0" cy="0" r="5" fill="none" stroke="#6B7486" stroke-width="1.5" stroke-dasharray="3 2" />
-                    <circle cx="0" cy="0" r="1.8" fill="#6B7486" />
-                    <text x="10" y="3" class="marker-label" fill="#8D96A8">Navi Mumbai</text>
-                    <text x="10" y="13" class="marker-label-sub">NM-Z01 · Not yet retrievable</text>
-                  </g>
-
-                  <!-- Marker 4: PENDING - VASAI -->
-                  <g class="map-marker" transform="translate(160, 202)" onclick="selectRegion('vasai')">
-                    <circle cx="0" cy="0" r="5" fill="none" stroke="#6B7486" stroke-width="1.5" stroke-dasharray="3 2" />
-                    <circle cx="0" cy="0" r="1.8" fill="#6B7486" />
-                    <text x="10" y="3" class="marker-label" fill="#8D96A8">Vasai</text>
-                    <text x="10" y="13" class="marker-label-sub">VS-Z01 · Not yet retrievable</text>
-                  </g>
-
-                  <!-- Marker 5: PENDING - THANE -->
-                  <g class="map-marker" transform="translate(198, 222)" onclick="selectRegion('thane')">
-                    <circle cx="0" cy="0" r="5" fill="none" stroke="#6B7486" stroke-width="1.5" stroke-dasharray="3 2" />
-                    <circle cx="0" cy="0" r="1.8" fill="#6B7486" />
-                    <text x="10" y="3" class="marker-label" fill="#8D96A8">Thane</text>
-                    <text x="10" y="13" class="marker-label-sub">THN-Z01 · Not yet retrievable</text>
-                  </g>
-
-                  <!-- Marker 6: PENDING - MAVAL -->
-                  <g class="map-marker" transform="translate(255, 290)" onclick="selectRegion('maval')">
-                    <circle cx="0" cy="0" r="5" fill="none" stroke="#6B7486" stroke-width="1.5" stroke-dasharray="3 2" />
-                    <circle cx="0" cy="0" r="1.8" fill="#6B7486" />
-                    <text x="10" y="3" class="marker-label" fill="#8D96A8">Maval</text>
-                    <text x="10" y="13" class="marker-label-sub">MV-Z01 · Not yet retrievable</text>
-                  </g>
-                </svg>
-
-                <div class="map-legend-overlay">
-                  <div class="legend-item">
-                    <div class="legend-bullet solid-live"></div>
-                    <span>1 Live Confirmed</span>
-                  </div>
-                  <div class="legend-item">
-                    <div class="legend-bullet dashed-pending"></div>
-                    <span>5 Pending Upstream</span>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Live Observation Telemetry Strip Below Map -->
-              <div class="map-telemetry-strip" id="mapTelemetryBar">
-                <div class="telemetry-item">
-                  <div class="telemetry-label">Ingestion Source &amp; License</div>
-                  <div class="telemetry-value" id="telSourceVal">Connecting...</div>
-                </div>
-                <div class="telemetry-item">
-                  <div class="telemetry-label">Sensor Measurement</div>
-                  <div class="telemetry-value" id="telMeasurementVal">Connecting...</div>
-                </div>
-                <div class="telemetry-item">
-                  <div class="telemetry-label">Coordinates &amp; Elevation</div>
-                  <div class="telemetry-value mono" id="telLocationVal">Connecting...</div>
-                </div>
-                <div class="telemetry-item">
-                  <div class="telemetry-label">Synthetic State Classification</div>
-                  <div class="telemetry-value" id="telSyntheticVal">Connecting...</div>
-                </div>
-              </div>
-            </div>
-
-            <!-- STAGE VIEW 2: LINEAGE RAIL VIEW -->
-            <div class="lineage-wrapper" id="viewLineage" style="display:none">
-              <div class="lineage-rail-track" id="lineageRailContainer">
-                <!-- Rendered dynamically by app.js -->
-              </div>
-            </div>
-
-            <!-- STAGE VIEW 3: GOVERNANCE MATRIX VIEW -->
-            <div class="lineage-wrapper" id="viewGovernance" style="display:none">
-              <div class="stage-card" style="margin-bottom:12px">
-                <div class="stage-card-head">
-                  <div>
-                    <div class="stage-group-tag">Group 4 · Doctrine &amp; Execution Gate</div>
-                    <div class="stage-title">Automated Governance Ruling &amp; Fail-Closed Proof</div>
-                  </div>
-                  <span class="badge BLOCKED"><span class="badge-swatch"></span>GOVERNED ABSTENTION</span>
-                </div>
-
-                <div class="decision-block ABSTAIN">
-                  <div class="decision-label">Governed Outcome · Ruling: ABSTAIN · Decision Action: NOOP</div>
-                  <div class="decision-outcome">GOVERNED ABSTENTION ENFORCED - NO OPERATIONAL ACTION</div>
-                  <div class="decision-reason" id="govDecisionReason">Authoritative evidence threshold not met (Missing Source Timestamp). Failing closed to ABSTAIN. Execution halted with zero side-effects.</div>
-                </div>
-
-                <div class="field-grid" style="margin-top:12px" id="governanceGrid">
-                  <!-- Populated dynamically -->
-                </div>
-              </div>
-            </div>
-
-            <!-- STAGE VIEW 4: SCIENTIFIC CONTEXT VIEW -->
-            <div class="lineage-wrapper" id="viewScientific" style="display:none">
-              <div class="stage-card">
-                <div class="stage-card-head">
-                  <div>
-                    <div class="stage-group-tag">Group 2 · Context &amp; Botanical Model</div>
-                    <div class="stage-title">Scientific Context &amp; Dynamic Sensor Context Fields</div>
-                  </div>
-                  <span class="badge LOCAL"><span class="badge-swatch"></span>CONTEXT EVALUATED</span>
-                </div>
-
-                <div class="field-grid" id="scientificGrid">
-                  <!-- Populated dynamically -->
-                </div>
-              </div>
-            </div>
-
-            <!-- STAGE VIEW 5: REPLAY & DIFF ENGINE -->
-            <div class="replay-wrapper" id="viewReplay" style="display:none">
-              <div class="replay-control-card">
-                <div class="replay-info">
-                  <h3>Deterministic Lineage Replay Engine</h3>
-                  <p>Executes direct live calls across Group 1 → Group 2 → Group 4 and verifies that the four identity invariants remain perfectly unchanged.</p>
-                </div>
-                <button class="btn-header" onclick="triggerReplayVerification()">
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"></polyline><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg>
-                  <span>Execute Replay Verification</span>
+        <div class="geo-control-wrapper">
+          <!-- Geospatial Toolbar -->
+          <div class="geo-toolbar">
+            <div class="geo-toolbar-left">
+              <div class="geo-mode-group">
+                <button class="geo-mode-btn active" id="btnMapTile" onclick="setMapDisplayMode('tile')">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"></polygon></svg>
+                  <span>Geographic Map</span>
+                </button>
+                <button class="geo-mode-btn" id="btnMapSchematic" onclick="setMapDisplayMode('schematic')">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line></svg>
+                  <span>Schematic</span>
                 </button>
               </div>
 
-              <table class="invariant-diff-table">
-                <thead>
-                  <tr>
-                    <th>Invariant Identity Field</th>
-                    <th>Baseline Value</th>
-                    <th>Replayed Live Value</th>
-                    <th>Integrity Check</th>
-                  </tr>
-                </thead>
-                <tbody id="invariantDiffTableBody">
-                  <!-- Dynamically populated -->
-                </tbody>
-              </table>
+              <!-- Zone Quick-Selector -->
+              <select class="filter-select" id="geoZoneSelect" onchange="handleZoneJump(this.value)" title="Quick-jump to surveillance zone">
+                <option value="">Jump to Location...</option>
+                <option value="thane_creek">Thane Creek (Updated recently)</option>
+                <option value="mumbai">Mumbai (Waiting for information)</option>
+                <option value="navi_mumbai">Navi Mumbai (Waiting for information)</option>
+                <option value="vasai">Vasai (Waiting for information)</option>
+                <option value="thane">Thane (Waiting for information)</option>
+                <option value="maval">Maval (Waiting for information)</option>
+              </select>
+            </div>
 
-              <div class="stage-card" style="margin-top:8px">
-                <div class="stage-title" style="font-size:12.5px;margin-bottom:6px">Deterministic Proof &amp; Lineage Audit Log</div>
-                <div class="mono" id="replayProofLog" style="font-size:10.5px;color:var(--text-secondary);line-height:1.5">
+            <div class="geo-toolbar-right">
+              <div class="status-pill active" id="mapStatusPill">
+                <span class="status-dot"></span>
+                <span id="geoStatusText">Map Active: 1 Live Verified Station</span>
+              </div>
+              <button class="btn-header" id="btnMapFullscreen" onclick="window.VanaGeoEngine && window.VanaGeoEngine.toggleFullscreen()" title="Toggle Fullscreen">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 3 21 3 21 9"></polyline><polyline points="9 21 3 21 3 15"></polyline><line x1="21" y1="3" x2="14" y2="10"></line><line x1="3" y1="21" x2="10" y2="14"></line></svg>
+                <span>Fullscreen</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Leaflet Map Container -->
+          <div class="geo-map-viewport" id="leafletMapWrapper">
+            <div id="leafletMap"></div>
+          </div>
+
+          <!-- Fallback Schematic Container -->
+          <div class="map-viewport" id="schematicMapWrapper" style="display:none;background:#F5F7F5;position:relative;height:100%;">
+            <svg class="map-svg-container" viewBox="0 0 800 420" preserveAspectRatio="xMidYMid meet" style="width:100%;height:100%;">
+              <path d="M 120 200 L 160 140 L 250 110 L 340 90 L 440 95 L 530 115 L 620 145 L 710 185 L 750 240 L 730 310 L 680 370 L 590 410 L 490 430 L 390 420 L 290 410 L 220 380 L 170 330 L 135 270 Z" fill="#E8ECE9" stroke="#C5D2C8" stroke-width="1.5" />
+              <!-- Marker: Thane Creek -->
+              <g transform="translate(190, 220)" onclick="selectRegion('thane_creek')" style="cursor:pointer">
+                <circle cx="0" cy="0" r="10" fill="rgba(23, 107, 77, 0.25)"></circle>
+                <circle cx="0" cy="0" r="5" fill="#176B4D"></circle>
+                <text x="12" y="4" font-size="12" font-weight="700" fill="#202824">Thane Creek (LIVE)</text>
+              </g>
+              <!-- Markers for Pending -->
+              <g transform="translate(160, 250)" onclick="selectRegion('mumbai')" style="cursor:pointer">
+                <circle cx="0" cy="0" r="5" fill="#B7791F"></circle>
+                <text x="10" y="4" font-size="11" fill="#66736B">Mumbai (Pending)</text>
+              </g>
+              <g transform="translate(210, 255)" onclick="selectRegion('navi_mumbai')" style="cursor:pointer">
+                <circle cx="0" cy="0" r="5" fill="#66736B"></circle>
+                <text x="10" y="4" font-size="11" fill="#66736B">Navi Mumbai (Pending)</text>
+              </g>
+              <g transform="translate(165, 175)" onclick="selectRegion('vasai')" style="cursor:pointer">
+                <circle cx="0" cy="0" r="5" fill="#66736B"></circle>
+                <text x="10" y="4" font-size="11" fill="#66736B">Vasai (Pending)</text>
+              </g>
+              <g transform="translate(215, 195)" onclick="selectRegion('thane')" style="cursor:pointer">
+                <circle cx="0" cy="0" r="5" fill="#66736B"></circle>
+                <text x="10" y="4" font-size="11" fill="#66736B">Thane (Pending)</text>
+              </g>
+              <g transform="translate(280, 280)" onclick="selectRegion('maval')" style="cursor:pointer">
+                <circle cx="0" cy="0" r="5" fill="#66736B"></circle>
+                <text x="10" y="4" font-size="11" fill="#66736B">Maval (Pending)</text>
+              </g>
+            </svg>
+          </div>
+
+          <!-- Map Telemetry Strip -->
+          <div class="map-telemetry-strip" id="mapTelemetryBar">
+            <div class="telemetry-item">
+              <div class="telemetry-label">Ingestion Source &amp; License</div>
+              <div class="telemetry-value" id="telSourceVal">Connecting...</div>
+            </div>
+            <div class="telemetry-item">
+              <div class="telemetry-label">Observed Measurement</div>
+              <div class="telemetry-value" id="telMeasurementVal">Connecting...</div>
+            </div>
+            <div class="telemetry-item">
+              <div class="telemetry-label">Coordinates &amp; Elevation</div>
+              <div class="telemetry-value mono" id="telLocationVal">Connecting...</div>
+            </div>
+            <div class="telemetry-item">
+              <div class="telemetry-label">Data Validation State</div>
+              <div class="telemetry-value" id="telSyntheticVal">Connecting...</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Location Directory Table (List-based Alternative) -->
+        <div class="content-panel">
+          <div class="panel-header">
+            <div>
+              <div class="panel-title">Surveillance Zone Directory (Accessible List)</div>
+              <div style="font-size:11.5px;color:var(--text-secondary);margin-top:2px;">
+                Full directory of monitored locations with geographic coordinates and direct focus actions.
+              </div>
+            </div>
+            <span class="status-pill neutral">6 Monitored Areas</span>
+          </div>
+          <div class="table-responsive">
+            <table class="plain-table">
+              <thead>
+                <tr>
+                  <th>Location Name</th>
+                  <th>Location Reference</th>
+                  <th>Information Status</th>
+                  <th>Latitude</th>
+                  <th>Longitude</th>
+                  <th>Elevation</th>
+                  <th>Latest Available Notes</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody id="mapZoneTableBody">
+                <!-- Dynamically populated -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- =========================================================================
+           VIEW 4: REVIEWS & DECISIONS
+           ========================================================================= -->
+      <section class="view-section" id="viewDecisions" style="display:none">
+        <div class="section-intro">
+          <h2 class="section-title">Reviews &amp; Decisions</h2>
+          <p class="section-subtitle">
+            Statutory governance assessments and automated policy evaluations.
+          </p>
+        </div>
+
+        <!-- Main Governance Assessment Card -->
+        <div class="content-panel">
+          <div class="panel-header">
+            <div>
+              <div class="panel-title">Environmental Assessment for Thane Creek</div>
+              <div style="font-size:11.5px;color:var(--text-secondary);margin-top:2px;">
+                Automated evaluation against statutory environmental rules and fail-closed safety criteria.
+              </div>
+            </div>
+            <span class="status-pill paused" id="decisionsStatusBadge">Assessment Paused</span>
+          </div>
+
+          <div class="panel-body">
+            <!-- 1. Current Assessment Status (Plain Language) -->
+            <div class="assessment-callout paused" id="decisionsBlock">
+              <div class="assessment-status-heading" id="decisionsOutcomeTitle">Assessment paused</div>
+              <div class="assessment-status-text" id="decisionsOutcomeDesc">
+                More evidence is needed before this assessment can be completed. The system requires authoritative physical hardware sensor timestamps before authorizing operational action. Strict fail-closed governance prevented unauthorized state transition.
+              </div>
+            </div>
+
+            <!-- 2-6: Structured Explanation Grid -->
+            <div class="decision-sections-grid">
+
+              <!-- 2. What is known from available evidence -->
+              <div class="decision-step-card">
+                <div class="decision-step-title">1. What is known from available evidence</div>
+                <div class="decision-step-body" id="decisionsWhatObserved">
+                  Precipitation reading of 0.1 mm was recorded at Thane Creek monitoring zone (19.1288° N, 72.9421° E) via Open-Meteo Cloud API under CC-BY 4.0 license. Canonical record reference is verified in master ledger: CR-b4615a27-7ab1-4bde-a078-a56fa0f2414c.
+                </div>
+              </div>
+
+              <!-- 3. What information is missing -->
+              <div class="decision-step-card">
+                <div class="decision-step-title">2. What information is missing</div>
+                <div class="decision-step-body" id="decisionsEvidenceNeeded" style="color:#7B4C0A;">
+                  Authoritative physical hardware sensor timestamp is required. Raw sensor payload bytes were not persisted at capture time (declared data gap §26 / §49.1).
+                </div>
+              </div>
+
+              <!-- 4. Why that information matters -->
+              <div class="decision-step-card">
+                <div class="decision-step-title">3. Why that information matters</div>
+                <div class="decision-step-body" id="decisionsWhyReturned">
+                  Statutory environmental governance rules mandate physical hardware verification before automated dispatch. To prevent spoofed or stale readings from authorizing operational actions, the system fails closed to Hold (assessment paused).
+                </div>
+              </div>
+
+              <!-- 5. What the user can do next -->
+              <div class="decision-step-card">
+                <div class="decision-step-title">4. What the user can do next</div>
+                <div class="decision-step-body" id="decisionsNextStepText">
+                  No automated action is permitted without complete physical evidence. Environmental officers should check the observation source or wait for edge sensor verification. Authorized administrators may inspect configuration or execute replay verification.
+                </div>
+              </div>
+
+              <!-- 6. Safeguard Guarantee -->
+              <div class="decision-step-card" style="border-left:3px solid var(--status-ok);">
+                <div class="decision-step-title" style="color:var(--status-ok);">5. Safeguard Guarantee</div>
+                <div class="decision-step-body" style="color:var(--text-main);">
+                  Strict Fail-Closed Enforced: Zero operational side-effects dispatched while assessment is paused.
+                </div>
+              </div>
+
+            </div>
+
+            <!-- Role-Aware Actions Panel -->
+            <div class="role-action-box" id="roleActionPanel">
+              <div class="role-action-title" id="roleActionTitle">Current User Role &amp; Permitted Actions</div>
+              <div class="role-action-text" id="roleActionDesc">
+                Checking role permissions...
+              </div>
+              <div class="role-action-btns" id="roleActionButtons">
+                <!-- Populated dynamically based on authenticated role -->
+              </div>
+            </div>
+
+            <!-- Collapsible Technical Details (Separated Secondary Layer) -->
+            <details class="tech-details">
+              <summary>
+                <span>Technical details</span>
+                <span style="font-size:11px;font-weight:normal;color:var(--text-muted);margin-left:8px;">(Execution identifiers and raw audit payload ▾)</span>
+              </summary>
+              <div class="tech-details-content">
+                <div class="tech-kv-grid">
+                  <div class="tech-kv-item"><div class="tech-k">Canonical Observation ID</div><div class="tech-v mono" id="pinnedOid">TC-Z03-EXT-OPENMETEO-OBS001</div></div>
+                  <div class="tech-kv-item"><div class="tech-k">Canonical Record ID</div><div class="tech-v mono" id="pinnedCanonicalRecordId">CR-b4615a27-7ab1-4bde-a078-a56fa0f2414c</div></div>
+                  <div class="tech-kv-item"><div class="tech-k">Context ID</div><div class="tech-v mono" id="pinnedContextId">null</div></div>
+                  <div class="tech-kv-item"><div class="tech-k">Assessment Outcome</div><div class="tech-v mono" id="pinnedOutcomeTag">Assessment Paused</div></div>
+                  <div class="tech-kv-item"><div class="tech-k">Raw System Ruling</div><div class="tech-v mono" id="techRulingVal">ABSTAIN</div></div>
+                  <div class="tech-kv-item"><div class="tech-k">Decision Action</div><div class="tech-v mono" id="techActionVal">noop</div></div>
+                  <div class="tech-kv-item"><div class="tech-k">Status</div><div class="tech-v mono" id="techStatusVal">governed_abstention</div></div>
+                  <div class="tech-kv-item"><div class="tech-k">Abstention Record ID</div><div class="tech-v mono" id="techAbstentionId">null</div></div>
+                  <div class="tech-kv-item"><div class="tech-k">Event ID</div><div class="tech-v mono" id="techEventId">null</div></div>
+                  <div class="tech-kv-item"><div class="tech-k">Execution ID</div><div class="tech-v mono" id="techExecId">null</div></div>
+                </div>
+                <div style="font-size:11px;font-weight:600;margin-bottom:6px;color:var(--text-secondary)">Raw Response Payload:</div>
+                <div class="raw-json-box" id="techRawDecisionJson">
+                  Awaiting backend response...
+                </div>
+              </div>
+            </details>
+
+          </div>
+        </div>
+      </section>
+
+      <!-- =========================================================================
+           VIEW 5: HISTORY & EVIDENCE
+           ========================================================================= -->
+      <section class="view-section" id="viewHistory" style="display:none">
+        <div class="section-intro">
+          <h2 class="section-title">History &amp; Evidence</h2>
+          <p class="section-subtitle">
+            Comprehensive audit trail, end-to-end evidence history, and deterministic replay verification.
+          </p>
+        </div>
+
+        <!-- History Tabs -->
+        <div class="geo-mode-group" style="width:fit-content;margin-bottom:var(--space-xs);">
+          <button class="geo-mode-btn active" id="btnHistProvenance" onclick="switchHistorySubTab('provenance')">
+            <span>Evidence History</span>
+          </button>
+          <button class="geo-mode-btn" id="btnHistReplay" onclick="switchHistorySubTab('replay')">
+            <span>Compare Assessment Versions</span>
+          </button>
+          <button class="geo-mode-btn" id="btnHistEvidence" onclick="switchHistorySubTab('evidence')">
+            <span>Evidence Sources</span>
+          </button>
+          <button class="geo-mode-btn" id="btnHistScientific" onclick="switchHistorySubTab('scientific')">
+            <span>Scientific References</span>
+          </button>
+          <button class="geo-mode-btn" id="btnHistForestCover" onclick="switchHistorySubTab('forestCover')">
+            <span>Statutory Benchmarks</span>
+          </button>
+        </div>
+
+        <!-- SUBTAB 1: PROVENANCE CHAIN -->
+        <div id="subtabProvenance" style="display:flex;flex-direction:column;gap:var(--space-md);">
+          <div class="lineage-rail-track" id="lineageRailContainer">
+            <!-- Populated dynamically by app.js -->
+          </div>
+        </div>
+
+        <!-- SUBTAB 2: REPLAY & DIFF ENGINE -->
+        <div id="subtabReplay" style="display:none;flex-direction:column;gap:var(--space-md);">
+          <div class="content-panel">
+            <div class="panel-header">
+              <div>
+                <div class="panel-title">Compare Assessment Versions (Replay &amp; Diff)</div>
+                <div style="font-size:11.5px;color:var(--text-secondary);margin-top:2px;">
+                  Executes live queries across operational runtimes and mathematically verifies that immutable identity invariants remain unchanged.
+                </div>
+              </div>
+              <button class="btn-header primary" onclick="triggerReplayVerification()">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"></polyline><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg>
+                <span>Run Replay Verification</span>
+              </button>
+            </div>
+            <div class="panel-body">
+              <div class="table-responsive">
+                <table class="plain-table">
+                  <thead>
+                    <tr>
+                      <th>Invariant Identity Field</th>
+                      <th>Baseline Value</th>
+                      <th>Replayed Live Value</th>
+                      <th>Integrity Check</th>
+                    </tr>
+                  </thead>
+                  <tbody id="invariantDiffTableBody">
+                    <!-- Populated dynamically -->
+                  </tbody>
+                </table>
+              </div>
+              <div style="margin-top:14px;">
+                <div style="font-size:11.5px;font-weight:600;margin-bottom:6px;color:var(--text-secondary)">Deterministic Audit Proof Log:</div>
+                <div class="mono" id="replayProofLog" style="font-size:11px;background:var(--bg-page);border:1px solid var(--border-light);padding:10px 12px;border-radius:var(--radius-md);color:var(--text-secondary);overflow-wrap:anywhere;">
                   Awaiting replay trigger...
                 </div>
               </div>
             </div>
+          </div>
+        </div>
 
-            <!-- STAGE VIEW 6: RAW EVIDENCE PACK -->
-            <div class="json-viewer-container" id="viewEvidencePack" style="display:none">
-              <div style="display:flex;align-items:center;justify-content:space-between;gap:10px">
-                <div>
-                  <strong style="color:var(--ink)">Group 3 Source Evidence Pack v2.2</strong>
-                  <span style="color:var(--text-muted);font-size:10.5px;margin-left:6px">(SOURCE_EVIDENCE_PACK_EMITTED_TC-Z03-EXT-OPENMETEO-OBS001.json)</span>
+        <!-- SUBTAB 3: EVIDENCE PACK VIEWER -->
+        <div id="subtabEvidence" style="display:none;flex-direction:column;gap:var(--space-md);">
+          <div class="content-panel">
+            <div class="panel-header">
+              <div>
+                <div class="panel-title">Evidence Sources &amp; Pack v2.2</div>
+                <div style="font-size:11.5px;color:var(--text-secondary);margin-top:2px;">
+                  Raw statutory evidence pack emitted for observation TC-Z03-EXT-OPENMETEO-OBS001.
                 </div>
-                <span class="badge CONTROLLED"><span class="badge-swatch"></span>§26 / §49.1 Compliant</span>
               </div>
+              <span class="status-pill neutral">§26 / §49.1 Compliant</span>
+            </div>
+            <div class="panel-body">
               <div class="raw-json-box" id="rawEvidencePackBox">
                 Loading evidence pack JSON...
               </div>
             </div>
-
-          </div>
-        </section>
-
-        <!-- Right Operational Alerts Panel -->
-        <section class="alerts-stage-panel" id="alertsPanel">
-          <div class="panel-head">
-            <div class="panel-title">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
-              <span>Operational Exceptions</span>
-            </div>
-            <span class="alert-counter" id="alertCounterBadge">6 Exceptions</span>
-          </div>
-
-          <!-- Filter Bar -->
-          <div class="alert-filter-bar">
-            <button class="filter-chip active" onclick="filterAlerts('ALL', this)">All (6)</button>
-            <button class="filter-chip" onclick="filterAlerts('CRITICAL', this)">Critical</button>
-            <button class="filter-chip" onclick="filterAlerts('ABSTAIN', this)">Abstain</button>
-            <button class="filter-chip" onclick="filterAlerts('GAP', this)">Declared Gaps</button>
-            <button class="filter-chip" onclick="filterAlerts('INFO', this)">Pending</button>
-          </div>
-
-          <!-- Alert Items Container -->
-          <div class="alerts-list" id="alertsContainer">
-            <!-- Populated dynamically by app.js -->
-          </div>
-
-          <!-- Strict Governance Guardrail Notice -->
-          <div class="guardrail-notice">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--status-warn)" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
-            <span><strong>Decision surface only</strong> - manual ALLOW and override controls are disabled by constitutional doctrine.</span>
-          </div>
-        </section>
-
-      </div>
-
-      <!-- Bottom Telemetry Status Footer -->
-      <footer class="bottom-telemetry-footer">
-        <div class="footer-chips-group">
-          <div class="telemetry-chip" id="chipCoreSystem">
-            <div class="chip-dot"></div>
-            <span>System Status: <strong>Operational</strong></span>
-          </div>
-          <div class="telemetry-chip" id="chipDataSync">
-            <div class="chip-dot"></div>
-            <span>Surveillance Policy: <strong>Strict Fail-Closed</strong></span>
-          </div>
-          <div class="telemetry-chip hide-on-mobile" id="chipFeeds">
-            <div class="chip-dot"></div>
-            <span>Data Integrity: <strong>Zero Fabrication Invariant</strong></span>
-          </div>
-          <div class="telemetry-chip hide-on-mobile" id="chipNetwork">
-            <div class="chip-dot"></div>
-            <span>Gateway: <strong>Active Reverse-Proxy</strong></span>
           </div>
         </div>
 
-        <div class="footer-doctrine">
-          STATE ENVIRONMENTAL SURVEILLANCE · GOVERNMENT OF MAHARASHTRA
+        <!-- SUBTAB 4: SCIENTIFIC REFERENCES -->
+        <div id="subtabScientific" style="display:none;flex-direction:column;gap:var(--space-md);">
+          <div class="content-panel">
+            <div class="panel-header">
+              <div>
+                <div class="panel-title">Scientific References &amp; Botanical Benchmarks</div>
+                <div style="font-size:11.5px;color:var(--text-secondary);margin-top:2px;">
+                  Peer-reviewed DOI scientific literature underpinning environmental criteria.
+                </div>
+              </div>
+              <span class="status-pill active">Peer Reviewed</span>
+            </div>
+            <div class="panel-body">
+              <div class="tech-kv-grid" id="scientificGrid">
+                <!-- Populated dynamically -->
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- SUBTAB 5: STATUTORY FOREST COVER BENCHMARKS (FSI ISFR 2023) -->
+        <div id="subtabForestCover" style="display:none;flex-direction:column;gap:var(--space-md);">
+          <div class="content-panel">
+            <div class="panel-header">
+              <div>
+                <div class="panel-title">Official Statutory Forest Cover &amp; Mangrove Benchmarks (FSI ISFR 2023)</div>
+                <div style="font-size:11.5px;color:var(--text-secondary);margin-top:2px;">
+                  Authoritative statutory benchmarks published by the Forest Survey of India, Ministry of Environment, Forest and Climate Change.
+                </div>
+              </div>
+              <div style="display:flex;align-items:center;gap:8px;">
+                <span class="status-pill active" id="fsiStatusBadge">FSI ISFR 2023 · Validated</span>
+                <button class="btn-header" onclick="loadOfficialForestCover()" title="Reload benchmarks from MasterDB">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
+                  <span>Query MasterDB</span>
+                </button>
+              </div>
+            </div>
+            <div class="panel-body" id="officialForestCoverContainer">
+              <!-- Dynamically populated or rendered by app.js -->
+              <div style="color:var(--text-secondary);font-size:12px;">Querying MasterDB for statutory benchmarks...</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Bottom Status Strip -->
+      <footer style="padding:14px 0 6px;display:flex;align-items:center;justify-content:space-between;border-top:1px solid var(--border-light);font-size:11.5px;color:var(--text-secondary);flex-wrap:wrap;gap:8px;">
+        <div style="display:flex;align-items:center;gap:16px;">
+          <span style="display:flex;align-items:center;gap:6px;">
+            <span class="status-dot" style="background:var(--status-ok)"></span>
+            Platform Status: <strong>Operational</strong>
+          </span>
+          <span class="hide-on-mobile">Doctrine: <strong>Strict Fail-Closed Zero-Fabrication</strong></span>
+          <span class="hide-on-mobile">Gateway: <strong>Protected Reverse-Proxy</strong></span>
+        </div>
+        <div style="font-weight:600;font-size:10.5px;letter-spacing:0.04em;text-transform:uppercase;color:var(--text-muted)">
+          STATE ENVIRONMENTAL SURVEILLANCE · GOVT OF MAHARASHTRA
         </div>
       </footer>
 
     </div>
 
     <!-- =========================================================================
-         MOBILE BOTTOM NAVIGATION BAR (Visible on screens <= 768px)
+         MOBILE BOTTOM NAVIGATION (<= 768px)
          ========================================================================= -->
     <nav class="mobile-bottom-nav">
-      <button class="bottom-nav-item active" id="bnavField" onclick="switchMainTab('fieldSummaryView', this)">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="21" x2="9" y2="9"></line></svg>
-        <span>Field</span>
+      <button class="bottom-nav-item active" id="bnavOverview" onclick="switchMainTab('overviewView', this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+        <span>Overview</span>
       </button>
 
-      <button class="bottom-nav-item" id="bnavOverview" onclick="switchMainTab('mapView', this)">
+      <button class="bottom-nav-item" id="bnavMonitoring" onclick="switchMainTab('monitoringView', this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
+        <span>Monitoring</span>
+      </button>
+
+      <button class="bottom-nav-item" id="bnavMap" onclick="switchMainTab('mapView', this)">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"></polygon></svg>
         <span>Map</span>
       </button>
 
-      <button class="bottom-nav-item" id="bnavAlerts" onclick="focusAlerts(this)">
-        <div class="nav-icon-wrapper">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
-          <span class="mobile-badge" id="mobileAlertCount">6</span>
-        </div>
-        <span>Alerts</span>
-      </button>
-
-      <button class="bottom-nav-item" id="bnavLineage" onclick="switchMainTab('lineageView', this)">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="6" cy="6" r="3"></circle><circle cx="6" cy="18" r="3"></circle><line x1="20" y1="4" x2="8.12" y2="15.88"></line></svg>
-        <span>Lineage</span>
-      </button>
-
-      <button class="bottom-nav-item" id="bnavGovernance" onclick="switchMainTab('governanceView', this)">
+      <button class="bottom-nav-item" id="bnavDecisions" onclick="switchMainTab('decisionsView', this)">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
-        <span>Govern</span>
+        <span>Decisions</span>
       </button>
 
-      <button class="bottom-nav-item" id="bnavReplay" onclick="switchMainTab('replayView', this)">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="23 4 23 10 17 10"></polyline><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg>
-        <span>Replay</span>
+      <button class="bottom-nav-item" id="bnavHistory" onclick="switchMainTab('historyView', this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path></svg>
+        <span>History</span>
       </button>
     </nav>
 
   </main>
 </div>
 
-<!-- LOGIN MODAL FOR OPERATIONAL DASHBOARD -->
+<!-- =========================================================================
+     LOGIN MODAL (OPERATIONAL DASHBOARD)
+     ========================================================================= -->
 <div class="modal-backdrop" id="dashboardLoginModal" style="display:none;" role="dialog" aria-modal="true" aria-labelledby="dashLoginTitle">
   <div class="modal-card">
     <div class="modal-card-header">
@@ -709,7 +869,7 @@
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--brand)">
           <path d="M12 2L3 7v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V7l-9-5z"/>
         </svg>
-        VANA Sign In
+        Sign in to VANA
       </div>
       <div class="modal-card-sub">Environmental Governance &amp; Execution Authorization</div>
     </div>
@@ -724,12 +884,79 @@
         <input type="password" id="dashPasswordInput" class="form-input" placeholder="••••••••••••" required autocomplete="current-password">
       </div>
       <div class="form-actions">
-        <button type="button" class="btn-form secondary" onclick="closeDashboardLoginModal()">Close</button>
+        <button type="button" class="btn-form secondary" onclick="closeDashboardLoginModal()">Cancel</button>
         <button type="submit" id="dashLoginSubmitBtn" class="btn-form primary">Sign In</button>
       </div>
     </form>
     <div class="modal-card-footer mono">
       Role-Based Access Control · Tokens stored tab-scoped
+    </div>
+  </div>
+</div>
+
+<!-- =========================================================================
+     OBSERVATION INGESTION MODAL (GROUP 3 V2.2 -> MASTERDB)
+     ========================================================================= -->
+<div class="modal-backdrop" id="observationSubmitModal" style="display:none;" role="dialog" aria-modal="true" aria-labelledby="obsModalTitle">
+  <div class="modal-card" style="max-width:640px;width:95%;">
+    <div class="modal-card-header">
+      <div class="modal-card-title" id="obsModalTitle">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--brand)">
+          <path d="M12 2L3 7v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V7l-9-5z"/>
+        </svg>
+        Submit Observation (Group 3 v2.2)
+      </div>
+      <div class="modal-card-sub">MasterDB Schema Validation &amp; SHA-256 Idempotency Ingestion</div>
+    </div>
+
+    <div style="padding:16px 20px 20px;">
+      <!-- Sample Payload Quick Fill -->
+      <div style="margin-bottom:12px;">
+        <div style="font-size:11.5px;font-weight:600;margin-bottom:6px;color:var(--text-secondary);">Load Verified Sample Payload:</div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;">
+          <button type="button" class="btn-header" style="font-size:11px;padding:3px 8px;" onclick="loadSampleObsPayload('canopy')">
+            Canopy Survey (Valid v2.2)
+          </button>
+          <button type="button" class="btn-header" style="font-size:11px;padding:3px 8px;" onclick="loadSampleObsPayload('precipitation')">
+            Precipitation (Valid v2.2)
+          </button>
+          <button type="button" class="btn-header" style="font-size:11px;padding:3px 8px;" onclick="loadSampleObsPayload('invalid')">
+            Missing Location (Test Rejection)
+          </button>
+        </div>
+        <div style="font-size:11px;color:var(--text-muted);margin-top:6px;line-height:1.4;">
+          <strong>Sample Payload Notice:</strong> Preloaded payloads are example test fixtures for contract verification. They are clearly identified as sample fixtures and cannot be confused with live production records.
+        </div>
+      </div>
+
+      <!-- Idempotency Key -->
+      <div class="form-field" style="margin-bottom:12px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+          <label for="obsIdempotencyKey" style="font-size:11.5px;font-weight:600;color:var(--text-main);">Idempotency-Key (Header)</label>
+          <button type="button" style="background:transparent;border:none;color:var(--brand);font-size:11px;cursor:pointer;text-decoration:underline;" onclick="generateNewIdempotencyKey()">Generate New Key</button>
+        </div>
+        <input type="text" id="obsIdempotencyKey" class="form-input mono" placeholder="IK-VANA-..." style="font-size:11.5px;">
+      </div>
+
+      <!-- JSON Payload Editor -->
+      <div class="form-field" style="margin-bottom:14px;">
+        <label for="obsPayloadTextarea" style="font-size:11.5px;font-weight:600;color:var(--text-main);margin-bottom:4px;display:block;">Observation Payload JSON</label>
+        <textarea id="obsPayloadTextarea" class="form-input mono" rows="10" placeholder="{ ... }" style="font-size:11px;line-height:1.4;resize:vertical;width:100%;font-family:var(--font-mono);"></textarea>
+      </div>
+
+      <!-- Ingestion Feedback Box -->
+      <div id="obsIngestionResult" style="display:none;margin-bottom:14px;padding:10px 12px;border-radius:var(--radius-md);font-size:12px;"></div>
+
+      <div class="form-actions" style="margin-top:0;">
+        <button type="button" class="btn-form secondary" onclick="closeObservationSubmitModal()">Cancel</button>
+        <button type="button" id="btnSubmitObsPayload" class="btn-form primary" onclick="submitObservationPayload()">
+          <span>Submit to MasterDB</span>
+        </button>
+      </div>
+    </div>
+
+    <div class="modal-card-footer mono">
+      Authoritative MasterDB Ingestion Gateway (POST /observations)
     </div>
   </div>
 </div>

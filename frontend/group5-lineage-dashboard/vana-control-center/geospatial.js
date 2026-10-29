@@ -1,5 +1,5 @@
 /**
- * VANA Control Center — Geospatial Control Map Engine
+ * VANA Control Center: Geospatial Control Map Engine
  * ====================================================
  * Leaflet-powered geospatial control surface for environmental surveillance.
  *

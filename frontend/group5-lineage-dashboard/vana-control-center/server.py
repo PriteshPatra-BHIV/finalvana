@@ -34,9 +34,12 @@ UNIFIED_BACKEND = os.environ.get(
     os.environ.get("VITE_API_URL", "http://localhost:8000")
 ).rstrip("/")
 
+# Local MasterDB runs on port 8013; falls back to VM host if configured
+DEFAULT_G1 = "http://127.0.0.1:8013"
+
 TARGETS = {
     "/proxy/auth": UNIFIED_BACKEND + "/auth",
-    "/proxy/g1": os.environ.get("VANA_G1_URL", "http://163.128.209.18:8013"),
+    "/proxy/g1": os.environ.get("VANA_G1_URL", DEFAULT_G1),
     "/proxy/g2": os.environ.get("VANA_G2_URL", "https://niyantran.blackholeinfiverse.com"),
     "/proxy/g4": os.environ.get("VANA_G4_URL", UNIFIED_BACKEND),
 }
@@ -149,6 +152,18 @@ class VANAHandler(http.server.SimpleHTTPRequestHandler):
     def do_POST(self):
         if self.path.startswith("/proxy/"):
             if self._handle_proxy("POST"):
+                return
+        self.send_error(404, "Endpoint not found")
+
+    def do_PUT(self):
+        if self.path.startswith("/proxy/"):
+            if self._handle_proxy("PUT"):
+                return
+        self.send_error(404, "Endpoint not found")
+
+    def do_DELETE(self):
+        if self.path.startswith("/proxy/"):
+            if self._handle_proxy("DELETE"):
                 return
         self.send_error(404, "Endpoint not found")
 
