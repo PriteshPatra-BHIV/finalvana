@@ -45,12 +45,47 @@
 }
 
 .admin-sidebar-header {
-  padding: 16px 18px;
+  padding: 14px 18px;
   display: flex;
   align-items: center;
   gap: 12px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
   background: #062F29;
+  min-height: 58px;
+  box-sizing: border-box;
+}
+
+.admin-brand-link {
+  display: flex;
+  align-items: center;
+  text-decoration: none;
+  min-width: 0;
+  flex: 1;
+}
+
+.admin-logo-full {
+  height: 32px;
+  width: auto;
+  max-width: 180px;
+  object-fit: contain;
+  display: block;
+}
+
+.admin-logo-mark {
+  height: 32px;
+  width: 32px;
+  object-fit: contain;
+  display: none;
+  flex-shrink: 0;
+}
+
+.admin-barrier-emblem {
+  width: 52px;
+  height: 52px;
+  object-fit: contain;
+  display: block;
+  margin: 0 auto 12px;
+  filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.15));
 }
 
 .admin-emblem-icon {

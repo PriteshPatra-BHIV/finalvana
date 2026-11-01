@@ -134,6 +134,29 @@ document.addEventListener("DOMContentLoaded", async () => {
   await loadDefaultEvidencePack();
   await fetchLive();
 
+  // Restore persisted desktop sidebar collapsed state
+  if (window.innerWidth > 768) {
+    try {
+      const persistedCollapsed = sessionStorage.getItem("vana_sidebar_collapsed");
+      const sidebar = document.getElementById("mainSidebar");
+      const toggleBtn = document.getElementById("sidebarToggleBtn");
+      if (persistedCollapsed === "true" && sidebar) {
+        sidebar.classList.add("collapsed");
+        if (toggleBtn) {
+          toggleBtn.setAttribute("aria-expanded", "false");
+          toggleBtn.setAttribute("aria-label", "Expand navigation sidebar");
+          toggleBtn.title = "Expand Navigation";
+        }
+      } else if (toggleBtn) {
+        toggleBtn.setAttribute("aria-expanded", "true");
+        toggleBtn.setAttribute("aria-label", "Collapse navigation sidebar");
+        toggleBtn.title = "Collapse Navigation";
+      }
+    } catch (e) {
+      // Storage access blocked or restricted
+    }
+  }
+
   // Support URL query param or hash for deep linking tabs
   const urlParams = new URLSearchParams(window.location.search);
   const initialTab = urlParams.get("tab") || (window.location.hash ? window.location.hash.replace("#", "") : null);
@@ -1100,7 +1123,7 @@ function reparentMap(targetContainerId) {
     if (window.VanaGeoEngine && window.VanaGeoEngine.map) {
       setTimeout(() => {
         window.VanaGeoEngine.map.invalidateSize();
-      }, 100);
+      }, 50);
     }
   }
 }
@@ -1806,6 +1829,7 @@ function renderMapDetailPanel(zoneKey) {
   const isThane = (zoneKey === "thane_creek" || z.id === "TC-Z03-EXT-OPENMETEO-OBS001");
   const g1 = (currentRuntimeData && currentRuntimeData.group1) || {};
   const isG1Live = !!(currentRuntimeData && currentRuntimeData.group1 && !currentRuntimeData.group1.failed);
+  const isLive = isG1Live;
   const zoneCode = z.id.split("-EXT-")[0];
 
   const titleEl = document.getElementById("mapDetailPanelTitle");
@@ -2089,6 +2113,7 @@ window.handleZoneJump = handleZoneJump;
 // VIEW 4: REVIEWS & DECISIONS RENDERER (ITERATION 5)
 // =============================================================================
 function renderDecisions(data) {
+  const g1 = data.group1 || {};
   const g4 = data.group4 || {};
   const g2 = data.group2 || {};
 
@@ -3116,6 +3141,20 @@ function selectRegion(zoneKey) {
 // =============================================================================
 // NAVIGATION & VIEW SWITCHING (SYNCHRONIZED DESKTOP & MOBILE)
 // =============================================================================
+function closeMobileSidebar() {
+  if (window.innerWidth <= 768) {
+    const sidebar = document.getElementById("mainSidebar");
+    const backdrop = document.getElementById("sidebarBackdrop");
+    const toggleBtn = document.getElementById("sidebarToggleBtn");
+    if (sidebar) sidebar.classList.remove("mobile-open");
+    if (backdrop) backdrop.classList.remove("active");
+    if (toggleBtn) {
+      toggleBtn.setAttribute("aria-expanded", "false");
+      toggleBtn.setAttribute("aria-label", "Open navigation");
+    }
+  }
+}
+
 function switchMainTab(viewKey, navItem) {
   // Normalize view aliases
   const viewMap = {
@@ -3140,6 +3179,14 @@ function switchMainTab(viewKey, navItem) {
   };
 
   const targetViewId = viewMap[viewKey] || "viewOverview";
+
+  // Fast-path: if already on target view and no subtab change requested
+  const isSubtabRequest = ["replayView", "evidencePackView", "scientificView", "lineageView"].includes(viewKey);
+  if (targetViewId === activeMainView && !isSubtabRequest) {
+    closeMobileSidebar();
+    return;
+  }
+
   activeMainView = targetViewId;
 
   // Hide all sections
@@ -3181,17 +3228,8 @@ function switchMainTab(viewKey, navItem) {
   // Reparent Leaflet map between Overview and Full Map View
   if (targetViewId === "viewOverview") {
     reparentMap("overviewMapContainer");
-    if (window.VanaGeoEngine && window.VanaGeoEngine.map) {
-      setTimeout(() => { window.VanaGeoEngine.map.invalidateSize(); }, 120);
-    }
   } else if (targetViewId === "viewMap") {
     reparentMap("fullMapContainer");
-    if (window.VanaGeoEngine && window.VanaGeoEngine.map) {
-      setTimeout(() => { window.VanaGeoEngine.map.invalidateSize(); }, 120);
-    }
-    if (typeof renderMapLocations === "function" && typeof currentRuntimeData !== "undefined") {
-      renderMapLocations(currentRuntimeData);
-    }
     if (typeof selectMapLocation === "function") {
       selectMapLocation(currentSelectedMapZoneKey, false);
     }
@@ -3203,8 +3241,8 @@ function switchMainTab(viewKey, navItem) {
   if (viewKey === "scientificView") switchHistorySubTab("scientific");
   if (viewKey === "lineageView") switchHistorySubTab("provenance");
 
-  // Close mobile drawer
-  toggleSidebar(false);
+  // On mobile only, close the off-canvas drawer
+  closeMobileSidebar();
 }
 
 // Backwards-compatible alias
@@ -3232,13 +3270,16 @@ function focusAlerts(navItem) {
 function toggleSidebar(forceState) {
   const sidebar = document.getElementById("mainSidebar");
   const backdrop = document.getElementById("sidebarBackdrop");
+  const toggleBtn = document.getElementById("sidebarToggleBtn");
   if (!sidebar) return;
 
   const isMobile = window.innerWidth <= 768;
 
   if (isMobile) {
+    let isOpen;
     if (forceState !== undefined) {
-      if (forceState) {
+      isOpen = !!forceState;
+      if (isOpen) {
         sidebar.classList.add("mobile-open");
         if (backdrop) backdrop.classList.add("active");
       } else {
@@ -3246,14 +3287,47 @@ function toggleSidebar(forceState) {
         if (backdrop) backdrop.classList.remove("active");
       }
     } else {
-      const isOpen = sidebar.classList.toggle("mobile-open");
+      isOpen = sidebar.classList.toggle("mobile-open");
       if (backdrop) {
         if (isOpen) backdrop.classList.add("active");
         else backdrop.classList.remove("active");
       }
     }
+    if (toggleBtn) {
+      toggleBtn.setAttribute("aria-expanded", isOpen ? "true" : "false");
+      toggleBtn.setAttribute("aria-label", isOpen ? "Close navigation" : "Open navigation");
+    }
   } else {
-    sidebar.classList.toggle("collapsed");
+    // Desktop: explicit toggle only
+    let isCollapsed;
+    if (forceState !== undefined) {
+      isCollapsed = !!forceState;
+      if (isCollapsed) sidebar.classList.add("collapsed");
+      else sidebar.classList.remove("collapsed");
+    } else {
+      isCollapsed = sidebar.classList.toggle("collapsed");
+    }
+
+    // Persist user preference in sessionStorage
+    try {
+      sessionStorage.setItem("vana_sidebar_collapsed", isCollapsed ? "true" : "false");
+    } catch (e) {
+      // Ignore storage restrictions
+    }
+
+    // Update accessible state and tooltip
+    if (toggleBtn) {
+      toggleBtn.setAttribute("aria-expanded", isCollapsed ? "false" : "true");
+      toggleBtn.setAttribute("aria-label", isCollapsed ? "Expand navigation sidebar" : "Collapse navigation sidebar");
+      toggleBtn.title = isCollapsed ? "Expand Navigation" : "Collapse Navigation";
+    }
+
+    // Invalidate Leaflet map size after sidebar width transition completes
+    setTimeout(() => {
+      if (window.VanaGeoEngine && window.VanaGeoEngine.map) {
+        window.VanaGeoEngine.map.invalidateSize();
+      }
+    }, 220);
   }
 }
 
