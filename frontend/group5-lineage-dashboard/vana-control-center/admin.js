@@ -5,13 +5,13 @@
  * Must be loaded after both.
  *
  * Responsibilities:
- *  - Admin section navigation and rendering
+ *  - Admin 6-section navigation and rendering
  *  - Permission guards on every section
  *  - System Health checks via vanaFetch() (mirrors app.js, uses VANA_CONFIG)
- *  - DEV role switcher integration
+ *  - DEV Geoapify session key management
  *  - Session-scoped audit log
  *
- * SAFETY INVARIANTS (never violated here):
+ * SAFETY INVARIANTS:
  *  - Does NOT call Group 1/2/4 pipeline for anything other than health checks
  *  - Does NOT modify canonical_record_id or any authoritative observation data
  *  - Does NOT bypass the fail-closed pipeline
@@ -29,19 +29,18 @@ if (!window.VANA_AUTH) {
 // ── CONSTANTS ───────────────────────────────────────────────────────────
 const P = window.VANA_AUTH.PERMISSIONS;
 
-// Real VANA monitoring zones (from VANA architecture: same data as app.js)
+// Real VANA monitoring zones (from VANA architecture: canonical coordinates and IDs)
 const ADMIN_ZONES = [
-  { id: "TC-Z03-EXT-OPENMETEO-OBS001", name: "Thane Creek",  status: "CONFIRMED_LIVE",    lat: 19.1288, lon: 72.9421, alt_m: 4.0,   source: "Open-Meteo.com", license: "CC-BY 4.0" },
-  { id: "MU-Z01-EXT-OPENMETEO-OBS001", name: "Mumbai",       status: "PENDING_UPSTREAM",  lat: 19.0760, lon: 72.8777, alt_m: null, source: "Pending",        license: "Pending" },
-  { id: "NM-Z01-EXT-OPENMETEO-OBS001", name: "Navi Mumbai",  status: "PENDING_UPSTREAM",  lat: 19.0330, lon: 73.0297, alt_m: null, source: "Pending",        license: "Pending" },
-  { id: "VS-Z01-EXT-OPENMETEO-OBS001", name: "Vasai",        status: "PENDING_UPSTREAM",  lat: 19.4919, lon: 72.8054, alt_m: null, source: "Pending",        license: "Pending" },
-  { id: "THN-Z01-EXT-OPENMETEO-OBS001",name: "Thane",        status: "PENDING_UPSTREAM",  lat: 19.2183, lon: 72.9781, alt_m: null, source: "Pending",        license: "Pending" },
-  { id: "MV-Z01-EXT-OPENMETEO-OBS001", name: "Maval",        status: "PENDING_UPSTREAM",  lat: 18.7500, lon: 73.5000, alt_m: null, source: "Pending",        license: "Pending" },
+  { id: "TC-Z03", name: "Thane Creek",  status: "Record retrieved",      lat: 19.1288, lon: 72.9421, alt_m: 4.0,   source: "Open-Meteo.com", license: "CC-BY 4.0", note: "MasterDB observation available (0.1 mm)" },
+  { id: "MU-Z01", name: "Mumbai",       status: "Awaiting upstream data", lat: 19.0760, lon: 72.8777, alt_m: null, source: "Pending",        license: "Pending",   note: "Surveillance zone awaiting sensor deployment" },
+  { id: "NM-Z01", name: "Navi Mumbai",  status: "Awaiting upstream data", lat: 19.0330, lon: 73.0297, alt_m: null, source: "Pending",        license: "Pending",   note: "Surveillance zone awaiting sensor deployment" },
+  { id: "VS-Z01", name: "Vasai",        status: "Awaiting upstream data", lat: 19.4919, lon: 72.8054, alt_m: null, source: "Pending",        license: "Pending",   note: "Surveillance zone awaiting sensor deployment" },
+  { id: "THN-Z01",name: "Thane",        status: "Awaiting upstream data", lat: 19.2183, lon: 72.9781, alt_m: null, source: "Pending",        license: "Pending",   note: "Surveillance zone awaiting sensor deployment" },
+  { id: "MV-Z01", name: "Maval",        status: "Awaiting upstream data", lat: 18.7500, lon: 73.5000, alt_m: null, source: "Pending",        license: "Pending",   note: "Surveillance zone awaiting sensor deployment" },
 ];
 
 // ── SESSION AUDIT LOG ────────────────────────────────────────────────────
-// Records admin actions for this session only. NOT persisted.
-// When a real audit backend exists, replace _pushAuditEntry() to POST to it.
+// Records admin actions for this session only. In-memory, NOT persisted to backend.
 const _sessionAuditLog = [];
 
 function _pushAuditEntry(action, resource, result) {
@@ -55,14 +54,23 @@ function _pushAuditEntry(action, resource, result) {
     resource: resource,
     result:   result || "OK",
   });
-  // Keep last 100 entries in memory
   if (_sessionAuditLog.length > 100) _sessionAuditLog.length = 100;
+
+  // Refresh audit trace table if active
+  const auditTable = document.getElementById("sessionAuditRowsContainer");
+  if (auditTable) {
+    _renderAuditRows(auditTable);
+  }
 }
 
 // ── ADMIN FETCH HELPER ──────────────────────────────────────────────────
-// Mirrors vanaFetch() from app.js. Enforces timeout and attaches bearer token
-// for authenticated VANA backend calls without leaking tokens to external origins.
 async function adminFetch(url, options) {
+  // Fail-closed invariant: Unauthenticated calls cannot dispatch requests through adminFetch
+  if (!window.VANA_AUTH || !window.VANA_AUTH.isAuthenticated()) {
+    console.warn("[VANA Admin] Security: Blocked unauthenticated attempt to fetch " + url);
+    throw new Error("Unauthenticated request blocked by administrative security boundary");
+  }
+
   const timeoutMs = (window.VANA_CONFIG && window.VANA_CONFIG.REQUEST_TIMEOUT_MS) || 10000;
   const controller = new AbortController();
   const timerId = setTimeout(function () { controller.abort(); }, timeoutMs);
@@ -101,12 +109,10 @@ async function adminFetch(url, options) {
 // ── INITIALIZATION ──────────────────────────────────────────────────────
 document.addEventListener("DOMContentLoaded", async function () {
   console.log("[VANA Admin] Initializing Administration Control Plane...");
-  // Restore session from token storage before rendering protected data
   await window.VANA_AUTH.restoreSession();
   _initAuthUI();
   _pushAuditEntry("ADMIN_SESSION_START", "admin.html", "OK");
 
-  // Subscribe to auth changes to keep UI synchronized
   window.VANA_AUTH.onAuthChange(function () {
     _initAuthUI();
   });
@@ -118,10 +124,16 @@ function _initAuthUI() {
 
   const badge = document.getElementById("adminRoleBadge");
   const label = document.getElementById("adminUserLabel");
+  const sessionPill = document.getElementById("adminSessionPill");
+  const sessionText = document.getElementById("adminSessionText");
   const loginBtn = document.getElementById("adminLoginBtn");
   const logoutBtn = document.getElementById("adminLogoutBtn");
   const barrierOverlay = document.getElementById("adminBarrierOverlay");
   const barrierContent = document.getElementById("adminBarrierContent");
+  const personaCard = document.getElementById("adminPersonaCard");
+  const personaName = document.getElementById("adminPersonaName");
+  const personaRole = document.getElementById("adminPersonaRole");
+  const personaAvatar = document.getElementById("adminPersonaAvatar");
 
   if (!user) {
     // ── UNAUTHENTICATED STATE ──
@@ -132,14 +144,21 @@ function _initAuthUI() {
       badge.style.color = "#9ca3af";
     }
     if (label) label.textContent = "Sign in to access control plane";
-    if (loginBtn) loginBtn.style.display = "inline-block";
+    if (sessionPill && sessionText) {
+      sessionPill.className = "admin-session-pill warn";
+      sessionText.textContent = "Unauthenticated";
+    }
+    if (loginBtn) loginBtn.style.display = "inline-flex";
     if (logoutBtn) logoutBtn.style.display = "none";
 
-    // Show authentication barrier overlay
+    if (personaName) personaName.textContent = "Guest";
+    if (personaRole) personaRole.textContent = "Sign-in required";
+    if (personaAvatar) personaAvatar.textContent = "--";
+
     if (barrierOverlay && barrierContent) {
       barrierContent.innerHTML = [
         '<div class="admin-denied-icon">',
-        '  <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="color:var(--brand)">',
+        '  <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="color:var(--brand)">',
         '    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>',
         '    <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>',
         '  </svg>',
@@ -149,9 +168,9 @@ function _initAuthUI() {
         '  The Administration Control Plane requires an authenticated session.<br>',
         '  Please sign in with authorized administrative credentials.',
         '</div>',
-        '<div style="display:flex;justify-content:center;gap:10px;margin-top:18px;">',
-        '  <a href="index.html" class="admin-btn secondary" style="text-decoration:none;">Operational Dashboard</a>',
-        '  <button class="admin-btn primary" onclick="adminOpenLoginModal()">Sign In</button>',
+        '<div style="display:flex;justify-content:center;gap:10px;margin-top:14px;">',
+        '  <a href="index.html" class="admin-header-btn" style="text-decoration:none;">Operational Dashboard</a>',
+        '  <button class="admin-header-btn primary" onclick="adminOpenLoginModal()">Sign In</button>',
         '</div>',
       ].join("\n");
       barrierOverlay.style.display = "flex";
@@ -161,7 +180,7 @@ function _initAuthUI() {
 
   // ── AUTHENTICATED STATE ──
   if (loginBtn) loginBtn.style.display = "none";
-  if (logoutBtn) logoutBtn.style.display = "inline-block";
+  if (logoutBtn) logoutBtn.style.display = "inline-flex";
 
   if (badge) {
     badge.textContent = user.roleLabel || user.role;
@@ -170,15 +189,29 @@ function _initAuthUI() {
     badge.style.color = user.roleColor || "";
   }
   if (label) {
-    label.textContent = user.name + (user.email ? " · " + user.email : "");
+    label.textContent = user.name + (user.email ? " (" + user.email + ")" : "");
   }
 
-  // Session integrity check: Cached offline session cannot access admin plane without live validation
-  if (typeof window.VANA_AUTH.isLiveValidated === "function" && !window.VANA_AUTH.isLiveValidated()) {
+  // Update Persona Card in sidebar footer
+  if (personaName) personaName.textContent = user.name || "Administrator";
+  if (personaRole) personaRole.textContent = user.roleLabel || user.role;
+  if (personaAvatar) {
+    var initials = (user.name || "AD").split(" ").map(function (n) { return n[0]; }).join("").toUpperCase().slice(0, 2);
+    personaAvatar.textContent = initials || "AD";
+  }
+
+  // Session validation check: Cached offline session cannot access admin plane without live validation
+  const isLive = typeof window.VANA_AUTH.isLiveValidated === "function" && window.VANA_AUTH.isLiveValidated();
+  if (sessionPill && sessionText) {
+    sessionPill.className = "admin-session-pill " + (isLive ? "live" : "warn");
+    sessionText.textContent = isLive ? "Live Validated" : "Degraded / Offline";
+  }
+
+  if (!isLive) {
     if (barrierOverlay && barrierContent) {
       barrierContent.innerHTML = [
         '<div class="admin-denied-icon">',
-        '  <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="color:#f59e0b">',
+        '  <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="color:var(--status-warn)">',
         '    <circle cx="12" cy="12" r="10"></circle>',
         '    <line x1="12" y1="8" x2="12" y2="12"></line>',
         '    <line x1="12" y1="16" x2="12.01" y2="16"></line>',
@@ -189,9 +222,9 @@ function _initAuthUI() {
         '  The backend authentication service is unreachable or live session validation is pending.<br>',
         '  Cached offline profiles cannot access administrative controls without live verification.',
         '</div>',
-        '<div style="display:flex;justify-content:center;gap:10px;margin-top:18px;">',
-        '  <a href="index.html" class="admin-btn secondary" style="text-decoration:none;">Operational Dashboard</a>',
-        '  <button class="admin-btn primary" onclick="adminOpenLoginModal()">Re-authenticate</button>',
+        '<div style="display:flex;justify-content:center;gap:10px;margin-top:14px;">',
+        '  <a href="index.html" class="admin-header-btn" style="text-decoration:none;">Operational Dashboard</a>',
+        '  <button class="admin-header-btn primary" onclick="adminOpenLoginModal()">Re-authenticate</button>',
         '</div>',
       ].join("\n");
       barrierOverlay.style.display = "flex";
@@ -199,12 +232,12 @@ function _initAuthUI() {
     return;
   }
 
-  // Role restriction: Approved Consumer (Participant) is strictly denied
+  // Role restriction: Approved Consumer (Participant) is strictly denied (403)
   if (user.role === auth.ROLES.APPROVED_CONSUMER) {
     if (barrierOverlay && barrierContent) {
       barrierContent.innerHTML = [
         '<div class="admin-denied-icon">',
-        '  <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="color:#ef4444">',
+        '  <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="color:var(--status-critical)">',
         '    <circle cx="12" cy="12" r="10"></circle>',
         '    <line x1="4.93" y1="4.93" x2="19.07" y2="19.07"></line>',
         '  </svg>',
@@ -214,9 +247,9 @@ function _initAuthUI() {
         '  Your authenticated role (<strong>Approved Consumer</strong>) is not authorized to access the Administration Control Plane.<br>',
         '  Privileged administration is restricted to Platform Administrators and Authorized Auditors.',
         '</div>',
-        '<div style="display:flex;justify-content:center;gap:10px;margin-top:18px;">',
-        '  <a href="index.html" class="admin-btn primary" style="text-decoration:none;">Return to Operational Dashboard</a>',
-        '  <button class="admin-btn secondary" onclick="adminLogout()">Sign Out</button>',
+        '<div style="display:flex;justify-content:center;gap:10px;margin-top:14px;">',
+        '  <a href="index.html" class="admin-header-btn primary" style="text-decoration:none;">Return to Operational Dashboard</a>',
+        '  <button class="admin-header-btn" onclick="adminLogout()">Sign Out</button>',
         '</div>',
       ].join("\n");
       barrierOverlay.style.display = "flex";
@@ -229,7 +262,16 @@ function _initAuthUI() {
     if (barrierOverlay) barrierOverlay.style.display = "none";
     _configureAuditorNav();
     _renderAllSections();
-    adminNav("audit-activity", document.getElementById("nav-audit-activity"));
+    adminNav("audit-trace", document.getElementById("nav-audit-trace"));
+    return;
+  }
+
+  // Role restriction: Governance Steward allowed access to Governance Doctrine and Overview only
+  if (user.role === auth.ROLES.GOVERNANCE_STEWARD) {
+    if (barrierOverlay) barrierOverlay.style.display = "none";
+    _configureStewardNav();
+    _renderAllSections();
+    adminNav("admin-overview", document.getElementById("nav-admin-overview"));
     return;
   }
 
@@ -237,67 +279,909 @@ function _initAuthUI() {
   if (barrierOverlay) barrierOverlay.style.display = "none";
   _enableAllAdminNav();
   _renderAllSections();
-  adminNav("system-health", document.getElementById("nav-system-health"));
-  runHealthCheck();
+  adminNav("admin-overview", document.getElementById("nav-admin-overview"));
 }
 
 function _configureAuditorNav() {
-  document.querySelectorAll(".admin-nav-item").forEach(function (btn) {
-    if (btn.id === "nav-audit-activity") {
+  const allNavItems = document.querySelectorAll(".admin-nav-item");
+  allNavItems.forEach(function (btn) {
+    if (btn.id === "nav-audit-trace") {
       btn.style.display = "flex";
       btn.disabled = false;
     } else {
       btn.style.display = "none";
     }
   });
-  document.querySelectorAll(".admin-nav-group").forEach(function (grp) {
-    var hasAudit = grp.querySelector("#nav-audit-activity");
-    grp.style.display = hasAudit ? "block" : "none";
+}
+
+function _configureStewardNav() {
+  const allNavItems = document.querySelectorAll(".admin-nav-item");
+  allNavItems.forEach(function (btn) {
+    if (btn.id === "nav-admin-overview" || btn.id === "nav-gov-doctrine") {
+      btn.style.display = "flex";
+      btn.disabled = false;
+    } else {
+      btn.style.display = "none";
+    }
   });
 }
 
 function _enableAllAdminNav() {
-  document.querySelectorAll(".admin-nav-item").forEach(function (btn) {
+  const allNavItems = document.querySelectorAll(".admin-nav-item");
+  allNavItems.forEach(function (btn) {
     btn.style.display = "flex";
     btn.disabled = false;
-  });
-  document.querySelectorAll(".admin-nav-group").forEach(function (grp) {
-    grp.style.display = "block";
   });
 }
 
 function _renderAllSections() {
-  renderSystemHealth();
+  renderAdminOverview();
   renderSystemServices();
-  renderSystemConfig();
-  renderAccessUsers();
-  renderAccessRoles();
-  renderAccessPermissions();
-  renderGeoZones();
-  renderGeoLayers();
+  renderAccessManagement();
+  renderGovDoctrine();
   renderGeoConfig();
-  renderGovPolicies();
-  renderGovFailClosed();
-  renderGovEvidence();
-  renderOpsAlerts();
-  renderOpsAlertRules();
-  renderOpsNotifications();
-  renderAuditActivity();
+  renderAuditTrace();
 }
 
-// ── MODAL & AUTH ACTION HANDLERS ────────────────────────────────────────
+// ── NAVIGATION DISPATCHER ──────────────────────────────────────────────
+function adminNav(sectionKey, navEl) {
+  // Normalize legacy 16-section keys to the consolidated 6 primary sections
+  const KEY_MAP = {
+    "system-health": "system-services",
+    "system-services": "system-services",
+    "system-config": "system-services",
+    "access-users": "access-management",
+    "access-roles": "access-management",
+    "access-permissions": "access-management",
+    "gov-policies": "gov-doctrine",
+    "gov-failclosed": "gov-doctrine",
+    "gov-evidence": "gov-doctrine",
+    "geo-zones": "geo-config",
+    "geo-layers": "geo-config",
+    "geo-config": "geo-config",
+    "ops-alerts": "audit-trace",
+    "ops-alertrules": "audit-trace",
+    "ops-notifications": "audit-trace",
+    "audit-activity": "audit-trace",
+    "audit-trace": "audit-trace",
+    "admin-overview": "admin-overview"
+  };
+
+  const canonicalKey = KEY_MAP[sectionKey] || sectionKey;
+
+  const auth = window.VANA_AUTH;
+  const user = auth ? auth.getCurrentUser() : null;
+
+  // 1. Fail-closed: Must be authenticated and not Approved Consumer
+  if (!auth || !auth.isAuthenticated() || !user) {
+    console.warn("[VANA Admin] Security: Navigation blocked - unauthenticated session.");
+    _initAuthUI();
+    return false;
+  }
+
+  if (user.role === auth.ROLES.APPROVED_CONSUMER) {
+    console.warn("[VANA Admin] Security: Navigation blocked - Approved Consumer role.");
+    _initAuthUI();
+    return false;
+  }
+
+  // 2. Role-specific explicit boundaries
+  if (user.role === auth.ROLES.AUDITOR && canonicalKey !== "audit-trace") {
+    console.warn("[VANA Admin] Security: Auditor role cannot access " + canonicalKey + ". Restricted to audit-trace.");
+    return false;
+  }
+
+  if (user.role === auth.ROLES.GOVERNANCE_STEWARD) {
+    if (canonicalKey !== "admin-overview" && canonicalKey !== "gov-doctrine") {
+      console.warn("[VANA Admin] Security: Governance Steward cannot access " + canonicalKey + ".");
+      return false;
+    }
+  }
+
+  // 3. Permission checks
+  const SECTION_PERMISSIONS = {
+    "admin-overview": P.VIEW_DASHBOARD,
+    "system-services": P.MANAGE_SYSTEM_CONFIG,
+    "access-management": P.MANAGE_USERS,
+    "gov-doctrine": P.MANAGE_GOVERNANCE_POLICIES,
+    "geo-config": P.MANAGE_MAP_CONFIG,
+    "audit-trace": P.VIEW_AUDIT_LOG
+  };
+
+  const reqPerm = SECTION_PERMISSIONS[canonicalKey];
+  if (reqPerm && !auth.hasPermission(reqPerm)) {
+    console.warn("[VANA Admin] Security: Missing required permission " + reqPerm + " for section " + canonicalKey);
+    return false;
+  }
+
+  // Deactivate all sections and nav buttons
+  document.querySelectorAll(".admin-section").forEach(function (s) { s.classList.remove("active"); });
+  document.querySelectorAll(".admin-nav-item").forEach(function (n) { n.classList.remove("active"); });
+
+  const section = document.getElementById("section-" + canonicalKey);
+  if (section) section.classList.add("active");
+
+  const matchingBtn = navEl || document.getElementById("nav-" + canonicalKey);
+  if (matchingBtn) matchingBtn.classList.add("active");
+
+  // Update breadcrumb
+  const breadcrumb = document.getElementById("adminBreadcrumbTitle");
+  if (breadcrumb) {
+    const titles = {
+      "admin-overview": "Overview",
+      "system-services": "System Health & Gateway Services",
+      "access-management": "User & Access Management",
+      "gov-doctrine": "Governance Doctrine & Invariants",
+      "geo-config": "Geospatial Configuration",
+      "audit-trace": "Audit & Operational Trace"
+    };
+    breadcrumb.textContent = titles[canonicalKey] || "Administration";
+  }
+
+  // Close mobile drawer on navigation
+  toggleAdminSidebar(false);
+
+  _pushAuditEntry("NAVIGATE", "admin/" + canonicalKey, "OK");
+  return true;
+}
+
+function toggleAdminSidebar(force) {
+  const sidebar = document.getElementById("adminSidebar");
+  const backdrop = document.getElementById("adminSidebarBackdrop");
+  if (!sidebar) return;
+  const shouldOpen = typeof force === "boolean" ? force : !sidebar.classList.contains("open");
+  if (shouldOpen) {
+    sidebar.classList.add("open");
+    if (backdrop) backdrop.classList.add("open");
+  } else {
+    sidebar.classList.remove("open");
+    if (backdrop) backdrop.classList.remove("open");
+  }
+}
+
+// ── SECTION HEADER & NOTICE HELPERS ────────────────────────────────────
+function _sectionHeader(title, desc, badge, badgeClass) {
+  var badgeHtml = badge
+    ? '<div class="admin-section-badge ' + (badgeClass || "") + '">' + badge + '</div>'
+    : "";
+  return '<div class="admin-section-header">' +
+    '<div class="admin-section-title-group">' +
+    '  <div class="admin-section-title">' + title + '</div>' +
+    '  <div class="admin-section-desc">' + desc + '</div>' +
+    '</div>' + badgeHtml +
+    '</div>';
+}
+
+function _boundaryNotice(title, text, code) {
+  var codeHtml = code ? '<div class="admin-boundary-notice-code">' + code + '</div>' : "";
+  return '<div class="admin-boundary-notice">' +
+    '<div class="admin-boundary-notice-icon">' +
+    '  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">' +
+    '    <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>' +
+    '  </svg>' +
+    '</div>' +
+    '<div class="admin-boundary-notice-body">' +
+    '  <div class="admin-boundary-notice-title">' + title + '</div>' +
+    '  <div class="admin-boundary-notice-text">' + text + '</div>' + codeHtml +
+    '</div></div>';
+}
+
+// =============================================================================
+// SECTION 1: ADMINISTRATIVE OVERVIEW
+// =============================================================================
+function renderAdminOverview() {
+  const el = document.getElementById("section-admin-overview");
+  if (!el) return;
+
+  const auth = window.VANA_AUTH;
+  const user = auth.getCurrentUser() || {};
+  const isLive = auth.isLiveValidated();
+
+  el.innerHTML = _sectionHeader(
+    "Administrative Overview",
+    "Current administrative session status, authenticated persona, and platform control boundaries.",
+    isLive ? "Live Validated" : "Degraded Session",
+    isLive ? "live" : "warn"
+  ) +
+  // Summary Metric Cards
+  '<div class="admin-summary-grid">' +
+  '  <div class="admin-summary-card">' +
+  '    <div class="admin-summary-label">Authenticated Identity</div>' +
+  '    <div class="admin-summary-val" style="font-size:16px;">' + (user.name || "Administrator") + '</div>' +
+  '    <div class="admin-summary-desc">' + (user.email || "admin@vana.gov.in") + '</div>' +
+  '  </div>' +
+  '  <div class="admin-summary-card">' +
+  '    <div class="admin-summary-label">Active Role & Scope</div>' +
+  '    <div class="admin-summary-val">' +
+  '      <span class="admin-role-badge ' + (user.role || "").toLowerCase() + '">' + (user.roleLabel || user.role || "ADMIN") + '</span>' +
+  '    </div>' +
+  '    <div class="admin-summary-desc">' + (user.roleDescription || "Full system administration access") + '</div>' +
+  '  </div>' +
+  '  <div class="admin-summary-card">' +
+  '    <div class="admin-summary-label">Session Validation</div>' +
+  '    <div class="admin-summary-val" style="color:' + (isLive ? "var(--status-ok)" : "var(--status-warn)") + '">' +
+  '      <span class="status-dot"></span> ' + (isLive ? "Live Validated" : "Degraded Offline") +
+  '    </div>' +
+  '    <div class="admin-summary-desc">Verified via GET /proxy/auth/me</div>' +
+  '  </div>' +
+  '  <div class="admin-summary-card">' +
+  '    <div class="admin-summary-label">Enforcement Mode</div>' +
+  '    <div class="admin-summary-val" style="font-size:15px;color:var(--brand)">Strict Backend RBAC</div>' +
+  '    <div class="admin-summary-desc">Client privilege elevation disabled</div>' +
+  '  </div>' +
+  '</div>';
+
+  // Two Column Overview Details
+  var quickActions = [];
+  if (auth.hasPermission(P.MANAGE_SYSTEM_CONFIG)) {
+    quickActions.push(
+      '<button class="admin-header-btn primary" onclick="adminNav(\'system-services\')">' +
+      '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>' +
+      ' Run System Health Checks' +
+      '</button>'
+    );
+  }
+  if (auth.hasPermission(P.VIEW_AUDIT_LOG)) {
+    quickActions.push(
+      '<button class="admin-header-btn" onclick="adminNav(\'audit-trace\')">' +
+      '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>' +
+      ' View Session Activity Log' +
+      '</button>'
+    );
+  }
+  if (auth.hasPermission(P.MANAGE_GOVERNANCE_POLICIES)) {
+    quickActions.push(
+      '<button class="admin-header-btn" onclick="adminNav(\'gov-doctrine\')">' +
+      '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>' +
+      ' Review Governance Doctrine' +
+      '</button>'
+    );
+  }
+  quickActions.push(
+    '<a href="index.html" class="admin-header-btn" style="text-decoration:none;">' +
+    '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"></polyline></svg>' +
+    ' Operational Dashboard' +
+    '</a>'
+  );
+
+  el.innerHTML +=
+  '<div class="admin-grid-2col">' +
+  '  <div class="admin-card">' +
+  '    <div class="admin-card-head"><span class="admin-card-title">Authorized Administrative Operations</span></div>' +
+  '    <div class="admin-card-body" style="display:flex;flex-direction:column;gap:12px;">' +
+  '      <div style="font-size:12.5px;color:var(--text-secondary);line-height:1.4;">' +
+  '        Perform authorized operational diagnostics, verify gateway reachability, or review active session audit events.' +
+  '      </div>' +
+  '      <div style="display:flex;gap:10px;flex-wrap:wrap;">' +
+  quickActions.join("\n") +
+  '      </div>' +
+  '    </div>' +
+  '  </div>' +
+
+  '  <div class="admin-card">' +
+  '    <div class="admin-card-head"><span class="admin-card-title">System Status & Security Doctrine</span></div>' +
+  '    <div class="admin-card-body" style="display:flex;flex-direction:column;gap:8px;font-size:12px;color:var(--text-secondary);">' +
+  '      <div><strong>Constitutional Governance:</strong> Sequential G3 to G1 to G2 to G4 pipeline enforcement active.</div>' +
+  '      <div><strong>Fail-Closed Doctrine:</strong> Missing upstream context or telemetry halts downstream execution.</div>' +
+  '      <div><strong>Zero-Fabrication Invariant:</strong> Unpersisted telemetry is explicitly acknowledged as a declared gap; data is never fabricated.</div>' +
+  '      <div><strong>Credential Security:</strong> Tokens are stored in tab-scoped sessionStorage; zero secrets committed to git.</div>' +
+  '    </div>' +
+  '  </div>' +
+  '</div>' +
+
+  _boundaryNotice(
+    "Administrative Boundary & Data Transparency",
+    "The VANA Administration Control Plane operates under strict backend authorization. Runtime capabilities reflect genuine backend services. Administrative actions do not simulate unpersisted operations.",
+    "Session User ID: " + (user.id || "usr-anon") + "\nRole Authority: " + (user.role || "UNASSIGNED") + "\nEnforcement: Backend-validated access control"
+  );
+}
+
+// =============================================================================
+// SECTION 2: SYSTEM HEALTH & GATEWAY SERVICES
+// =============================================================================
+function renderSystemServices() {
+  const el = document.getElementById("section-system-services");
+  if (!el) return;
+
+  // Strict RBAC permission check
+  if (!window.VANA_AUTH.requirePermission(P.MANAGE_SYSTEM_CONFIG, el)) return;
+
+  const cfg = window.VANA_CONFIG || {};
+
+  el.innerHTML = _sectionHeader(
+    "System Health & Gateway Services",
+    "Live connectivity checks for backend subsystems and configured reverse-proxy routing.",
+    "Diagnostics",
+    "live"
+  ) +
+
+  // Live Service Health Panel
+  '<div class="admin-card">' +
+  '  <div class="admin-card-head">' +
+  '    <span class="admin-card-title">Backend API Subsystems Reachability</span>' +
+  '    <span class="admin-card-tag">via /proxy/* gateway</span>' +
+  '  </div>' +
+  '  <div id="healthServiceRows">' + _buildHealthPlaceholders() + '</div>' +
+  '  <div style="padding:14px 18px;border-top:1px solid var(--border-light);background:var(--bg-surface-subtle);display:flex;justify-content:space-between;align-items:center;">' +
+  '    <button class="admin-header-btn primary" onclick="runHealthCheck()" id="btnHealthCheck">' +
+  '      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>' +
+  '      Run Health Checks' +
+  '    </button>' +
+  '    <span style="font-size:11px;color:var(--text-muted);">Probes live /health endpoints across all three groups</span>' +
+  '  </div>' +
+  '</div>' +
+
+  // Configured Gateway Routes Table
+  '<div class="admin-card">' +
+  '  <div class="admin-card-head">' +
+  '    <span class="admin-card-title">Configured Gateway Proxy Routes</span>' +
+  '    <span class="admin-card-tag">config.js + vercel.json</span>' +
+  '  </div>' +
+  '  <div class="admin-table-wrap">' +
+  '    <table class="admin-table">' +
+  '      <thead>' +
+  '        <tr><th>Route Prefix</th><th>Subsystem</th><th>Operational Purpose</th><th>Method</th><th>Auth Requirement</th></tr>' +
+  '      </thead>' +
+  '      <tbody>' +
+  '        <tr><td class="mono cell-primary">/proxy/g1/*</td><td>Group 1</td><td>Canonical Observation Retrieval & MasterDB Ledger</td><td class="mono">GET / POST</td><td>Public / Header</td></tr>' +
+  '        <tr><td class="mono cell-primary">/proxy/g2/*</td><td>Group 2</td><td>Scientific Context & Decision Resolution (Pravah)</td><td class="mono">POST</td><td>Forwarded Bearer</td></tr>' +
+  '        <tr><td class="mono cell-primary">/proxy/g4/*</td><td>Group 4</td><td>Governed Execution & Abstention Gate (SANSKAR)</td><td class="mono">POST</td><td>Privileged Bearer</td></tr>' +
+  '        <tr><td class="mono cell-primary">/proxy/auth/*</td><td>Auth Central</td><td>Unified Authentication & Token Verification (/me)</td><td class="mono">GET / POST</td><td>Bearer Token</td></tr>' +
+  '      </tbody>' +
+  '    </table>' +
+  '  </div>' +
+  '</div>' +
+
+  // Expandable Technical Configuration
+  '<details class="tech-details" style="margin-top:0;">' +
+  '  <summary>' +
+  '    <span>Technical Runtime Configuration (window.VANA_CONFIG)</span>' +
+  '    <span class="admin-section-badge" style="font-size:10px;">Read-Only</span>' +
+  '  </summary>' +
+  '  <div class="tech-details-content">' +
+  '    <table class="admin-table">' +
+  '      <thead><tr><th>Parameter Key</th><th>Resolved Value</th><th>Description</th></tr></thead>' +
+  '      <tbody>' +
+  '        <tr><td class="mono cell-primary">G1_BASE</td><td class="mono">' + (cfg.G1_BASE || "/proxy/g1") + '</td><td>Group 1 MasterDB proxy base path</td></tr>' +
+  '        <tr><td class="mono cell-primary">G2_ENDPOINT</td><td class="mono">' + (cfg.G2_ENDPOINT || "/proxy/g2/api/group2/context/resolve") + '</td><td>Group 2 scientific context resolution endpoint</td></tr>' +
+  '        <tr><td class="mono cell-primary">G4_ENDPOINT</td><td class="mono">' + (cfg.G4_ENDPOINT || "/proxy/g4/vana/execute") + '</td><td>Group 4 governed execution endpoint</td></tr>' +
+  '        <tr><td class="mono cell-primary">AUTH_BASE</td><td class="mono">' + (cfg.AUTH_BASE || "/proxy/auth") + '</td><td>Unified authentication service base route</td></tr>' +
+  '        <tr><td class="mono cell-primary">REQUEST_TIMEOUT_MS</td><td class="mono">' + (cfg.REQUEST_TIMEOUT_MS || 10000) + ' ms</td><td>Network fetch timeout applied to all API calls</td></tr>' +
+  '      </tbody>' +
+  '    </table>' +
+  '  </div>' +
+  '</details>' +
+
+  _boundaryNotice(
+    "Gateway Architecture & Zero-Secret Doctrine",
+    "Configured proxy routes are handled transparently by the local Python proxy (server.py) or production edge rewrites (vercel.json). Direct backend IP addresses are never exposed to browser client code.",
+    "Route Mapping: /proxy/g1/* -> MasterDB (Port 8013)\n               /proxy/g2/* -> Pravah API (Production)\n               /proxy/g4/* -> SANSKAR Runtime (Port 8010)"
+  );
+}
+
+function _buildHealthPlaceholders() {
+  var services = [
+    { key: "g1", label: "Group 1: Canonical Observation Retrieval (MasterDB)", proxy: (window.VANA_CONFIG && window.VANA_CONFIG.G1_BASE) || "/proxy/g1" },
+    { key: "g2", label: "Group 2: Scientific Context & Decision Resolve (Pravah)", proxy: (window.VANA_CONFIG && window.VANA_CONFIG.G2_ENDPOINT) || "/proxy/g2" },
+    { key: "g4", label: "Group 4: Governed Execution & Abstention Gate (SANSKAR)", proxy: (window.VANA_CONFIG && window.VANA_CONFIG.G4_ENDPOINT) || "/proxy/g4" },
+  ];
+  return services.map(function (s) {
+    return '<div class="admin-status-row" id="health-row-' + s.key + '">' +
+      '<span class="status-dot" id="health-dot-' + s.key + '" style="background:var(--border-strong);"></span>' +
+      '<div class="admin-status-name">' + s.label + '</div>' +
+      '<div class="admin-status-detail mono" id="health-detail-' + s.key + '">Pending check...</div>' +
+      '<div class="admin-status-badge" id="health-badge-' + s.key + '">NOT CHECKED</div>' +
+      '</div>';
+  }).join("");
+}
+
+async function runHealthCheck() {
+  if (!window.VANA_AUTH || !window.VANA_AUTH.hasPermission(P.MANAGE_SYSTEM_CONFIG)) {
+    console.warn("[VANA Admin] Security: Health check invocation denied - MANAGE_SYSTEM_CONFIG required.");
+    return;
+  }
+
+  const btn = document.getElementById("btnHealthCheck");
+  if (btn) { btn.disabled = true; btn.textContent = "Checking..."; }
+  _pushAuditEntry("HEALTH_CHECK", "/proxy/*", "RUNNING");
+
+  const checks = [
+    { key: "g1", label: "G1", url: window.VANA_CONFIG.G1_BASE + "/health" },
+    { key: "g2", label: "G2", url: window.VANA_CONFIG.G2_ENDPOINT.replace("/api/group2/context/resolve", "/health") },
+    { key: "g4", label: "G4", url: window.VANA_CONFIG.G4_ENDPOINT.replace("/vana/execute", "/health") },
+  ];
+
+  var allOk = true;
+
+  for (var i = 0; i < checks.length; i++) {
+    var c = checks[i];
+    var dot = document.getElementById("health-dot-" + c.key);
+    var detail = document.getElementById("health-detail-" + c.key);
+    var badge = document.getElementById("health-badge-" + c.key);
+
+    var t0 = Date.now();
+    var checkedAt = new Date().toLocaleTimeString();
+    try {
+      var res = await adminFetch(c.url, { method: "GET", headers: { "Accept": "application/json" } });
+      var latency = Date.now() - t0;
+      if (res.ok) {
+        if (dot) { dot.style.background = "var(--status-ok)"; }
+        if (detail) detail.innerHTML = '<span style="color:var(--status-ok);font-weight:600;">' + latency + "ms</span> · HTTP " + res.status + " · " + checkedAt;
+        if (badge) { badge.textContent = "REACHABLE"; badge.className = "admin-status-badge ok"; }
+      } else {
+        allOk = false;
+        if (dot) dot.style.background = "var(--status-warn)";
+        if (detail) detail.innerHTML = '<span style="color:var(--status-warn);font-weight:600;">' + latency + "ms</span> · HTTP " + res.status + " · " + checkedAt;
+        if (badge) { badge.textContent = "DEGRADED (" + res.status + ")"; badge.className = "admin-status-badge warn"; }
+      }
+    } catch (err) {
+      allOk = false;
+      var latency2 = Date.now() - t0;
+      if (dot) dot.style.background = "var(--status-critical)";
+      if (detail) detail.innerHTML = '<span style="color:var(--status-critical);font-weight:600;">' + latency2 + "ms</span> · Unavailable · " + checkedAt;
+      if (badge) { badge.textContent = "UNAVAILABLE"; badge.className = "admin-status-badge error"; }
+    }
+  }
+
+  _pushAuditEntry("HEALTH_CHECK", "/proxy/*", allOk ? "OK" : "PARTIAL_FAILURE");
+  if (btn) {
+    btn.disabled = false;
+    btn.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg> Run Health Checks';
+  }
+}
+
+// =============================================================================
+// SECTION 3: USER & ACCESS MANAGEMENT
+// =============================================================================
+function renderAccessManagement() {
+  const el = document.getElementById("section-access-management");
+  if (!el) return;
+
+  // Strict RBAC permission check
+  if (!window.VANA_AUTH.requirePermission(P.MANAGE_USERS, el)) return;
+
+  const auth = window.VANA_AUTH;
+  const user = auth.getCurrentUser() || {};
+  const isLive = auth.isLiveValidated();
+
+  // Role metadata rows
+  const roleRows = Object.keys(auth.ROLES).filter(function (k, idx, arr) {
+    // Show canonical unique roles only
+    return ["PLATFORM_ADMIN", "APPROVED_CONSUMER", "AUDITOR", "GOVERNANCE_STEWARD"].indexOf(auth.ROLES[k]) !== -1 && arr.indexOf(k) === idx;
+  }).map(function (k) {
+    var role = auth.ROLES[k];
+    var meta = auth.ROLE_META[role] || {};
+    var perms = (auth.ROLE_PERMISSIONS && auth.ROLE_PERMISSIONS[role]) ? auth.ROLE_PERMISSIONS[role] : [];
+    return '<tr>' +
+      '<td class="cell-primary">' + (meta.label || role) + '</td>' +
+      '<td class="mono">' + role + '</td>' +
+      '<td>' + (meta.description || "Authorized VANA role") + '</td>' +
+      '<td><span class="admin-role-badge ' + role.toLowerCase() + '">' + perms.length + ' permissions</span></td>' +
+      '</tr>';
+  }).join("");
+
+  // Permission matrix
+  const allPerms = Object.values(auth.PERMISSIONS);
+  const canonicalRoles = [auth.ROLES.PLATFORM_ADMIN, auth.ROLES.AUDITOR, auth.ROLES.GOVERNANCE_STEWARD, auth.ROLES.APPROVED_CONSUMER];
+
+  const matrixHead = '<tr><th>Capability / Permission</th>' + canonicalRoles.map(function (r) {
+    var meta = auth.ROLE_META[r] || {};
+    return '<th>' + (meta.label || r) + '</th>';
+  }).join("") + '</tr>';
+
+  const matrixBody = allPerms.map(function (perm) {
+    var cells = canonicalRoles.map(function (r) {
+      var has = false;
+      if (r === auth.ROLES.PLATFORM_ADMIN) has = true;
+      else if (auth.ROLE_PERMISSIONS && auth.ROLE_PERMISSIONS[r]) {
+        has = auth.ROLE_PERMISSIONS[r].indexOf(perm) !== -1;
+      }
+      return '<td>' + (has ? '<span class="perm-check">✓</span>' : '<span class="perm-nocheck">·</span>') + '</td>';
+    }).join("");
+    return '<tr><td class="mono">' + perm + '</td>' + cells + '</tr>';
+  }).join("");
+
+  el.innerHTML = _sectionHeader(
+    "User & Access Management",
+    "Current session identity, role hierarchy, and fail-closed permission evaluation matrix.",
+    "RBAC Config"
+  ) +
+
+  // Current User Session Card
+  '<div class="admin-card">' +
+  '  <div class="admin-card-head"><span class="admin-card-title">Active Session Identity & Credentials</span></div>' +
+  '  <div class="admin-card-body">' +
+  '    <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(200px, 1fr));gap:12px;">' +
+  '      <div><span style="font-size:11px;color:var(--text-muted);display:block;">User ID</span><strong class="mono">' + (user.id || "usr-anon") + '</strong></div>' +
+  '      <div><span style="font-size:11px;color:var(--text-muted);display:block;">Full Name</span><strong>' + (user.name || "Administrator") + '</strong></div>' +
+  '      <div><span style="font-size:11px;color:var(--text-muted);display:block;">Email Address</span><span class="mono">' + (user.email || "admin@vana.gov.in") + '</span></div>' +
+  '      <div><span style="font-size:11px;color:var(--text-muted);display:block;">Assigned Role</span><span class="admin-role-badge ' + (user.role || "").toLowerCase() + '">' + (user.roleLabel || user.role || "ADMIN") + '</span></div>' +
+  '      <div><span style="font-size:11px;color:var(--text-muted);display:block;">Live Validation</span><strong style="color:' + (isLive ? "var(--status-ok)" : "var(--status-warn)") + '">' + (isLive ? "Verified (Live /me)" : "Degraded Offline") + '</strong></div>' +
+  '    </div>' +
+  '  </div>' +
+  '</div>' +
+
+  // Role Hierarchy Table
+  '<div class="admin-card">' +
+  '  <div class="admin-card-head"><span class="admin-card-title">Canonical Role Hierarchy</span><span class="admin-card-tag">admin-auth.js</span></div>' +
+  '  <div class="admin-table-wrap">' +
+  '    <table class="admin-table">' +
+  '      <thead><tr><th>Display Label</th><th>Role Constant</th><th>Scope of Authority</th><th>Permission Set</th></tr></thead>' +
+  '      <tbody>' + roleRows + '</tbody>' +
+  '    </table>' +
+  '  </div>' +
+  '</div>' +
+
+  // Permission Matrix Table
+  '<div class="admin-card">' +
+  '  <div class="admin-card-head"><span class="admin-card-title">Full Capability & Permission Matrix</span><span class="admin-card-tag">Strict RBAC</span></div>' +
+  '  <div class="admin-table-wrap">' +
+  '    <table class="perm-matrix">' +
+  '      <thead>' + matrixHead + '</thead>' +
+  '      <tbody>' + matrixBody + '</tbody>' +
+  '    </table>' +
+  '  </div>' +
+  '</div>' +
+
+  _boundaryNotice(
+    "User Directory Capability Boundary",
+    "User directory management is not available through the connected backend. User account CRUD operations (Add, Edit, Delete User) and remote role assignment endpoints are not exposed by the current runtime.",
+    "Required Backend: GET/POST /api/admin/users\nPermission: MANAGE_USERS\nCurrent State: Honest boundary: zero simulated user records"
+  );
+}
+
+// =============================================================================
+// SECTION 4: GOVERNANCE DOCTRINE & INVARIANTS
+// =============================================================================
+function renderGovDoctrine() {
+  const el = document.getElementById("section-gov-doctrine");
+  if (!el) return;
+
+  // Strict RBAC permission check (Steward or Admin)
+  if (!window.VANA_AUTH.hasPermission(P.MANAGE_GOVERNANCE_POLICIES) && !window.VANA_AUTH.hasPermission(P.VIEW_EVIDENCE)) {
+    window.VANA_AUTH.requirePermission(P.MANAGE_GOVERNANCE_POLICIES, el);
+    return;
+  }
+
+  el.innerHTML = _sectionHeader(
+    "Governance Doctrine & Invariants",
+    "Authoritative pipeline execution sequence, fail-closed principles, and Group 3 contract clauses.",
+    "Constitutional",
+    "live"
+  ) +
+
+  // Pipeline Sequence Visual
+  '<div class="admin-card">' +
+  '  <div class="admin-card-head"><span class="admin-card-title">Authoritative Pipeline Execution Sequence</span></div>' +
+  '  <div class="admin-card-body">' +
+  '    <div style="display:flex;align-items:center;gap:8px;justify-content:center;flex-wrap:wrap;padding:8px 0;">' +
+  '      <span class="admin-role-badge approved_consumer" style="padding:6px 12px;font-size:11.5px;">Stage 1: G3 Sensor Contract</span>' +
+  '      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--text-muted);"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>' +
+  '      <span class="admin-role-badge platform_admin" style="padding:6px 12px;font-size:11.5px;">Stage 2: G1 MasterDB Ledger</span>' +
+  '      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--text-muted);"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>' +
+  '      <span class="admin-role-badge auditor" style="padding:6px 12px;font-size:11.5px;">Stage 3: G2 Pravah Context</span>' +
+  '      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--text-muted);"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>' +
+  '      <span class="admin-role-badge governance_steward" style="padding:6px 12px;font-size:11.5px;">Stage 4: G4 SANSKAR Execution Gate</span>' +
+  '    </div>' +
+  '  </div>' +
+  '</div>' +
+
+  // Enforced Fail-Closed Rules
+  '<div class="admin-card">' +
+  '  <div class="admin-card-head"><span class="admin-card-title">Enforced Fail-Closed Invariants</span><span class="admin-card-tag">Code-Enforced</span></div>' +
+  '  <div class="admin-card-body">' +
+  '    <div class="fail-closed-rule">' +
+  '      <div class="fail-closed-rule-num">Rule 1: Group 1 Retrieval Gate</div>' +
+  '      <div class="fail-closed-rule-text">No authoritative observation retrieval halts downstream processing</div>' +
+  '      <div class="fail-closed-rule-desc">If Group 1 canonical retrieval returns an error, times out, or fails to resolve the observation record, the pipeline halts immediately. Group 2 context resolution and Group 4 execution gates are bypassed fail-closed.</div>' +
+  '    </div>' +
+  '    <div class="fail-closed-rule">' +
+  '      <div class="fail-closed-rule-num">Rule 2: Group 2 Context Gate</div>' +
+  '      <div class="fail-closed-rule-text">Unverified scientific context results in governed ABSTAIN</div>' +
+  '      <div class="fail-closed-rule-desc">If Group 2 context resolution indicates missing evidence thresholds, unverified provenance, or missing timestamps, the ruling fails closed to ABSTAIN with action_eligibility false. Governed execution dispatches NOOP.</div>' +
+  '    </div>' +
+  '    <div class="fail-closed-rule" style="margin-bottom:0;">' +
+  '      <div class="fail-closed-rule-num">Rule 3: Zero-Fabrication Invariant</div>' +
+  '      <div class="fail-closed-rule-text">Missing evidence is recorded as NOT VERIFIED; never fabricated</div>' +
+  '      <div class="fail-closed-rule-desc">When canonical records or telemetry fields are missing from upstream responses, they are displayed as NOT VERIFIED or Unresolved. No mock data, placeholder timestamps, or fabricated record IDs are ever injected.</div>' +
+  '    </div>' +
+  '  </div>' +
+  '</div>' +
+
+  // Group 3 Contract Clauses
+  '<div class="admin-card">' +
+  '  <div class="admin-card-head"><span class="admin-card-title">Group 3 Ingestion Contract Specification</span><span class="admin-card-tag">Contract v2.2</span></div>' +
+  '  <div class="admin-table-wrap">' +
+  '    <table class="admin-table">' +
+  '      <thead><tr><th>Clause Reference</th><th>Type</th><th>Specification & Compliance Requirement</th></tr></thead>' +
+  '      <tbody>' +
+  '        <tr><td class="mono cell-primary">Clause §26</td><td>Contract Requirement</td><td>Telemetry Byte Handling: Raw payload bytes not persisted at capture time; declared data gap per contract specification.</td></tr>' +
+  '        <tr><td class="mono cell-primary">Clause §49.1</td><td>Contract Requirement</td><td>Cryptographic Integrity: SHA-256 value recorded in the canonical evidence record. Raw payload bytes are not recoverable from hash.</td></tr>' +
+  '        <tr><td class="mono cell-primary">Evidence Pack</td><td>Data Schema</td><td>SOURCE_EVIDENCE_PACK_EMITTED_TC-Z03-EXT-OPENMETEO-OBS001.json (v2.2 compliance baseline).</td></tr>' +
+  '      </tbody>' +
+  '    </table>' +
+  '  </div>' +
+  '</div>' +
+
+  _boundaryNotice(
+    "Contract Integrity Notice",
+    "Clauses §26 and §49.1 are authoritative provisions of the Group 3 Ingestion Contract v2.2, not statutory state legislation. Invariant enforcement is immutable at runtime.",
+    "Pipeline Status: Strictly sequential G3 -> G1 -> G2 -> G4\nFail-Closed Overrides: Prohibited\nModifiable via UI: No (Constitutional constraints)"
+  );
+}
+
+// =============================================================================
+// SECTION 5: GEOSPATIAL CONFIGURATION
+// =============================================================================
+function renderGeoConfig() {
+  const el = document.getElementById("section-geo-config");
+  if (!el) return;
+
+  // Strict RBAC permission check
+  if (!window.VANA_AUTH.requirePermission(P.MANAGE_MAP_CONFIG, el)) return;
+
+  var currentKey = (typeof sessionStorage !== "undefined" && sessionStorage.getItem("VANA_GEOAPIFY_API_KEY")) || "";
+  var keyStatus = currentKey ? "Configured in DEV Session (Key Masked)" : "Not Configured (OSM Development Fallback Active)";
+
+  // Zone rows
+  var zoneRows = ADMIN_ZONES.map(function (z) {
+    var isLive = z.status === "Record retrieved";
+    return '<tr>' +
+      '<td class="mono cell-primary">' + z.id + '</td>' +
+      '<td>' + z.name + '</td>' +
+      '<td><span class="status-pill ' + (isLive ? "active" : "waiting") + '">' + z.status + '</span></td>' +
+      '<td class="mono">' + z.lat.toFixed(4) + '° N, ' + z.lon.toFixed(4) + '° E</td>' +
+      '<td>' + (z.alt_m !== null ? z.alt_m + " m" : "--") + '</td>' +
+      '<td>' + z.source + '</td>' +
+      '<td style="font-size:11.5px;color:var(--text-secondary);">' + z.note + '</td>' +
+      '</tr>';
+  }).join("");
+
+  // Map layers
+  var layerDefs = [
+    { name: "Base Map (Geoapify Dark Matter / OSM Development Fallback)", type: "Base Tile Layer", status: "ACTIVE", detail: "Cartographic surface with automatic OSM direct-tile fallback" },
+    { name: "Regional Reference Points (6 Monitored Locations)", type: "Vector Points", status: "ACTIVE", detail: "1 Record Retrieved (Thane Creek), 5 Regional Monitoring Locations" },
+    { name: "Authoritative Observations Layer", type: "Telemetry Overlay", status: "ACTIVE", detail: "Bound to Group 1 canonical record CR-b4615a27..." },
+    { name: "Active Alerts Overlay", type: "Exception Badges", status: "ACTIVE", detail: "ALT-001 through ALT-006 plotted at canonical coordinates" },
+    { name: "Administrative Boundaries", type: "Vector Polygons", status: "DISABLED", detail: "Unavailable: Boundary shapefiles not yet connected in repository" },
+    { name: "Weather Satellite / Radar Ingestion", type: "Raster Stream", status: "DISABLED", detail: "Unavailable: Future capability: radar feed not connected" },
+    { name: "Rainfall Isohyets", type: "Mesh Surface", status: "DISABLED", detail: "Unavailable: Future capability: gauge mesh unpersisted" },
+    { name: "Terrain Elevation Mesh", type: "DEM Grid", status: "DISABLED", detail: "Unavailable: Future capability: no DEM raster connected" }
+  ];
+
+  var layerRows = layerDefs.map(function (l) {
+    var isActive = l.status === "ACTIVE";
+    return '<tr>' +
+      '<td class="cell-primary">' + l.name + '</td>' +
+      '<td class="mono">' + l.type + '</td>' +
+      '<td><span class="admin-status-badge ' + (isActive ? "ok" : "") + '" style="' + (!isActive ? "background:var(--bg-muted);color:var(--text-muted);" : "") + '">' + l.status + '</span></td>' +
+      '<td style="font-size:11.5px;color:var(--text-secondary);">' + l.detail + '</td>' +
+      '</tr>';
+  }).join("");
+
+  el.innerHTML = _sectionHeader(
+    "Geospatial Configuration",
+    "Surveillance zone registry, operational map layer definitions, and session cartographic parameters.",
+    "6 Zones"
+  ) +
+
+  // Zone Registry Card
+  '<div class="admin-card">' +
+  '  <div class="admin-card-head"><span class="admin-card-title">Surveillance Zone Registry</span><span class="admin-card-tag">Canonical MMR Coordinates</span></div>' +
+  '  <div class="admin-table-wrap">' +
+  '    <table class="admin-table">' +
+  '      <thead><tr><th>Zone ID</th><th>Location Name</th><th>Status</th><th>Coordinates</th><th>Altitude</th><th>Source Feed</th><th>Operational Description</th></tr></thead>' +
+  '      <tbody>' + zoneRows + '</tbody>' +
+  '    </table>' +
+  '  </div>' +
+  '</div>' +
+
+  // Map Layers Registry Card
+  '<div class="admin-card">' +
+  '  <div class="admin-card-head"><span class="admin-card-title">Geospatial Map Layers Registry</span><span class="admin-card-tag">8 Layer Definitions</span></div>' +
+  '  <div class="admin-table-wrap">' +
+  '    <table class="admin-table">' +
+  '      <thead><tr><th>Layer Name</th><th>Type</th><th>Status</th><th>Configuration Detail</th></tr></thead>' +
+  '      <tbody>' + layerRows + '</tbody>' +
+  '    </table>' +
+  '  </div>' +
+  '</div>' +
+
+  // DEV Session Geoapify Key Management Card
+  '<div class="admin-card">' +
+  '  <div class="admin-card-head">' +
+  '    <span class="admin-card-title">Development / Local Session Configuration</span>' +
+  '    <span class="admin-card-tag">sessionStorage</span>' +
+  '  </div>' +
+  '  <div class="admin-card-body" style="display:flex;flex-direction:column;gap:12px;">' +
+  '    <div style="font-size:12px;color:var(--text-secondary);line-height:1.4;">' +
+  '      <strong>DEV Testing Only:</strong> Configure a temporary Geoapify API key for the current browser session. ' +
+  '      The key is stored in <span class="mono">sessionStorage</span> and cleared upon closing the tab. It is never logged or committed to git. ' +
+  '      Current status: <strong class="mono">' + keyStatus + '</strong>.' +
+  '    </div>' +
+  '    <div style="display:flex;gap:8px;max-width:540px;">' +
+  '      <input type="password" id="adminGeoapifyKeyInput" class="admin-form-input" placeholder="Enter Geoapify API key for DEV session..." autocomplete="off" style="flex:1;font-family:\'JetBrains Mono\',monospace;font-size:11.5px;">' +
+  '      <button class="admin-header-btn primary" onclick="adminSaveGeoKey()">Save to Session</button>' +
+  '      <button class="admin-header-btn" onclick="adminClearGeoKey()">Clear</button>' +
+  '    </div>' +
+  '    <div id="adminGeoKeyFeedback" style="font-size:11.5px;color:var(--status-ok);display:none;"></div>' +
+  '  </div>' +
+  '</div>' +
+
+  _boundaryNotice(
+    "Layer Integrity Doctrine",
+    "Per VANA zero-fabrication doctrine, disabled map layers (radar, rainfall isohyets, elevation meshes) are honestly presented as unavailable architectural stubs until authoritative spatial data feeds are provisioned in the repository.",
+    "Storage Scope: sessionStorage (DEV testing only)\nProduction Key Loading: Environment variables on server\nDefault Cartographic Fallback: OpenStreetMap direct tiles active"
+  );
+}
+
+function adminSaveGeoKey() {
+  if (!window.VANA_AUTH || !window.VANA_AUTH.hasPermission(P.MANAGE_MAP_CONFIG)) {
+    console.warn("[VANA Admin] Security: Geo key configuration denied - MANAGE_MAP_CONFIG required.");
+    return;
+  }
+  var input = document.getElementById("adminGeoapifyKeyInput");
+  var feedback = document.getElementById("adminGeoKeyFeedback");
+  if (!input) return;
+  var key = input.value.trim();
+  if (key) {
+    sessionStorage.setItem("VANA_GEOAPIFY_API_KEY", key);
+    _pushAuditEntry("UPDATE_MAP_CONFIG", "sessionStorage:VANA_GEOAPIFY_API_KEY", "DEV_KEY_CONFIGURED");
+    input.value = "";
+    if (feedback) {
+      feedback.textContent = "Key saved to sessionStorage (masked). Reload Operational Dashboard to activate Geoapify tiles.";
+      feedback.style.display = "block";
+    }
+  }
+}
+
+function adminClearGeoKey() {
+  if (!window.VANA_AUTH || !window.VANA_AUTH.hasPermission(P.MANAGE_MAP_CONFIG)) {
+    console.warn("[VANA Admin] Security: Geo key clear denied - MANAGE_MAP_CONFIG required.");
+    return;
+  }
+  sessionStorage.removeItem("VANA_GEOAPIFY_API_KEY");
+  var input = document.getElementById("adminGeoapifyKeyInput");
+  var feedback = document.getElementById("adminGeoKeyFeedback");
+  if (input) input.value = "";
+  _pushAuditEntry("CLEAR_MAP_CONFIG", "sessionStorage:VANA_GEOAPIFY_API_KEY", "CLEARED");
+  if (feedback) {
+    feedback.textContent = "Cleared. Default OpenStreetMap development fallback will be used.";
+    feedback.style.display = "block";
+  }
+}
+
+// =============================================================================
+// SECTION 6: AUDIT & OPERATIONAL TRACE
+// =============================================================================
+function renderAuditTrace() {
+  const el = document.getElementById("section-audit-trace");
+  if (!el) return;
+
+  // Strict RBAC permission check
+  if (!window.VANA_AUTH.requirePermission(P.VIEW_AUDIT_LOG, el)) return;
+
+  // Operational Exceptions
+  const alerts = [
+    { id: "ALT-001", severity: "CRITICAL", title: "canonical_record_id Not Returned by Group 1 Live Runtime", category: "DATA_GAP", ts: "Live Session" },
+    { id: "ALT-002", severity: "ABSTAIN", title: "Group 4 Abstention Gate Triggered: NOOP Enforced", category: "GOVERNANCE_ABSTENTION", ts: "Live Session" },
+    { id: "ALT-003", severity: "GAP", title: "Missing Source Timestamp (observation_timestamp = null) in G1", category: "DATA_GAP", ts: "Live Session" },
+    { id: "ALT-004", severity: "GAP", title: "observation_type and measurement.unit Gap in Source Evidence", category: "DATA_GAP", ts: "Live Session" },
+    { id: "ALT-005", severity: "INFO", title: "5 Regional Surveillance Zones Pending Ingestion", category: "PENDING_REGIONAL_FEEDS", ts: "Live Session" },
+    { id: "ALT-006", severity: "INFO", title: "CORS Reverse-Proxy Gateway Active", category: "RUNTIME_GATEWAY", ts: "Live Session" },
+  ];
+
+  const alertRows = alerts.map(function (a) {
+    var badgeClass = a.severity === "CRITICAL" ? "error" : a.severity === "GAP" || a.severity === "ABSTAIN" ? "warn" : "ok";
+    return '<tr>' +
+      '<td class="mono cell-primary">' + a.id + '</td>' +
+      '<td><span class="admin-status-badge ' + badgeClass + '">' + a.severity + '</span></td>' +
+      '<td>' + a.title + '</td>' +
+      '<td class="mono">' + a.category + '</td>' +
+      '<td>' + a.ts + '</td>' +
+      '</tr>';
+  }).join("");
+
+  el.innerHTML = _sectionHeader(
+    "Audit & Operational Trace",
+    "Current browser session activity trace and documented operational exceptions.",
+    "Trace Audit"
+  ) +
+
+  // Current Browser Session Activity Log Card
+  '<div class="admin-card">' +
+  '  <div class="admin-card-head">' +
+  '    <span class="admin-card-title">Current Browser Session Activity</span>' +
+  '    <span class="admin-card-tag">In-Memory Session Trace</span>' +
+  '  </div>' +
+  '  <div class="admin-table-wrap">' +
+  '    <table class="admin-table">' +
+  '      <thead><tr><th>Time</th><th>User Identity</th><th>Role</th><th>Action</th><th>Target Resource</th><th>Result</th></tr></thead>' +
+  '      <tbody id="sessionAuditRowsContainer">' + _buildAuditRowsHtml() + '</tbody>' +
+  '    </table>' +
+  '  </div>' +
+  '  <div style="padding:10px 18px;border-top:1px solid var(--border-light);background:var(--bg-surface-subtle);font-size:11.5px;color:var(--text-muted);">' +
+  '    These entries are held in browser memory for the current session. They are not a persistent or authoritative backend audit log.' +
+  '  </div>' +
+  '</div>' +
+
+  // Documented Operational Exceptions Card
+  '<div class="admin-card">' +
+  '  <div class="admin-card-head">' +
+  '    <span class="admin-card-title">Documented Operational Exceptions</span>' +
+  '    <span class="admin-card-tag">Static Registry (ALT-001 - ALT-006)</span>' +
+  '  </div>' +
+  '  <div class="admin-table-wrap">' +
+  '    <table class="admin-table">' +
+  '      <thead><tr><th>Exception ID</th><th>Severity</th><th>Operational Description</th><th>Classification Category</th><th>Recorded Timestamp</th></tr></thead>' +
+  '      <tbody>' + alertRows + '</tbody>' +
+  '    </table>' +
+  '  </div>' +
+  '</div>' +
+
+  _boundaryNotice(
+    "Alert Rules & Notification Engine Limitation",
+    "Dynamic alert-rule configuration and notification delivery are not currently available through the connected backend. In production, authoritative audit logs are persisted on the unified runtime with append-only governance records.",
+    "Session Audit: In-memory trace (max 100 entries)\nAuthoritative Audit: Persisted on backend runtime (/proxy/g4/vana/execute)\nAlert Rules: Statically defined in platform contracts"
+  );
+}
+
+function _buildAuditRowsHtml() {
+  var log = _sessionAuditLog;
+  if (!log || log.length === 0) {
+    return '<tr><td colspan="6" style="text-align:center;color:var(--text-muted);padding:20px;">No actions recorded in this session yet.</td></tr>';
+  }
+  return log.map(function (entry) {
+    var ts = new Date(entry.ts).toLocaleTimeString("en-GB") + " " + new Date(entry.ts).toLocaleDateString("en-GB", { day: "2-digit", month: "short" });
+    return '<tr>' +
+      '<td class="mono">' + ts + '</td>' +
+      '<td>' + entry.userName + '</td>' +
+      '<td><span class="admin-role-badge ' + (entry.role || "").toLowerCase() + '">' + entry.role + '</span></td>' +
+      '<td style="font-weight:600;">' + entry.action + '</td>' +
+      '<td class="mono" style="color:var(--text-secondary);">' + entry.resource + '</td>' +
+      '<td><span class="admin-status-badge ' + (entry.result === "OK" ? "ok" : "warn") + '">' + entry.result + '</span></td>' +
+      '</tr>';
+  }).join("");
+}
+
+function _renderAuditRows(container) {
+  if (container) {
+    container.innerHTML = _buildAuditRowsHtml();
+  }
+}
+
+// ── AUTHENTICATED MODAL ACTIONS ─────────────────────────────────────────
 function adminOpenLoginModal() {
   var modal = document.getElementById("adminLoginModal");
+  var barrier = document.getElementById("adminBarrierOverlay");
   var errEl = document.getElementById("adminLoginError");
   if (errEl) { errEl.style.display = "none"; errEl.textContent = ""; }
-  if (modal) modal.style.display = "flex";
+
+  // Hide the barrier overlay so it does not block or conflict with the modal
+  if (barrier) {
+    barrier.style.display = "none";
+  }
+
+  if (modal) {
+    modal.style.display = "flex";
+  }
   var emailInput = document.getElementById("adminEmailInput");
-  if (emailInput) emailInput.focus();
+  if (emailInput) {
+    setTimeout(function () { emailInput.focus(); }, 50);
+  }
 }
 
 function adminCloseLoginModal() {
   var modal = document.getElementById("adminLoginModal");
-  if (modal) modal.style.display = "none";
+  if (modal) {
+    modal.style.display = "none";
+  }
+
+  // Closing without authenticating must restore the Authentication Required barrier
+  var auth = window.VANA_AUTH;
+  if (!auth || !auth.isAuthenticated() || !auth.isLiveValidated()) {
+    _initAuthUI();
+  }
 }
 
 async function adminSubmitLogin(event) {
@@ -319,583 +1203,34 @@ async function adminSubmitLogin(event) {
 
   if (res.success) {
     passInput.value = "";
-    adminCloseLoginModal();
+    var modal = document.getElementById("adminLoginModal");
+    if (modal) modal.style.display = "none";
     _initAuthUI();
   } else {
     if (errEl) {
-      errEl.textContent = res.error || "Authentication failed. Please verify credentials.";
+      var errMsg = res.error || "Authentication failed. Please verify credentials.";
+      if (typeof errMsg === "string" && (errMsg.includes("10061") || errMsg.includes("actively refused") || errMsg.includes("Failed to fetch"))) {
+        errMsg = "Authentication Service Unavailable: Upstream auth backend at localhost:8000 is stopped or unreachable (Connection Refused).";
+      }
+      errEl.textContent = errMsg;
       errEl.style.display = "block";
     }
   }
 }
 
+// Close modal on Escape key press
+document.addEventListener("keydown", function (e) {
+  if (e.key === "Escape") {
+    var modal = document.getElementById("adminLoginModal");
+    if (modal && modal.style.display === "flex") {
+      adminCloseLoginModal();
+    }
+  }
+});
+
 function adminLogout() {
   window.VANA_AUTH.logout();
   _initAuthUI();
-}
-
-function adminSetDevRole(role) {
-  console.warn("[VANA Admin] Dev role switching is disabled in production RBAC mode.");
-}
-
-// ── NAVIGATION ──────────────────────────────────────────────────────────
-function adminNav(sectionKey, navEl) {
-  // Deactivate all sections and nav items
-  document.querySelectorAll(".admin-section").forEach(function (s) { s.classList.remove("active"); });
-  document.querySelectorAll(".admin-nav-item").forEach(function (n) { n.classList.remove("active"); });
-
-  const section = document.getElementById("section-" + sectionKey);
-  if (section) section.classList.add("active");
-  if (navEl) navEl.classList.add("active");
-
-  _pushAuditEntry("NAVIGATE", "admin/" + sectionKey, "OK");
-}
-
-// ── SECTION HELPER ──────────────────────────────────────────────────────
-function _sectionHeader(title, desc, badge, badgeClass) {
-  var badgeHtml = badge
-    ? '<div class="admin-section-badge ' + (badgeClass || "") + '">' + badge + '</div>'
-    : "";
-  return '<div class="admin-section-header"><div class="admin-section-title-group"><div class="admin-section-title">' + title + '</div><div class="admin-section-desc">' + desc + '</div></div>' + badgeHtml + '</div>';
-}
-
-function _boundaryNotice(title, text, code) {
-  var codeHtml = code ? '<div class="admin-boundary-notice-code">' + code + '</div>' : "";
-  return '<div class="admin-boundary-notice"><div class="admin-boundary-notice-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg></div><div class="admin-boundary-notice-body"><div class="admin-boundary-notice-title">' + title + '</div><div class="admin-boundary-notice-text">' + text + '</div>' + codeHtml + '</div></div>';
-}
-
-// =============================================================================
-// SYSTEM: HEALTH
-// =============================================================================
-async function renderSystemHealth() {
-  const el = document.getElementById("section-system-health");
-  if (!el) return;
-
-  // Requires VIEW_DASHBOARD at minimum: all roles have this
-  el.innerHTML = _sectionHeader(
-    "System Health",
-    "Live connectivity check for Group 1, Group 2, and Group 4 backend services using the existing /proxy/* gateway.",
-    "Live Check",
-    "live"
-  ) + '<div id="healthServiceRows">' + _buildHealthPlaceholders() + '</div><div style="margin-top:12px"><button class="admin-btn primary" onclick="runHealthCheck()" id="btnHealthCheck"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg> Run Health Check</button></div>';
-}
-
-function _buildHealthPlaceholders() {
-  var services = [
-    { key: "g1", label: "Group 1: Canonical Observation Retrieval", proxy: window.VANA_CONFIG.G1_BASE },
-    { key: "g2", label: "Group 2: Scientific Context & Decision Resolve", proxy: window.VANA_CONFIG.G2_ENDPOINT },
-    { key: "g4", label: "Group 4: Governed Execution & Abstention Gate", proxy: window.VANA_CONFIG.G4_ENDPOINT },
-  ];
-  return '<div class="admin-card"><div class="admin-card-head"><span class="admin-card-title">Backend API Services</span><span class="admin-card-tag">via /proxy/* gateway</span></div>' +
-    services.map(function (s) {
-      return '<div class="admin-status-row" id="health-row-' + s.key + '">' +
-        '<div class="admin-status-dot pending" id="health-dot-' + s.key + '"></div>' +
-        '<div class="admin-status-name">' + s.label + '</div>' +
-        '<div class="admin-status-detail mono" id="health-detail-' + s.key + '">Checking...</div>' +
-        '<div class="admin-status-badge" id="health-badge-' + s.key + '">--</div>' +
-        '</div>';
-    }).join("") + '</div>';
-}
-
-async function runHealthCheck() {
-  const btn = document.getElementById("btnHealthCheck");
-  if (btn) { btn.disabled = true; btn.textContent = "Checking..."; }
-  _pushAuditEntry("HEALTH_CHECK", "/proxy/*", "RUNNING");
-
-  const checks = [
-    { key: "g1", label: "G1", url: window.VANA_CONFIG.G1_BASE + "/health" },
-    { key: "g2", label: "G2", url: window.VANA_CONFIG.G2_ENDPOINT.replace("/api/group2/context/resolve", "/health") },
-    { key: "g4", label: "G4", url: window.VANA_CONFIG.G4_ENDPOINT.replace("/vana/execute", "/health") },
-  ];
-
-  var allOk = true;
-
-  for (var i = 0; i < checks.length; i++) {
-    var c = checks[i];
-    var dot = document.getElementById("health-dot-" + c.key);
-    var detail = document.getElementById("health-detail-" + c.key);
-    var badge = document.getElementById("health-badge-" + c.key);
-
-    var t0 = Date.now();
-    try {
-      var res = await adminFetch(c.url, { method: "GET", headers: { "Accept": "application/json" } });
-      var latency = Date.now() - t0;
-      if (res.ok || res.status === 404 || res.status === 405) {
-        // 404/405 means server responded: it's reachable even if /health doesn't exist
-        var statusLabel = res.ok ? "ONLINE" : "REACHABLE (" + res.status + ")";
-        if (dot) { dot.className = "admin-status-dot ok"; }
-        if (detail) detail.innerHTML = '<span class="health-latency">' + latency + "ms</span> · HTTP " + res.status;
-        if (badge) { badge.textContent = statusLabel; badge.className = "admin-status-badge ok"; }
-      } else {
-        allOk = false;
-        if (dot) dot.className = "admin-status-dot warn";
-        if (detail) detail.textContent = "HTTP " + res.status + " · " + latency + "ms";
-        if (badge) { badge.textContent = "DEGRADED"; badge.className = "admin-status-badge warn"; }
-      }
-    } catch (err) {
-      allOk = false;
-      var latency2 = Date.now() - t0;
-      if (dot) dot.className = "admin-status-dot error";
-      if (detail) detail.textContent = err.message.substring(0, 60);
-      if (badge) { badge.textContent = "UNREACHABLE"; badge.className = "admin-status-badge error"; }
-    }
-  }
-
-  _pushAuditEntry("HEALTH_CHECK", "/proxy/*", allOk ? "OK" : "PARTIAL_FAILURE");
-  if (btn) {
-    btn.disabled = false;
-    btn.innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg> Run Health Check';
-  }
-}
-
-// =============================================================================
-// SYSTEM: BACKEND SERVICES
-// =============================================================================
-function renderSystemServices() {
-  const el = document.getElementById("section-system-services");
-  if (!el) return;
-
-  el.innerHTML = _sectionHeader(
-    "Backend Services",
-    "Configured proxy targets. Routes are defined in config.js and vercel.json. Read-only.",
-    "Read-only"
-  ) + '<div class="admin-card"><div class="admin-card-head"><span class="admin-card-title">Active Proxy Routes</span><span class="admin-card-tag">config.js + vercel.json</span></div>' +
-    '<table class="admin-table"><thead><tr><th>Route</th><th>Group</th><th>Purpose</th><th>Method</th></tr></thead><tbody>' +
-    '<tr><td class="mono cell-primary">/proxy/g1/*</td><td>Group 1</td><td>Canonical Observation Retrieval (Observations API)</td><td class="mono">GET</td></tr>' +
-    '<tr><td class="mono cell-primary">/proxy/g2/*</td><td>Group 2</td><td>Scientific Context &amp; Decision Resolve</td><td class="mono">POST</td></tr>' +
-    '<tr><td class="mono cell-primary">/proxy/g4/*</td><td>Group 4</td><td>Governed Execution &amp; Abstention Gate</td><td class="mono">POST</td></tr>' +
-    '</tbody></table></div>' +
-    _boundaryNotice(
-      "Production Proxy Configuration",
-      "In production (Vercel), proxy rewrites are defined in vercel.json. Locally, the Python server.py handles the same routes. No backend IPs appear in frontend code.",
-      "vercel.json → rewrites: /proxy/g1/* → G1 backend\n                          /proxy/g2/* → G2 backend\n                          /proxy/g4/* → G4 backend"
-    );
-}
-
-// =============================================================================
-// SYSTEM: CONFIGURATION
-// =============================================================================
-function renderSystemConfig() {
-  const el = document.getElementById("section-system-config");
-  if (!el) return;
-
-  if (!window.VANA_AUTH.requirePermission(P.MANAGE_SYSTEM_CONFIG, null)) {
-    // Still show read-only view of config for non-admins
-  }
-
-  var cfg = window.VANA_CONFIG;
-  el.innerHTML = _sectionHeader(
-    "Configuration",
-    "Current VANA_CONFIG values loaded from config.js. Edit config.js to change these values. No restart required: reload the page.",
-    window.VANA_AUTH.hasPermission(P.MANAGE_SYSTEM_CONFIG) ? "View" : "Read-only"
-  ) + '<div class="admin-card"><div class="admin-card-head"><span class="admin-card-title">VANA_CONFIG (window.VANA_CONFIG)</span><span class="admin-card-tag">config.js</span></div>' +
-    '<table class="admin-table"><thead><tr><th>Key</th><th>Value</th><th>Description</th></tr></thead><tbody>' +
-    '<tr><td class="mono cell-primary">G1_BASE</td><td class="mono">' + cfg.G1_BASE + '</td><td>Group 1 proxy base path</td></tr>' +
-    '<tr><td class="mono cell-primary">G2_ENDPOINT</td><td class="mono">' + cfg.G2_ENDPOINT + '</td><td>Group 2 context resolve endpoint</td></tr>' +
-    '<tr><td class="mono cell-primary">G4_ENDPOINT</td><td class="mono">' + cfg.G4_ENDPOINT + '</td><td>Group 4 execute endpoint</td></tr>' +
-    '<tr><td class="mono cell-primary">REQUEST_TIMEOUT_MS</td><td class="mono">' + cfg.REQUEST_TIMEOUT_MS + '</td><td>Fetch timeout for all API calls</td></tr>' +
-    '</tbody></table></div>' +
-    _boundaryNotice(
-      "Configuration Management",
-      "In this iteration, configuration is managed by editing config.js. Future iterations should connect this section to a backend configuration API (POST /api/admin/config) protected by the MANAGE_SYSTEM_CONFIG permission.",
-      "Required backend: POST /api/admin/config → { key, value }\nRequired permission: MANAGE_SYSTEM_CONFIG\nCurrently: read-only display"
-    );
-}
-
-// =============================================================================
-// ACCESS CONTROL: USERS
-// =============================================================================
-function renderAccessUsers() {
-  const el = document.getElementById("section-access-users");
-  if (!el) return;
-
-  el.innerHTML = _sectionHeader(
-    "Users",
-    "User account management. Requires MANAGE_USERS permission and a backend user directory.",
-    "Administrator only"
-  );
-
-  if (!window.VANA_AUTH.requirePermission(P.MANAGE_USERS, null)) {
-    el.innerHTML += window.VANA_AUTH._getAccessDeniedHtml
-      ? window.VANA_AUTH._getAccessDeniedHtml(P.MANAGE_USERS)
-      : '<div class="admin-denied-state"><div class="admin-denied-icon"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg></div><div class="admin-denied-title">Access Denied</div><div class="admin-denied-msg">Your current role does not have the <span class="mono">MANAGE_USERS</span> permission.</div></div>';
-    return;
-  }
-
-  el.innerHTML += _boundaryNotice(
-    "Backend Integration Required",
-    "User management requires a backend user directory (e.g., /api/admin/users). No user store exists in this version. The UI below shows the integration boundary: wire it to your backend.",
-    "Required: GET  /api/admin/users → [{ id, name, email, role }]\n          POST /api/admin/users → create user\n          PUT  /api/admin/users/:id → update role\n          DEL  /api/admin/users/:id → deactivate"
-  ) + '<div class="admin-card"><div class="admin-card-head"><span class="admin-card-title">User Directory</span><span class="admin-card-tag">Backend pending</span></div>' +
-    '<table class="admin-table"><thead><tr><th>User ID</th><th>Name</th><th>Role</th><th>Status</th></tr></thead><tbody>' +
-    '<tr><td class="mono" colspan="4" style="text-align:center;color:var(--text-muted);padding:20px">No user directory connected. Implement /api/admin/users backend endpoint to populate this table.</td></tr>' +
-    '</tbody></table></div>';
-}
-
-// =============================================================================
-// ACCESS CONTROL: ROLES
-// =============================================================================
-function renderAccessRoles() {
-  const el = document.getElementById("section-access-roles");
-  if (!el) return;
-
-  if (!window.VANA_AUTH.requirePermission(P.MANAGE_ROLES, el)) return;
-
-  var auth = window.VANA_AUTH;
-  var roleRows = Object.keys(auth.ROLES).map(function (k) {
-    var role = auth.ROLES[k];
-    var meta = auth.ROLE_META[role];
-    var permCount = auth.ROLE_PERMISSIONS[role] ? auth.ROLE_PERMISSIONS[role].length : 0;
-    return '<tr><td class="cell-primary">' + meta.label + '</td><td class="mono">' + role + '</td><td>' + meta.description + '</td><td><span class="admin-role-badge ' + role + '">' + permCount + ' permissions</span></td></tr>';
-  }).join("");
-
-  el.innerHTML = _sectionHeader("Roles", "The four VANA roles and their descriptions. Role assignment requires a backend user directory.", "View only") +
-    '<div class="admin-card"><div class="admin-card-head"><span class="admin-card-title">Role Hierarchy</span><span class="admin-card-tag">Defined in admin-auth.js</span></div>' +
-    '<table class="admin-table"><thead><tr><th>Label</th><th>Role Key</th><th>Description</th><th>Permission Set</th></tr></thead><tbody>' + roleRows + '</tbody></table></div>' +
-    _boundaryNotice(
-      "Role Assignment",
-      "In production, role assignment is managed by the backend (PATCH /api/admin/users/:id/role). The admin-auth.js module resolves the user's role from the auth provider.",
-      "Required: PATCH /api/admin/users/:id/role → { role }\nPermission: MANAGE_ROLES\nCurrently: roles are read-only display"
-    );
-}
-
-// =============================================================================
-// ACCESS CONTROL: PERMISSIONS
-// =============================================================================
-function renderAccessPermissions() {
-  const el = document.getElementById("section-access-permissions");
-  if (!el) return;
-
-  if (!window.VANA_AUTH.requirePermission(P.MANAGE_ROLES, el)) return;
-
-  var auth = window.VANA_AUTH;
-  var allPerms = Object.values(auth.PERMISSIONS);
-  var roles = [auth.ROLES.VIEWER, auth.ROLES.OPERATOR, auth.ROLES.ANALYST, auth.ROLES.ADMINISTRATOR];
-
-  var headerRow = "<tr><th>Permission</th>" + roles.map(function (r) {
-    return '<th>' + auth.ROLE_META[r].label + '</th>';
-  }).join("") + "</tr>";
-
-  var bodyRows = allPerms.map(function (perm) {
-    var cells = roles.map(function (r) {
-      var has = auth.ROLE_PERMISSIONS[r] && auth.ROLE_PERMISSIONS[r].indexOf(perm) !== -1;
-      return '<td>' + (has ? '<span class="perm-check">✓</span>' : '<span class="perm-nocheck">·</span>') + '</td>';
-    }).join("");
-    return '<tr><td class="mono">' + perm + '</td>' + cells + '</tr>';
-  }).join("");
-
-  el.innerHTML = _sectionHeader("Permissions", "Full permission matrix showing which roles have which capabilities.", "View only") +
-    '<div class="admin-card"><table class="perm-matrix"><thead>' + headerRow + '</thead><tbody>' + bodyRows + '</tbody></table></div>';
-}
-
-// =============================================================================
-// GEOSPATIAL: MONITORING ZONES
-// =============================================================================
-function renderGeoZones() {
-  const el = document.getElementById("section-geo-zones");
-  if (!el) return;
-
-  if (!window.VANA_AUTH.requirePermission(P.MANAGE_MAP_CONFIG, el)) return;
-
-  var rows = ADMIN_ZONES.map(function (z) {
-    var isLive = z.status === "CONFIRMED_LIVE";
-    return '<tr>' +
-      '<td class="mono cell-primary">' + z.id + '</td>' +
-      '<td>' + z.name + '</td>' +
-      '<td><span class="' + (isLive ? "zone-status-live" : "zone-status-pending") + '">' + z.status + '</span></td>' +
-      '<td class="mono">' + z.lat.toFixed(4) + ', ' + z.lon.toFixed(4) + '</td>' +
-      '<td>' + (z.alt_m !== null ? z.alt_m + " m" : "--") + '</td>' +
-      '<td>' + z.source + '</td>' +
-      '<td>' + z.license + '</td>' +
-      '</tr>';
-  }).join("");
-
-  el.innerHTML = _sectionHeader(
-    "Monitoring Zones",
-    "The 6 VANA environmental surveillance zones. 1 confirmed live (Thane Creek), 5 pending upstream ingestion.",
-    "6 Zones"
-  ) + '<div class="admin-card"><div class="admin-card-head"><span class="admin-card-title">Zone Registry</span><span class="admin-card-tag">Real VANA data</span></div>' +
-    '<div style="overflow-x:auto"><table class="admin-table"><thead><tr><th>Zone ID</th><th>Name</th><th>Status</th><th>Coordinates</th><th>Altitude</th><th>Source</th><th>License</th></tr></thead><tbody>' + rows + '</tbody></table></div></div>' +
-    _boundaryNotice(
-      "Zone Configuration Management",
-      "Zone metadata is currently defined in admin.js and app.js (shared static data). In production, zone configuration should be managed via a backend API and loaded dynamically.",
-      "Required: GET  /api/admin/zones → [zone objects]\n          PATCH /api/admin/zones/:id → update zone metadata\nPermission: MANAGE_MAP_CONFIG"
-    );
-}
-
-// =============================================================================
-// =============================================================================
-// GEOSPATIAL: MAP LAYERS
-// =============================================================================
-function renderGeoLayers() {
-  const el = document.getElementById("section-geo-layers");
-  if (!el) return;
-  if (!window.VANA_AUTH.requirePermission(P.MANAGE_MAP_CONFIG, el)) return;
-
-  var layerDefs = [
-    { name: "Base Map (Geoapify Production / OSM Development Fallback)", type: "Base Tile Layer", status: "ACTIVE", detail: "Geoapify Dark Matter / OpenStreetMap fallback" },
-    { name: "Regional Reference Points", type: "Vector Points (6)", status: "ACTIVE", detail: "1 Confirmed Live (Thane Creek), 5 Regional Reference Locations" },
-    { name: "Authoritative Observations", type: "Telemetry Overlay", status: "ACTIVE", detail: "Bound to Group 1 canonical record CR-b4615a27..." },
-    { name: "Active Alerts Overlay", type: "Exception Badges", status: "ACTIVE", detail: "ALT-001 through ALT-004 plotted at verified coordinates" },
-    { name: "Administrative Boundaries", type: "Vector Polygons", status: "DISABLED", detail: "Unavailable: No authoritative boundary shapefiles in repository" },
-    { name: "Weather Satellite / Radar", type: "Raster Ingestion", status: "DISABLED", detail: "Unavailable: Future capability: no authoritative radar feed connected" },
-    { name: "Rainfall Isohyets", type: "Gauge Mesh Surface", status: "DISABLED", detail: "Unavailable: Future capability: gauge mesh unpersisted" },
-    { name: "Terrain Elevation Mesh", type: "DEM Vector Grid", status: "DISABLED", detail: "Unavailable: Future capability: no DEM raster connected" }
-  ];
-
-  var rows = layerDefs.map(function (l) {
-    var isActive = l.status === "ACTIVE";
-    return '<tr>' +
-      '<td class="cell-primary">' + l.name + '</td>' +
-      '<td class="mono">' + l.type + '</td>' +
-      '<td><span class="' + (isActive ? 'admin-status-badge ok' : 'admin-status-badge') + '" style="' + (!isActive ? 'background:rgba(148,163,184,0.1);color:var(--text-muted)' : '') + '">' + l.status + '</span></td>' +
-      '<td>' + l.detail + '</td>' +
-      '</tr>';
-  }).join("");
-
-  el.innerHTML = _sectionHeader("Map Layers", "Operational layers in the VANA Geospatial Control Map. Architectural stubs remain honestly disabled.", "8 Layers") +
-    '<div class="admin-card"><div class="admin-card-head"><span class="admin-card-title">Geospatial Layer Registry</span><span class="admin-card-tag">VanaGeoEngine</span></div>' +
-    '<div style="overflow-x:auto"><table class="admin-table"><thead><tr><th>Layer Name</th><th>Type</th><th>Status</th><th>Description</th></tr></thead><tbody>' + rows + '</tbody></table></div></div>' +
-    _boundaryNotice(
-      "Layer Integrity Doctrine",
-      "Per VANA zero-fabrication constitutional doctrine, future layers (boundaries, radar, isohyets) are disabled until authoritative data sources exist in the repository. Reference locations do not imply active monitoring.",
-      "Controlled by: VanaGeoData GeoJSON FeatureCollections\nPermission: MANAGE_MAP_CONFIG"
-    );
-}
-
-// =============================================================================
-// GEOSPATIAL: GEOGRAPHIC CONFIG
-// =============================================================================
-function renderGeoConfig() {
-  const el = document.getElementById("section-geo-config");
-  if (!el) return;
-  if (!window.VANA_AUTH.requirePermission(P.MANAGE_MAP_CONFIG, el)) return;
-
-  var currentKey = (typeof sessionStorage !== "undefined" && sessionStorage.getItem("VANA_GEOAPIFY_API_KEY")) || "";
-  var keyStatus = currentKey ? "Configured in DEV Session (Key Masked)" : "Not Configured (OSM Development Fallback Active)";
-
-  el.innerHTML = _sectionHeader("Geographic Configuration", "Tile provider, coordinate system, projection, and session API key management.", "Config") +
-    '<div class="admin-card"><div class="admin-card-head"><span class="admin-card-title">Geospatial Engine Parameters</span><span class="admin-card-tag">VanaGeoConfig</span></div>' +
-    '<table class="admin-table"><thead><tr><th>Parameter</th><th>Value</th><th>Status</th></tr></thead><tbody>' +
-    '<tr><td>Map Framework</td><td class="mono">Leaflet 1.9.4</td><td><span class="admin-status-badge ok">ACTIVE</span></td></tr>' +
-    '<tr><td>Primary Tile Provider</td><td class="mono">Geoapify (OpenStreetMap-derived)</td><td><span class="admin-status-badge ok">CONFIGURED</span></td></tr>' +
-    '<tr><td>Development Fallback</td><td class="mono">OpenStreetMap Direct Tiles</td><td><span class="admin-status-badge ok">READY</span></td></tr>' +
-    '<tr><td>Tile Style</td><td class="mono">dark-matter-dark-grey</td><td>Default Dark Mode</td></tr>' +
-    '<tr><td>Center Coordinates</td><td class="mono">19.1500° N, 73.0000° E</td><td>MMR Surveillance Center</td></tr>' +
-    '<tr><td>Default Zoom</td><td class="mono">9.5 (Min: 7, Max: 18)</td><td>Fixed Bounds</td></tr>' +
-    '<tr><td>Projection</td><td class="mono">EPSG:4326 (WGS 84 Web Mercator)</td><td>Standard Cartographic</td></tr>' +
-    '<tr><td>Geoapify API Key</td><td class="mono">' + keyStatus + '</td><td>' + (currentKey ? '<span class="admin-status-badge ok">DEV KEY SET</span>' : '<span class="admin-status-badge">FALLBACK</span>') + '</td></tr>' +
-    '</tbody></table></div>' +
-
-    '<div class="admin-card" style="margin-top:16px"><div class="admin-card-head"><span class="admin-card-title">DEV Session Geoapify Key (Testing Only)</span><span class="admin-card-tag">DEV ONLY</span></div>' +
-    '<div style="padding:14px;display:flex;flex-direction:column;gap:10px">' +
-      '<div style="font-size:11.5px;color:var(--text-secondary);line-height:1.4"><strong>DEV Testing Only:</strong> You can simulate a Geoapify API key for the current browser session. It is stored in <span class="mono">sessionStorage</span> and cleared upon closing the tab. The key is never displayed, logged, or committed to git. In production, configure credentials via server-side environment variables with domain/referrer restrictions enabled on Geoapify.</div>' +
-      '<div style="display:flex;gap:8px;max-width:540px">' +
-        '<input type="password" id="adminGeoapifyKeyInput" class="admin-input" placeholder="Enter Geoapify API Key (DEV session only)..." autocomplete="off" style="flex:1;font-family:\'JetBrains Mono\',monospace;font-size:11px;padding:6px 10px;background:var(--bg-surface);border:1px solid var(--border-strong);border-radius:var(--radius-sm);color:var(--text-primary)">' +
-        '<button class="admin-btn primary" onclick="adminSaveGeoKey()" style="padding:6px 12px;font-size:11px">Save to Session</button>' +
-        '<button class="admin-btn secondary" onclick="adminClearGeoKey()" style="padding:6px 12px;font-size:11px">Clear</button>' +
-      '</div>' +
-      '<div id="adminGeoKeyFeedback" style="font-size:10.5px;color:var(--status-ok);display:none"></div>' +
-    '</div></div>' +
-
-    _boundaryNotice(
-      "Production Tile Configuration Boundary",
-      "In production, tile provider credentials and style configuration will be loaded from a secure backend or environment variable (e.g. process.env.GEOAPIFY_API_KEY). Zero secrets are committed to git.",
-      "Backend Integration: GET /api/admin/geospatial/config\nPermission: MANAGE_MAP_CONFIG\nZero-Secret Doctrine Enforced"
-    );
-}
-
-function adminSaveGeoKey() {
-  var input = document.getElementById("adminGeoapifyKeyInput");
-  var feedback = document.getElementById("adminGeoKeyFeedback");
-  if (!input) return;
-  var key = input.value.trim();
-  if (key) {
-    sessionStorage.setItem("VANA_GEOAPIFY_API_KEY", key);
-    _pushAuditEntry("UPDATE_MAP_CONFIG", "sessionStorage:VANA_GEOAPIFY_API_KEY", "DEV_KEY_CONFIGURED");
-    input.value = "";
-    if (feedback) {
-      feedback.textContent = "Key saved to sessionStorage (masked). Reload Dashboard to activate Geoapify tiles.";
-      feedback.style.display = "block";
-    }
-  }
-}
-
-function adminClearGeoKey() {
-  sessionStorage.removeItem("VANA_GEOAPIFY_API_KEY");
-  var input = document.getElementById("adminGeoapifyKeyInput");
-  var feedback = document.getElementById("adminGeoKeyFeedback");
-  if (input) input.value = "";
-  _pushAuditEntry("CLEAR_MAP_CONFIG", "sessionStorage:VANA_GEOAPIFY_API_KEY", "CLEARED");
-  if (feedback) {
-    feedback.textContent = "Cleared. Default OSM Development Fallback will be used.";
-    feedback.style.display = "block";
-  }
-}
-
-// =============================================================================
-// GOVERNANCE: POLICIES
-// =============================================================================
-function renderGovPolicies() {
-  const el = document.getElementById("section-gov-policies");
-  if (!el) return;
-  if (!window.VANA_AUTH.requirePermission(P.MANAGE_GOVERNANCE_POLICIES, el)) return;
-
-  el.innerHTML = _sectionHeader(
-    "Governance Policies",
-    "Active VANA governance doctrine. The pipeline G3 → G1 → G2 → G4 is the authoritative execution path. Read-only: these are constitutional constraints.",
-    "Read-only · Constitutional"
-  ) + '<div class="admin-card"><div class="admin-card-head"><span class="admin-card-title">Active Governance Pipeline</span></div>' +
-    '<div style="display:flex;align-items:center;gap:8px;padding:12px 0;font-size:13px;font-weight:700;color:var(--ink);justify-content:center">' +
-    '<span class="admin-role-badge viewer">G3: Field Observation</span>' +
-    '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>' +
-    '<span class="admin-role-badge operator">G1: Canonical Intake</span>' +
-    '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>' +
-    '<span class="admin-role-badge analyst">G2: Context &amp; Decision</span>' +
-    '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>' +
-    '<span class="admin-role-badge administrator">G4: Governed Execution</span>' +
-    '</div></div>' +
-    '<div class="admin-card"><div class="admin-card-head"><span class="admin-card-title">Policy Invariants</span></div>' +
-    '<table class="admin-table"><thead><tr><th>Policy</th><th>Value</th><th>Modifiable</th></tr></thead><tbody>' +
-    '<tr><td>Pipeline mode</td><td>Strictly sequential G3→G1→G2→G4</td><td>No</td></tr>' +
-    '<tr><td>Default ruling</td><td>ABSTAIN (fail-closed)</td><td>No</td></tr>' +
-    '<tr><td>Observation fabrication</td><td>Prohibited: zero-fabrication invariant</td><td>No</td></tr>' +
-    '<tr><td>Canonical record override</td><td>Prohibited</td><td>No</td></tr>' +
-    '<tr><td>G4 execution without G1+G2</td><td>Prohibited by Fail-Closed Invariant</td><td>No</td></tr>' +
-    '</tbody></table></div>';
-}
-
-// =============================================================================
-// GOVERNANCE: FAIL-CLOSED RULES
-// =============================================================================
-function renderGovFailClosed() {
-  const el = document.getElementById("section-gov-failclosed");
-  if (!el) return;
-  if (!window.VANA_AUTH.requirePermission(P.MANAGE_GOVERNANCE_POLICIES, el)) return;
-
-  el.innerHTML = _sectionHeader("Fail-Closed Rules", "The three enforced fail-closed invariants that govern the VANA pipeline. These are code-level constraints, not configuration.", "Enforced in app.js") +
-    '<div class="fail-closed-rule"><div class="fail-closed-rule-num">Rule 1: G1 Gate</div><div class="fail-closed-rule-text">Group 1 failure → Group 2 must not be called</div><div class="fail-closed-rule-desc">If Group 1 (Canonical Observation Retrieval) fails for any reason (HTTP error, timeout, network failure), the pipeline halts immediately. Group 2 is skipped with status SKIPPED and fail_reason explaining the halt. Group 4 is also skipped.</div></div>' +
-    '<div class="fail-closed-rule"><div class="fail-closed-rule-num">Rule 2: G2 Gate</div><div class="fail-closed-rule-text">Group 2 failure → Group 4 must not be called</div><div class="fail-closed-rule-desc">If Group 2 (Scientific Context & Decision Resolve) fails, or if Group 1 already failed (rule 1), Group 4 is skipped. The governed execution gate is never opened without explicit G2 authorization.</div></div>' +
-    '<div class="fail-closed-rule"><div class="fail-closed-rule-num">Rule 3: Zero Fabrication</div><div class="fail-closed-rule-text">Missing authoritative data → NOT VERIFIED, never fabricated</div><div class="fail-closed-rule-desc">If canonical_record_id is null or not returned by Group 1, it is displayed as "NOT VERIFIED". No cached value, default value, or fabricated value is substituted. The canonical_record_id is only populated from authoritative Group 1 response data.</div></div>' +
-    _boundaryNotice(
-      "Fail-Closed Rule Management",
-      "These rules are enforced in app.js (fetchLive function) and cannot be disabled through configuration. Any modification requires a code change with full audit trail and review.",
-      "Location: app.js → fetchLive() → g1Success / g2Success gates\nStatus: Immutable runtime invariants\nAdmin override: NOT AVAILABLE"
-    );
-}
-
-// =============================================================================
-// GOVERNANCE: EVIDENCE CONFIGURATION
-// =============================================================================
-function renderGovEvidence() {
-  const el = document.getElementById("section-gov-evidence");
-  if (!el) return;
-  if (!window.VANA_AUTH.requirePermission(P.MANAGE_GOVERNANCE_POLICIES, el)) return;
-
-  el.innerHTML = _sectionHeader("Evidence Configuration", "Evidence pack schema and Group 3 source configuration.", "View only") +
-    '<div class="admin-card"><div class="admin-card-head"><span class="admin-card-title">Active Evidence Pack Schema</span><span class="admin-card-tag">v2.2</span></div>' +
-    '<table class="admin-table"><thead><tr><th>Field</th><th>Value</th></tr></thead><tbody>' +
-    '<tr><td>Pack file</td><td class="mono">SOURCE_EVIDENCE_PACK_EMITTED_TC-Z03-EXT-OPENMETEO-OBS001.json</td></tr>' +
-    '<tr><td>Schema version</td><td class="mono">v2.2</td></tr>' +
-    '<tr><td>Compliance</td><td>§26 / §49.1</td></tr>' +
-    '<tr><td>Observation ID</td><td class="mono">TC-Z03-EXT-OPENMETEO-OBS001</td></tr>' +
-    '<tr><td>Source</td><td>Open-Meteo.com (CC-BY 4.0)</td></tr>' +
-    '</tbody></table></div>';
-}
-
-// =============================================================================
-// OPERATIONS: ALERTS (read-only view)
-// =============================================================================
-function renderOpsAlerts() {
-  const el = document.getElementById("section-ops-alerts");
-  if (!el) return;
-  if (!window.VANA_AUTH.requirePermission(P.VIEW_ALERTS, el)) return;
-
-  // Alert data (same as operational dashboard: read-only admin view)
-  var alerts = [
-    { id: "ALT-001", severity: "CRITICAL",  title: "canonical_record_id Not Returned by Group 1 Live Runtime",        category: "DATA_GAP",              ts: "Live Session" },
-    { id: "ALT-002", severity: "ABSTAIN",   title: "Group 4 Abstention Gate Triggered: NOOP Enforced",               category: "GOVERNANCE_ABSTENTION", ts: "Live Session" },
-    { id: "ALT-003", severity: "GAP",       title: "Missing Source Timestamp (observation_timestamp = null) in G1",    category: "DATA_GAP",              ts: "Live Session" },
-    { id: "ALT-004", severity: "GAP",       title: "observation_type and measurement.unit Gap in Source Evidence",     category: "DATA_GAP",              ts: "Live Session" },
-    { id: "ALT-005", severity: "INFO",      title: "5 Regional Surveillance Zones Pending Ingestion",                 category: "PENDING_REGIONAL_FEEDS",ts: "Live Session" },
-    { id: "ALT-006", severity: "INFO",      title: "CORS Reverse-Proxy Gateway Active",                               category: "RUNTIME_GATEWAY",       ts: "Live Session" },
-  ];
-
-  var rows = alerts.map(function (a) {
-    return '<tr><td class="mono cell-primary">' + a.id + '</td><td><span class="admin-status-badge ' + (a.severity === "CRITICAL" ? "error" : a.severity === "GAP" || a.severity === "ABSTAIN" ? "warn" : "ok") + '">' + a.severity + '</span></td><td>' + a.title + '</td><td class="mono">' + a.category + '</td><td>' + a.ts + '</td></tr>';
-  }).join("");
-
-  el.innerHTML = _sectionHeader("Alerts", "Read-only view of all operational exceptions from the dashboard. Alert management is in the Operational Dashboard.", "Read-only") +
-    '<div class="admin-card"><table class="admin-table"><thead><tr><th>ID</th><th>Severity</th><th>Title</th><th>Category</th><th>Timestamp</th></tr></thead><tbody>' + rows + '</tbody></table></div>';
-}
-
-// =============================================================================
-// OPERATIONS: ALERT RULES
-// =============================================================================
-function renderOpsAlertRules() {
-  const el = document.getElementById("section-ops-alertrules");
-  if (!el) return;
-  if (!window.VANA_AUTH.requirePermission(P.MANAGE_ALERT_RULES, el)) return;
-
-  el.innerHTML = _sectionHeader("Alert Rules", "Configure which conditions trigger operational alerts. Implementation pending backend alert engine.", "Future iteration") +
-    _boundaryNotice(
-      "Alert Rules Engine: Not Implemented",
-      "Dynamic alert rule configuration requires a backend alert engine. Current alerts in the operational dashboard are statically defined in app.js.",
-      "Required: GET/POST /api/admin/alert-rules\n          - condition: { field, operator, threshold }\n          - severity: CRITICAL | ABSTAIN | GAP | INFO\n          - action: { notify, log }\nPermission: MANAGE_ALERT_RULES"
-    );
-}
-
-// =============================================================================
-// OPERATIONS: NOTIFICATION RULES
-// =============================================================================
-function renderOpsNotifications() {
-  const el = document.getElementById("section-ops-notifications");
-  if (!el) return;
-  if (!window.VANA_AUTH.requirePermission(P.MANAGE_ALERT_RULES, el)) return;
-
-  el.innerHTML = _sectionHeader("Notification Rules", "Configure who gets notified and how when alerts are triggered. Implementation pending.", "Future iteration") +
-    _boundaryNotice(
-      "Notification Rules: Not Implemented",
-      "Notification delivery (email, SMS, webhook) requires a backend notification service and recipient directory.",
-      "Required: GET/POST /api/admin/notification-rules\n          - trigger: alert_rule_id\n          - channel: email | webhook | sms\n          - recipients: [user_id]\nPermission: MANAGE_ALERT_RULES"
-    );
-}
-
-// =============================================================================
-// AUDIT: ADMINISTRATIVE ACTIVITY
-// =============================================================================
-function renderAuditActivity() {
-  const el = document.getElementById("section-audit-activity");
-  if (!el) return;
-  if (!window.VANA_AUTH.requirePermission(P.VIEW_AUDIT_LOG, el)) return;
-
-  var log = _sessionAuditLog;
-
-  var rows = log.length > 0 ? log.map(function (entry) {
-    var ts = new Date(entry.ts).toLocaleTimeString("en-GB") + " " + new Date(entry.ts).toLocaleDateString("en-GB", { day: "2-digit", month: "short" });
-    return '<tr>' +
-      '<td class="mono audit-ts">' + ts + '</td>' +
-      '<td>' + entry.userName + '</td>' +
-      '<td><span class="admin-role-badge ' + entry.role + '">' + entry.role + '</span></td>' +
-      '<td class="audit-action">' + entry.action + '</td>' +
-      '<td class="mono" style="color:var(--text-secondary)">' + entry.resource + '</td>' +
-      '<td class="audit-result ' + (entry.result === "OK" ? "ok" : "err") + '">' + entry.result + '</td>' +
-      '</tr>';
-  }).join("")
-  : '<tr><td colspan="6" style="text-align:center;color:var(--text-muted);padding:20px">No actions recorded in this session yet.</td></tr>';
-
-  el.innerHTML = _sectionHeader(
-    "Administrative Activity",
-    "Session-scoped administrative activity log. Records navigation and inspection actions for this browser session only.",
-    "Session Audit Log"
-  ) + '<div class="admin-card">' +
-    '<div class="admin-card-head"><span class="admin-card-title">Session Audit Trace</span><span class="admin-card-tag">RBAC: Admin &amp; Auditor</span></div>' +
-    '<table class="admin-table"><thead><tr><th>Time</th><th>User</th><th>Role</th><th>Action</th><th>Resource</th><th>Result</th></tr></thead><tbody>' + rows + '</tbody></table></div>' +
-    _boundaryNotice(
-      "Authoritative Backend Audit Boundary",
-      "Local session audit entries reflect current administrative UI navigation only. Authoritative backend audit logs are persisted on the unified runtime with immutable append-only governance records, accessible by Platform Admins and Auditors per backend RBAC contract.",
-      "Access Rule: Permitted for PLATFORM_ADMIN and AUDITOR (Judge).\nEnforcement: Backend-validated access control.\nLocal Table: In-memory session audit trace only."
-    );
 }
 
 console.log("[VANA Admin] admin.js loaded successfully.");

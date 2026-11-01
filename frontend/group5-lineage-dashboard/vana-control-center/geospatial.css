@@ -538,3 +538,14 @@
   color: #FFFFFF;
   border-color: var(--brand);
 }
+
+.full-map-slot #geoLegendPanel,
+.compact-overview-map #geoLegendPanel {
+  display: none !important;
+}
+
+@media (max-width: 768px) {
+  #geoLayerPanel {
+    display: none !important;
+  }
+}

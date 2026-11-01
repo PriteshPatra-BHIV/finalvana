@@ -32,7 +32,7 @@
       linked_observation_id: "TC-Z03-EXT-OPENMETEO-OBS001",
       source: "Open-Meteo.com",
       license: "CC-BY 4.0",
-      notes: "Regional reference coordinates for Thane Creek environmental monitoring zone. Linked to live verified observation TC-Z03-EXT-OPENMETEO-OBS001."
+      notes: "Regional reference coordinates for Thane Creek environmental monitoring zone. Linked to retrieved observation TC-Z03-EXT-OPENMETEO-OBS001."
     },
     {
       zone_id: "MU-Z01",
@@ -454,6 +454,13 @@
 
         const marker = L.marker([p.lat, p.lon], { icon: customIcon });
 
+        // Bind click listener for bidirectional selection synchronization
+        marker.on("click", function () {
+          if (typeof window.selectMapLocation === "function") {
+            window.selectMapLocation(p.zoneKey, false);
+          }
+        });
+
         // Bind appropriate popup
         if (isLive) {
           marker.bindPopup(function () {
@@ -468,6 +475,7 @@
         self.markers[p.zoneKey] = marker;
         self.layers.zones.addLayer(marker);
       });
+      self.zoneMarkers = self.markers;
     },
 
     updateWithRuntimeData: function (runtimeData) {
@@ -552,61 +560,51 @@
     _buildObservationPopupContent: function () {
       const data = this.currentRuntimeData || {};
       const g1 = data.group1 || {};
-      const g2 = data.group2 || {};
       const g3 = data.group3 || {};
-      const g4 = data.group4 || {};
 
-      const hasCanonical = !!(g1.canonical_record_id || data.canonical_record_id);
-      const canonicalRecordId = hasCanonical
-        ? (g1.canonical_record_id || data.canonical_record_id)
-        : "NOT VERIFIED (FAIL-CLOSED)";
+      const hasCanonical = !!(g1 && !g1.failed && (g1.canonical_record_id || data.canonical_record_id));
+      const canonicalRecordId = hasCanonical ? (g1.canonical_record_id || data.canonical_record_id) : "UNRETRIEVED (LOOKUP FAILED)";
 
-      const measurementVal = (g3.measurement !== undefined && g3.measurement !== null)
-        ? (g3.measurement + " " + (g3.unit || "mm"))
-        : "0.1 mm (Precipitation)";
+      const measurementVal = hasCanonical
+        ? ((g3.measurement !== undefined && g3.measurement !== null)
+            ? (g3.measurement + " " + (g3.unit || "mm") + (g3.observation_type ? " (" + g3.observation_type + ")" : ""))
+            : "0.1 mm (Precipitation)")
+        : "Unavailable (Lookup Failed)";
 
-      const sourceVal = g3.source || "Open-Meteo.com";
-      const licenseVal = g3.license || "CC-BY 4.0";
-      const syntheticState = g3.synthetic_state || "CONTROLLED";
-      const ruling = g2.decision_action ? (g2.decision_action.toUpperCase() + ": " + (g2.reason || "synthetic_field_uncontrolled")) : "ABSTAIN: synthetic_field_uncontrolled";
-      const execution = g4.decision_action ? (g4.decision_action.toUpperCase() + " (" + (g4.dispatched ? "DISPATCHED" : "NOOP") + ")") : "ABSTAIN (NOOP)";
+      const qualityVal = hasCanonical ? (g3.quality_state || "CAPTURED") : "UNRESOLVED";
+      const statusClass = hasCanonical ? 'live' : 'unverified';
+      const statusLabel = hasCanonical ? 'RETRIEVED FROM MASTERDB' : 'LOOKUP FAILED';
+      const noteText = hasCanonical
+        ? 'Authoritative Group 1 MasterDB record retrieved. Pipeline executed under fail-closed constitutional doctrine.'
+        : 'Configured observation lookup failed or unretrieved from Group 1 MasterDB. Pipeline halted under fail-closed constitutional doctrine.';
 
       return '<div class="geo-popup-card">' +
         '<div class="geo-popup-top">' +
           '<div>' +
-            '<div class="geo-popup-title">Thane Creek Observation</div>' +
+            '<div class="geo-popup-title">Thane Creek Station</div>' +
             '<div class="geo-popup-subtitle">TC-Z03-EXT-OPENMETEO-OBS001</div>' +
           '</div>' +
-          '<span class="geo-popup-status ' + (hasCanonical ? 'live' : 'unverified') + '">' +
-            (hasCanonical ? 'CONFIRMED LIVE' : 'NOT VERIFIED') +
+          '<span class="geo-popup-status ' + statusClass + '">' +
+            statusLabel +
           '</span>' +
         '</div>' +
         '<div class="geo-popup-grid">' +
           '<div class="geo-popup-kv"><span class="geo-popup-k">Measurement</span><span class="geo-popup-v">' + measurementVal + '</span></div>' +
-          '<div class="geo-popup-kv"><span class="geo-popup-k">Elevation</span><span class="geo-popup-v">4.0 m MSL</span></div>' +
-          '<div class="geo-popup-kv"><span class="geo-popup-k">Ingestion Source</span><span class="geo-popup-v">' + sourceVal + '</span></div>' +
-          '<div class="geo-popup-kv"><span class="geo-popup-k">Data License</span><span class="geo-popup-v">' + licenseVal + '</span></div>' +
+          '<div class="geo-popup-kv"><span class="geo-popup-k">Coordinates</span><span class="geo-popup-v mono">19.1288° N, 72.9421° E (4.0m)</span></div>' +
+          '<div class="geo-popup-kv"><span class="geo-popup-k">Data Provenance</span><span class="geo-popup-v">Controlled Synthetic Benchmark</span></div>' +
+          '<div class="geo-popup-kv"><span class="geo-popup-k">Quality State</span><span class="geo-popup-v mono">' + qualityVal + '</span></div>' +
         '</div>' +
         '<div class="geo-popup-badges">' +
           '<div class="geo-badge-item" title="Canonical Record ID">CR: ' + canonicalRecordId + '</div>' +
-          '<div class="geo-badge-item" title="Synthetic Classification">State: ' + syntheticState + '</div>' +
-          '<div class="geo-badge-item" title="Group 2 Ruling">Ruling: ' + ruling + '</div>' +
-          '<div class="geo-badge-item" title="Group 4 Execution">Gate: ' + execution + '</div>' +
+          '<div class="geo-badge-item" title="Calibration">Calibration: Not Verified</div>' +
+          '<div class="geo-badge-item" title="GNSS">GNSS: Not Verified</div>' +
         '</div>' +
         '<div class="geo-popup-note">' +
-          (hasCanonical
-            ? 'Authoritative Group 1 canonical record verified. Pipeline executed under fail-closed constitutional doctrine.'
-            : 'FAIL-CLOSED: Group 1 canonical verification unavailable. Data unverified.') +
+          noteText +
         '</div>' +
         '<div class="geo-popup-actions">' +
-          '<button class="geo-btn-action" onclick="window.VanaGeoEngine.navAction(\'fieldSummaryView\')" title="Switch to Field Operations Summary">' +
-            'Field Detail' +
-          '</button>' +
-          '<button class="geo-btn-action secondary" onclick="window.VanaGeoEngine.navAction(\'lineageView\')" title="Audit Four-Stage Lineage Trace">' +
-            'Lineage' +
-          '</button>' +
-          '<button class="geo-btn-action secondary" onclick="window.VanaGeoEngine.navAction(\'governanceView\')" title="View Automated Governance Matrix">' +
-            'Governance' +
+          '<button class="geo-btn-action" style="flex:1;" onclick="window.switchMainTab(\'monitoringView\', document.getElementById(\'navItemMonitoring\'))" title="Inspect in Environmental Monitoring">' +
+            'View in Environmental Monitoring' +
           '</button>' +
         '</div>' +
       '</div>';
@@ -616,23 +614,23 @@
       return '<div class="geo-popup-card">' +
         '<div class="geo-popup-top">' +
           '<div>' +
-            '<div class="geo-popup-title">' + props.name + ' Regional Reference</div>' +
-            '<div class="geo-popup-subtitle">Zone ' + props.zone_id + ' · Regional Reference Coordinates</div>' +
+            '<div class="geo-popup-title">' + props.name + ' Monitored Location</div>' +
+            '<div class="geo-popup-subtitle">Zone ' + props.zone_id + ' · Regional Surveillance Zone</div>' +
           '</div>' +
-          '<span class="geo-popup-status pending">REFERENCE / PENDING</span>' +
+          '<span class="geo-popup-status pending">AWAITING SENSOR FEED</span>' +
         '</div>' +
         '<div class="geo-popup-grid">' +
-          '<div class="geo-popup-kv"><span class="geo-popup-k">Reference Coords</span><span class="geo-popup-v mono">' + props.lat.toFixed(4) + ', ' + props.lon.toFixed(4) + '</span></div>' +
-          '<div class="geo-popup-kv"><span class="geo-popup-k">Geographic Role</span><span class="geo-popup-v">Reference Location</span></div>' +
+          '<div class="geo-popup-kv"><span class="geo-popup-k">Reference Coords</span><span class="geo-popup-v mono">' + props.lat.toFixed(4) + '° N, ' + props.lon.toFixed(4) + '° E</span></div>' +
+          '<div class="geo-popup-kv"><span class="geo-popup-k">Deployment Status</span><span class="geo-popup-v" style="color:var(--status-warn)">Pending Sensor Hardware</span></div>' +
           '<div class="geo-popup-kv"><span class="geo-popup-k">Authoritative Obs</span><span class="geo-popup-v" style="color:var(--status-warn)">UNAVAILABLE</span></div>' +
-          '<div class="geo-popup-kv"><span class="geo-popup-k">Monitoring Status</span><span class="geo-popup-v mono" style="color:var(--status-warn)">PENDING UPSTREAM</span></div>' +
+          '<div class="geo-popup-kv"><span class="geo-popup-k">Next Step</span><span class="geo-popup-v">Wait for telemetry feed</span></div>' +
         '</div>' +
         '<div class="geo-popup-note">' +
-          '<strong>Regional reference location.</strong> Reference locations do not imply active monitoring. Per constitutional doctrine, unpersisted data is never fabricated.' +
+          'Regional surveillance location. Awaiting upstream field sensor deployment. Under VANA strict fail-closed doctrine, unpersisted data is never simulated.' +
         '</div>' +
         '<div class="geo-popup-actions">' +
-          '<button class="geo-btn-action secondary" style="flex:1" onclick="window.VanaGeoEngine.navAction(\'fieldSummaryView\')">' +
-            'View Regional Feeds in Field Summary' +
+          '<button class="geo-btn-action secondary" style="flex:1" onclick="if(typeof window.selectMapLocation===\'function\'){window.selectMapLocation(\'' + props.zoneKey + '\', false);}">' +
+            'Select Location Details' +
           '</button>' +
         '</div>' +
       '</div>';

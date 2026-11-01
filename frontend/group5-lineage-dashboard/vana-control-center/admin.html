@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <meta name="vite-api-url" content="">
   <title>VANA: Administration Control Plane</title>
   <meta name="description" content="VANA Environmental Governance System: Administrator Control Plane for system health, access control, geospatial configuration, governance policies, and audit log.">
@@ -11,225 +11,205 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
   <!-- Base design tokens from operational dashboard -->
-  <link rel="stylesheet" href="styles.css?v=2">
+  <link rel="stylesheet" href="styles.css?v=11">
   <!-- Admin-specific layout and components -->
-  <link rel="stylesheet" href="admin.css?v=2">
+  <link rel="stylesheet" href="admin.css?v=13">
 </head>
 <body style="margin:0;padding:0">
 
 <div class="admin-app" id="adminApp">
 
-  <!-- TOP HEADER -->
-  <header class="admin-top-header">
-    <div class="admin-header-left">
-      <a href="index.html" class="admin-back-btn" title="Return to Operational Dashboard">
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+  <!-- Mobile Backdrop Overlay for Admin Sidebar Drawer -->
+  <div class="admin-sidebar-backdrop" id="adminSidebarBackdrop" onclick="toggleAdminSidebar(false)"></div>
+
+  <!-- =========================================================================
+       LEFT SIDEBAR NAVIGATION (Deep Forest Green Shell #073B32)
+       ========================================================================= -->
+  <aside class="admin-sidebar" id="adminSidebar">
+    <div>
+      <div class="admin-sidebar-header">
+        <div class="admin-emblem-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 2L3 7v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V7l-9-5z"/>
+            <path d="M12 6v12"/>
+            <path d="M8 10h8"/>
+          </svg>
+        </div>
+        <div class="admin-brand-text">
+          <div class="admin-brand-title">VANA</div>
+          <div class="admin-brand-subtitle">Administration Control Plane</div>
+        </div>
+        <button class="admin-sidebar-close-btn" onclick="toggleAdminSidebar(false)" aria-label="Close navigation">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+        </button>
+      </div>
+
+      <nav class="admin-nav-menu">
+        <div class="admin-nav-section-label">System Administration</div>
+
+        <!-- 1. Administrative Overview -->
+        <button class="admin-nav-item active" id="nav-admin-overview" onclick="adminNav('admin-overview', this)" title="Administrative Overview & Session Status">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+          <span>Overview</span>
+          <span class="admin-nav-badge live">Live</span>
+        </button>
+
+        <!-- 2. System Health & Gateway Services -->
+        <button class="admin-nav-item" id="nav-system-services" onclick="adminNav('system-services', this)" title="Backend Services Connectivity & Gateway Routing">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
+          <span>System Health &amp; Services</span>
+        </button>
+
+        <!-- 3. User & Access Management -->
+        <button class="admin-nav-item" id="nav-access-management" onclick="adminNav('access-management', this)" title="Role Hierarchy & Permission Matrix">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          <span>User &amp; Access</span>
+        </button>
+
+        <!-- 4. Governance Doctrine & Invariants -->
+        <button class="admin-nav-item" id="nav-gov-doctrine" onclick="adminNav('gov-doctrine', this)" title="Constitutional Pipeline & Fail-Closed Invariants">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+          <span>Governance Doctrine</span>
+        </button>
+
+        <!-- 5. Geospatial Configuration -->
+        <button class="admin-nav-item" id="nav-geo-config" onclick="adminNav('geo-config', this)" title="Monitoring Zones & Cartographic Parameters">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"></polygon><line x1="8" y1="2" x2="8" y2="18"></line><line x1="16" y1="6" x2="16" y2="22"></line></svg>
+          <span>Geospatial Config</span>
+          <span class="admin-nav-badge">6 Zones</span>
+        </button>
+
+        <!-- 6. Audit & Operational Trace -->
+        <button class="admin-nav-item" id="nav-audit-trace" onclick="adminNav('audit-trace', this)" title="Session Activity & Operational Exceptions">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+          <span>Audit &amp; Trace</span>
+          <span class="admin-nav-badge" id="adminAuditCountBadge">Session</span>
+        </button>
+      </nav>
+    </div>
+
+    <!-- Sidebar Footer -->
+    <div class="admin-sidebar-footer">
+      <a href="index.html" class="admin-return-dashboard-btn" title="Return to Operational Dashboard">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <polyline points="15 18 9 12 15 6"></polyline>
         </svg>
-        Dashboard
+        <span>Operational Dashboard</span>
       </a>
-      <div class="admin-header-divider"></div>
-      <div class="admin-header-title">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--brand)">
-          <path d="M12 2L3 7v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V7l-9-5z"/>
-        </svg>
-        <div>
-          <div class="admin-header-title-text">VANA: Administration Control Plane</div>
-          <div class="admin-header-title-sub">Government of Maharashtra · Dept of Environment &amp; Forest · System Administration</div>
+
+      <div class="admin-persona-card" id="adminPersonaCard">
+        <div class="admin-persona-avatar" id="adminPersonaAvatar">AD</div>
+        <div class="admin-persona-info">
+          <div class="admin-persona-name" id="adminPersonaName">Administrator</div>
+          <div class="admin-persona-role" id="adminPersonaRole">Dept of Environment</div>
         </div>
       </div>
     </div>
-    <div class="admin-header-right" id="adminHeaderRight">
-      <div class="admin-role-badge" id="adminRoleBadge">--</div>
-      <div id="adminUserLabel" style="font-size:11px;color:var(--text-secondary)"></div>
-      <button class="admin-auth-btn" id="adminLogoutBtn" onclick="adminLogout()" style="display:none;" title="Sign out of Admin Control Plane">Sign Out</button>
-      <button class="admin-auth-btn primary" id="adminLoginBtn" onclick="adminOpenLoginModal()" title="Sign in with administrative credentials">Sign In</button>
-    </div>
-  </header>
+  </aside>
 
-  <!-- BODY: SIDEBAR + CONTENT -->
-  <div class="admin-body">
+  <!-- =========================================================================
+       MAIN ADMINISTRATIVE VIEWPORT
+       ========================================================================= -->
+  <div class="admin-viewport">
 
-    <!-- LEFT ADMIN NAVIGATION -->
-    <nav class="admin-sidebar" id="adminSidebar">
-
-      <!-- SYSTEM -->
-      <div class="admin-nav-group">
-        <div class="admin-nav-group-label">System</div>
-        <button class="admin-nav-item active" id="nav-system-health" onclick="adminNav('system-health', this)">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
-          System Health
+    <!-- Top Administrative Header -->
+    <header class="admin-top-header">
+      <div class="admin-header-left">
+        <button class="toggle-sidebar-btn" onclick="toggleAdminSidebar()" title="Toggle Navigation">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
         </button>
-        <button class="admin-nav-item" id="nav-system-services" onclick="adminNav('system-services', this)">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
-          Backend Services
-        </button>
-        <button class="admin-nav-item" id="nav-system-config" onclick="adminNav('system-config', this)">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-          Configuration
-        </button>
+        <div class="admin-breadcrumb">
+          <a href="index.html" class="admin-breadcrumb-link">Control Center</a>
+          <span class="admin-breadcrumb-separator">/</span>
+          <span class="admin-breadcrumb-current" id="adminBreadcrumbTitle">Administration</span>
+        </div>
       </div>
 
-      <!-- ACCESS CONTROL -->
-      <div class="admin-nav-group">
-        <div class="admin-nav-group-label">Access Control</div>
-        <button class="admin-nav-item" id="nav-access-users" onclick="adminNav('access-users', this)">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-          Users
+      <div class="admin-header-right">
+        <!-- Live Session Validation Indicator -->
+        <div class="admin-session-pill" id="adminSessionPill" title="Backend session validation status">
+          <span class="status-dot"></span>
+          <span id="adminSessionText">Validating...</span>
+        </div>
+
+        <!-- Role Badge -->
+        <div class="admin-role-badge" id="adminRoleBadge">--</div>
+
+        <!-- User Identity Label -->
+        <div class="admin-user-label hide-on-mobile" id="adminUserLabel"></div>
+
+        <!-- Auth Actions -->
+        <button class="admin-header-btn" id="adminLogoutBtn" onclick="adminLogout()" style="display:none;" title="Sign out of Admin Control Plane">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+          <span>Sign Out</span>
         </button>
-        <button class="admin-nav-item" id="nav-access-roles" onclick="adminNav('access-roles', this)">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L3 7v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V7l-9-5z"/></svg>
-          Roles
-        </button>
-        <button class="admin-nav-item" id="nav-access-permissions" onclick="adminNav('access-permissions', this)">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-          Permissions
+        <button class="admin-header-btn primary" id="adminLoginBtn" onclick="adminOpenLoginModal()" title="Sign in with administrative credentials">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
+          <span>Sign In</span>
         </button>
       </div>
+    </header>
 
-      <!-- GEOSPATIAL -->
-      <div class="admin-nav-group">
-        <div class="admin-nav-group-label">Geospatial</div>
-        <button class="admin-nav-item" id="nav-geo-zones" onclick="adminNav('geo-zones', this)">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/></svg>
-          Monitoring Zones
-        </button>
-        <button class="admin-nav-item" id="nav-geo-layers" onclick="adminNav('geo-layers', this)">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>
-          Map Layers
-        </button>
-        <button class="admin-nav-item" id="nav-geo-config" onclick="adminNav('geo-config', this)">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
-          Geographic Config
-        </button>
-      </div>
-
-      <!-- GOVERNANCE -->
-      <div class="admin-nav-group">
-        <div class="admin-nav-group-label">Governance</div>
-        <button class="admin-nav-item" id="nav-gov-policies" onclick="adminNav('gov-policies', this)">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-          Governance Policies
-        </button>
-        <button class="admin-nav-item" id="nav-gov-failclosed" onclick="adminNav('gov-failclosed', this)">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/></svg>
-          Fail-Closed Rules
-        </button>
-        <button class="admin-nav-item" id="nav-gov-evidence" onclick="adminNav('gov-evidence', this)">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
-          Evidence Configuration
-        </button>
-      </div>
-
-      <!-- OPERATIONS -->
-      <div class="admin-nav-group">
-        <div class="admin-nav-group-label">Operations</div>
-        <button class="admin-nav-item" id="nav-ops-alerts" onclick="adminNav('ops-alerts', this)">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
-          Alerts
-        </button>
-        <button class="admin-nav-item" id="nav-ops-alertrules" onclick="adminNav('ops-alertrules', this)">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
-          Alert Rules
-        </button>
-        <button class="admin-nav-item" id="nav-ops-notifications" onclick="adminNav('ops-notifications', this)">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 16 12 14 15 10 15 8 12 2 12"/><path d="M5.45 5.11L2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/></svg>
-          Notification Rules
-        </button>
-      </div>
-
-      <!-- AUDIT -->
-      <div class="admin-nav-group">
-        <div class="admin-nav-group-label">Audit</div>
-        <button class="admin-nav-item" id="nav-audit-activity" onclick="adminNav('audit-activity', this)">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
-          Administrative Activity
-        </button>
-      </div>
-
-    </nav>
-
-    <!-- ADMIN CONTENT AREA -->
+    <!-- Main Scrollable Content Canvas -->
     <main class="admin-content" id="adminContent">
 
-      <!-- SYSTEM: Health -->
-      <div class="admin-section active" id="section-system-health">
-        <!-- Populated by admin.js -->
-      </div>
+      <!-- SECTION 1: ADMINISTRATIVE OVERVIEW -->
+      <section class="admin-section active" id="section-admin-overview">
+        <!-- Rendered dynamically by renderAdminOverview() in admin.js -->
+      </section>
 
-      <!-- SYSTEM: Backend Services -->
-      <div class="admin-section" id="section-system-services">
-      </div>
+      <!-- SECTION 2: SYSTEM HEALTH & GATEWAY SERVICES -->
+      <section class="admin-section" id="section-system-services">
+        <!-- Rendered dynamically by renderSystemServices() in admin.js -->
+      </section>
 
-      <!-- SYSTEM: Configuration -->
-      <div class="admin-section" id="section-system-config">
-      </div>
+      <!-- SECTION 3: USER & ACCESS MANAGEMENT -->
+      <section class="admin-section" id="section-access-management">
+        <!-- Rendered dynamically by renderAccessManagement() in admin.js -->
+      </section>
 
-      <!-- ACCESS: Users -->
-      <div class="admin-section" id="section-access-users">
-      </div>
+      <!-- SECTION 4: GOVERNANCE DOCTRINE & INVARIANTS -->
+      <section class="admin-section" id="section-gov-doctrine">
+        <!-- Rendered dynamically by renderGovDoctrine() in admin.js -->
+      </section>
 
-      <!-- ACCESS: Roles -->
-      <div class="admin-section" id="section-access-roles">
-      </div>
+      <!-- SECTION 5: GEOSPATIAL CONFIGURATION -->
+      <section class="admin-section" id="section-geo-config">
+        <!-- Rendered dynamically by renderGeoConfig() in admin.js -->
+      </section>
 
-      <!-- ACCESS: Permissions -->
-      <div class="admin-section" id="section-access-permissions">
-      </div>
-
-      <!-- GEO: Monitoring Zones -->
-      <div class="admin-section" id="section-geo-zones">
-      </div>
-
-      <!-- GEO: Map Layers -->
-      <div class="admin-section" id="section-geo-layers">
-      </div>
-
-      <!-- GEO: Geographic Config -->
-      <div class="admin-section" id="section-geo-config">
-      </div>
-
-      <!-- GOV: Governance Policies -->
-      <div class="admin-section" id="section-gov-policies">
-      </div>
-
-      <!-- GOV: Fail-Closed Rules -->
-      <div class="admin-section" id="section-gov-failclosed">
-      </div>
-
-      <!-- GOV: Evidence Configuration -->
-      <div class="admin-section" id="section-gov-evidence">
-      </div>
-
-      <!-- OPS: Alerts -->
-      <div class="admin-section" id="section-ops-alerts">
-      </div>
-
-      <!-- OPS: Alert Rules -->
-      <div class="admin-section" id="section-ops-alertrules">
-      </div>
-
-      <!-- OPS: Notification Rules -->
-      <div class="admin-section" id="section-ops-notifications">
-      </div>
-
-      <!-- AUDIT: Activity -->
-      <div class="admin-section" id="section-audit-activity">
-      </div>
+      <!-- SECTION 6: AUDIT & OPERATIONAL TRACE -->
+      <section class="admin-section" id="section-audit-trace">
+        <!-- Rendered dynamically by renderAuditTrace() in admin.js -->
+      </section>
 
     </main>
   </div>
 </div>
 
-<!-- ADMINISTRATIVE SIGN IN MODAL -->
-<div class="admin-modal-overlay" id="adminLoginModal" style="display:none;" role="dialog" aria-modal="true" aria-labelledby="adminModalTitle">
+<!-- =========================================================================
+     ACCESS BARRIER OVERLAY (FOR UNAUTHENTICATED OR PARTICIPANT ROLES)
+     ========================================================================= -->
+<div class="admin-barrier-overlay" id="adminBarrierOverlay" style="display:none;">
+  <div class="admin-barrier-box" id="adminBarrierContent">
+    <!-- Populated dynamically by admin.js -->
+  </div>
+</div>
+
+<!-- =========================================================================
+     ADMINISTRATIVE SIGN IN MODAL (TOPMOST INTERACTIVE LAYER)
+     ========================================================================= -->
+<div class="admin-modal-overlay" id="adminLoginModal" style="display:none;" role="dialog" aria-modal="true" aria-labelledby="adminModalTitle" onclick="if (event.target === this) adminCloseLoginModal()">
   <div class="admin-modal-box">
     <div class="admin-modal-header">
-      <div class="admin-modal-title" id="adminModalTitle">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--brand)">
-          <path d="M12 2L3 7v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V7l-9-5z"/>
-        </svg>
-        Administrative Sign In
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;width:100%;">
+        <div class="admin-modal-title" id="adminModalTitle">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--brand)">
+            <path d="M12 2L3 7v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V7l-9-5z"/>
+          </svg>
+          Administrative Sign In
+        </div>
+        <button type="button" class="admin-modal-close-btn" onclick="adminCloseLoginModal()" aria-label="Close modal">&times;</button>
       </div>
       <div class="admin-modal-subtitle">VANA Environmental Governance Control Plane</div>
     </div>
@@ -244,8 +224,8 @@
         <input type="password" id="adminPasswordInput" class="admin-form-input" placeholder="••••••••••••" required autocomplete="current-password">
       </div>
       <div class="admin-form-actions">
-        <a href="index.html" class="admin-btn secondary" style="text-decoration:none;display:inline-flex;align-items:center;">Dashboard</a>
-        <button type="submit" id="adminLoginSubmitBtn" class="admin-btn primary">Sign In</button>
+        <button type="button" class="admin-header-btn" onclick="adminCloseLoginModal()">Cancel</button>
+        <button type="submit" id="adminLoginSubmitBtn" class="admin-header-btn primary">Sign In</button>
       </div>
     </form>
     <div class="admin-modal-footnote">
@@ -254,16 +234,9 @@
   </div>
 </div>
 
-<!-- ACCESS BARRIER OVERLAY (FOR UNAUTHENTICATED OR PARTICIPANT ROLES) -->
-<div class="admin-barrier-overlay" id="adminBarrierOverlay" style="display:none;">
-  <div class="admin-barrier-box" id="adminBarrierContent">
-    <!-- Populated dynamically by admin.js -->
-  </div>
-</div>
-
 <!-- Script loading order: config → auth → admin -->
-<script src="config.js"></script>
-<script src="admin-auth.js"></script>
-<script src="admin.js"></script>
+<script src="config.js?v=15"></script>
+<script src="admin-auth.js?v=15"></script>
+<script src="admin.js?v=15"></script>
 </body>
 </html>
