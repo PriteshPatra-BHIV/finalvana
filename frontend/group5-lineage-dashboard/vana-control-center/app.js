@@ -138,9 +138,11 @@ document.addEventListener("DOMContentLoaded", async () => {
   if (window.innerWidth > 768) {
     try {
       const persistedCollapsed = sessionStorage.getItem("vana_sidebar_collapsed");
+      const urlParams = new URLSearchParams(window.location.search);
+      const isParamCollapsed = urlParams.get("sidebar") === "collapsed";
       const sidebar = document.getElementById("mainSidebar");
       const toggleBtn = document.getElementById("sidebarToggleBtn");
-      if (persistedCollapsed === "true" && sidebar) {
+      if ((persistedCollapsed === "true" || isParamCollapsed) && sidebar) {
         sidebar.classList.add("collapsed");
         if (toggleBtn) {
           toggleBtn.setAttribute("aria-expanded", "false");
@@ -292,13 +294,24 @@ function handleDashboardLogout() {
 function startClock() {
   const dateEl = document.getElementById("liveDateStr");
   const timeEl = document.getElementById("liveTimeStr");
-  if (!dateEl && !timeEl) return;
+  const headTimeEl = document.getElementById("headerClockTime");
+  const headDateEl = document.getElementById("headerClockDate");
+
   function update() {
     const now = new Date();
     const dateStr = now.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
     const timeStr = now.toLocaleTimeString("en-GB", { hour12: false }) + " IST";
     if (dateEl) dateEl.textContent = dateStr;
     if (timeEl) timeEl.textContent = timeStr;
+
+    if (headTimeEl) {
+      headTimeEl.textContent = now.toLocaleTimeString("en-GB", { hour12: false });
+    }
+    if (headDateEl) {
+      const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+      const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+      headDateEl.textContent = `${days[now.getDay()]}, ${now.getDate()} ${months[now.getMonth()]} ${now.getFullYear()}`;
+    }
   }
   update();
   setInterval(update, 1000);
@@ -652,13 +665,13 @@ async function fetchLive(targetObservationId) {
 
   const okCount = (g1Success ? 1 : 0) + (g2Success ? 1 : 0) + (g4Success ? 1 : 0);
   if (okCount === 3) {
-    if (statusText) statusText.textContent = "All Systems Online · Fail-Closed Active";
+    if (statusText) statusText.textContent = "SYSTEM OPERATIONAL";
     if (statusPill) statusPill.className = "system-status-pill";
   } else if (okCount > 0) {
-    if (statusText) statusText.textContent = `${okCount} of 3 Services Reachable`;
+    if (statusText) statusText.textContent = `${okCount} OF 3 SERVICES REACHABLE`;
     if (statusPill) statusPill.className = "system-status-pill warn";
   } else {
-    if (statusText) statusText.textContent = "0 of 3 Services Reachable";
+    if (statusText) statusText.textContent = "0 OF 3 SERVICES REACHABLE";
     if (statusPill) statusPill.className = "system-status-pill error";
   }
 }
@@ -676,7 +689,7 @@ function renderDashboard(data) {
   if (pinnedOid) pinnedOid.textContent = data.observation_id || currentObservationId;
   if (pinnedCrId) {
     if (data.group1 && data.group1.failed) {
-      pinnedCrId.textContent = "NOT FOUND / UNRESOLVED";
+      pinnedCrId.textContent = data.group1.http_status === 404 ? "RECORD NOT FOUND" : "RETRIEVAL FAILED";
       pinnedCrId.style.color = "var(--status-critical)";
     } else {
       pinnedCrId.textContent = data.canonical_record_id || "NOT VERIFIED";
@@ -688,7 +701,7 @@ function renderDashboard(data) {
   }
   if (pinnedOutcomeTag) {
     if (data.group1 && data.group1.failed) {
-      pinnedOutcomeTag.textContent = "Observation Not Found";
+      pinnedOutcomeTag.textContent = data.group1.http_status === 404 ? "RECORD NOT FOUND" : "UPSTREAM SERVICE UNAVAILABLE";
       pinnedOutcomeTag.style.color = "var(--status-critical)";
     } else {
       const isPaused = (data.group4 && data.group4.ruling === "ABSTAIN") || (data.group2 && data.group2.ruling === "ABSTAIN");
@@ -734,13 +747,13 @@ function renderKPIs(data) {
   const statusPill = document.getElementById("systemStatusPill");
   if (statusText && statusPill) {
     if (okCount === 3) {
-      statusText.textContent = "All Systems Online";
+      statusText.textContent = "System Operational";
       statusPill.className = "system-status-pill";
     } else if (okCount > 0) {
-      statusText.textContent = `${okCount} of 3 Services Active`;
+      statusText.textContent = `${okCount}/3 Services Active`;
       statusPill.className = "system-status-pill warn";
     } else {
-      statusText.textContent = "Offline";
+      statusText.textContent = "System Offline";
       statusPill.className = "system-status-pill error";
     }
   }
@@ -999,7 +1012,7 @@ function renderOverviewLatestObservation(data) {
 
         <div class="latest-obs-footer">
           <span>Source: None</span>
-          <span>Status: ${is404 ? "Observation Not Found" : "Service Unavailable"}</span>
+          <span>Status: ${is404 ? "RECORD NOT FOUND" : "UPSTREAM SERVICE UNAVAILABLE"}</span>
         </div>
 
         <div class="latest-obs-actions">
@@ -2124,7 +2137,7 @@ function renderDecisions(data) {
   const badge = document.getElementById("decisionsStatusBadge");
   if (badge) {
     if (g1Failed) {
-      badge.textContent = "Observation Not Found";
+      badge.textContent = is404 ? "RECORD NOT FOUND" : "UPSTREAM SERVICE UNAVAILABLE";
       badge.className = "status-pill warn";
     } else {
       badge.textContent = isPaused ? "Assessment Paused" : "Assessment Approved";
@@ -2158,7 +2171,7 @@ function renderDecisions(data) {
   const outcomeDesc = document.getElementById("decisionsOutcomeDesc");
 
   if (outcomeTitle) {
-    outcomeTitle.textContent = is404 ? "Observation Not Found" : (isUnavailable ? "Service Unavailable" : (isPaused ? "Action paused" : "Action allowed"));
+    outcomeTitle.textContent = is404 ? "RECORD NOT FOUND" : (isUnavailable ? "UPSTREAM SERVICE UNAVAILABLE" : (isPaused ? "Action paused" : "Action allowed"));
   }
   if (outcomeDesc) {
     if (is404) {
@@ -2441,7 +2454,7 @@ function renderHistoryEvidence(data) {
   }
   if (audObsSub) {
     if (g1Failed) {
-      audObsSub.textContent = g1.http_status === 404 ? "Observation Not Found in Ledger" : "MasterDB Service Unavailable (Lookup Failed)";
+      audObsSub.textContent = g1.http_status === 404 ? "RECORD NOT FOUND in Ledger" : "UPSTREAM SERVICE UNAVAILABLE (Lookup Failed)";
     } else {
       audObsSub.textContent = g1.zone_name ? `${g1.zone_name} (${g1.zone_id || "TC-Z03"})` : "Thane Creek Surveillance Zone (TC-Z03)";
     }
