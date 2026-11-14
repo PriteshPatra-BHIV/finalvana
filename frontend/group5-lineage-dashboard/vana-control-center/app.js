@@ -165,6 +165,13 @@ document.addEventListener("DOMContentLoaded", async () => {
   if (initialTab) {
     switchMainTab(initialTab);
   }
+
+  window.addEventListener("hashchange", () => {
+    const hash = window.location.hash.replace("#", "").trim();
+    if (hash) {
+      switchMainTab(hash);
+    }
+  });
 });
 
 // =============================================================================
@@ -334,15 +341,54 @@ function startClock() {
 }
 
 // =============================================================================
-// EVIDENCE PACK LOADER
+// EVIDENCE PACK LOADER & SYNTAX HIGHLIGHTER
 // =============================================================================
+function formatJsonSyntax(json) {
+  let jsonStr = typeof json !== "string" ? JSON.stringify(json, null, 2) : json;
+  return jsonStr
+    .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+    .replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g, function (match) {
+      let cls = "json-number";
+      if (/^"/.test(match)) {
+        if (/:$/.test(match)) {
+          cls = "json-key";
+        } else {
+          cls = "json-string";
+        }
+      } else if (/true|false/.test(match)) {
+        cls = "json-boolean";
+      } else if (/null/.test(match)) {
+        cls = "json-null";
+      }
+      return '<span class="' + cls + '">' + match + '</span>';
+    });
+}
+
+function copyEvidenceJson() {
+  const jsonToCopy = evidencePackData ? JSON.stringify(evidencePackData, null, 2) : (
+    document.getElementById("rawEvidencePackBox") ? document.getElementById("rawEvidencePackBox").innerText : ""
+  );
+  if (jsonToCopy) {
+    navigator.clipboard.writeText(jsonToCopy).then(() => {
+      const btn = document.getElementById("copyEvidenceBtnText");
+      if (btn) {
+        const orig = btn.textContent;
+        btn.textContent = "Copied!";
+        setTimeout(() => { btn.textContent = orig; }, 2000);
+      }
+    });
+  }
+}
+
 async function loadDefaultEvidencePack() {
   try {
     const res = await fetch("SOURCE_EVIDENCE_PACK_EMITTED_TC-Z03-EXT-OPENMETEO-OBS001.json");
     if (res.ok) {
       evidencePackData = await res.json();
       const rawBox = document.getElementById("rawEvidencePackBox");
-      if (rawBox) rawBox.textContent = JSON.stringify(evidencePackData, null, 2);
+      if (rawBox) {
+        rawBox.innerHTML = formatJsonSyntax(evidencePackData);
+      }
       console.log("[VANA Platform] Loaded Evidence Pack:", evidencePackData.evidence_pack_id);
     }
   } catch (e) {
@@ -2476,7 +2522,7 @@ function renderDecisions(data) {
   if (techExec) techExec.textContent = (g4 && g4.execution_id) || "null";
 
   if (techRawJson) {
-    techRawJson.textContent = JSON.stringify({
+    const rawPayload = {
       observation_id: data.observation_id,
       canonical_record_id: data.canonical_record_id,
       context_id: data.context_id,
@@ -2485,7 +2531,12 @@ function renderDecisions(data) {
       decision_action: g4.decision_action || "noop",
       fail_closed_enforced: true,
       http_status: (g4 && g4.http_status) || 200
-    }, null, 2);
+    };
+    if (typeof formatJsonSyntax === "function") {
+      techRawJson.innerHTML = formatJsonSyntax(rawPayload);
+    } else {
+      techRawJson.textContent = JSON.stringify(rawPayload, null, 2);
+    }
   }
 }
 
@@ -3248,29 +3299,65 @@ function switchMainTab(viewKey, navItem) {
   const viewMap = {
     overviewView: "viewOverview",
     overview: "viewOverview",
+    dashboard: "viewOverview",
     fieldSummaryView: "viewOverview",
+    fieldSummary: "viewOverview",
+
     monitoringView: "viewMonitoring",
     monitoring: "viewMonitoring",
+    sensor: "viewMonitoring",
+    sensorView: "viewMonitoring",
+    sensorIntake: "viewMonitoring",
+    "sensor-intake": "viewMonitoring",
+    telemetry: "viewMonitoring",
+
     mapView: "viewMap",
     map: "viewMap",
+    spatial: "viewMap",
+    spatialView: "viewMap",
+    spatialIntelligence: "viewMap",
     regionalView: "viewMap",
+    fieldOps: "viewMap",
+    fieldOpsView: "viewMap",
+    fieldOperations: "viewMap",
+    fieldops: "viewMap",
+
     decisionsView: "viewDecisions",
     decisions: "viewDecisions",
     governanceView: "viewDecisions",
     governance: "viewDecisions",
+    pravah: "viewDecisions",
+    niyantran: "viewDecisions",
+
     historyView: "viewHistory",
     history: "viewHistory",
+    masterdb: "viewHistory",
+    masterdbView: "viewHistory",
+    masterDB: "viewHistory",
+    canonical: "viewHistory",
     lineageView: "viewHistory",
+    lineage: "viewHistory",
     replayView: "viewHistory",
+    replay: "viewHistory",
     scientificView: "viewHistory",
-    evidencePackView: "viewHistory"
+    scientific: "viewHistory",
+    evidencePackView: "viewHistory",
+    evidence: "viewHistory",
+    analyticsView: "viewHistory",
+    analytics: "viewHistory",
+    reportsView: "viewHistory",
+    reports: "viewHistory"
   };
 
   const targetViewId = viewMap[viewKey] || "viewOverview";
 
   // Fast-path: if already on target view and no subtab change requested
-  const isSubtabRequest = ["replayView", "evidencePackView", "scientificView", "lineageView"].includes(viewKey);
-  if (targetViewId === activeMainView && !isSubtabRequest) {
+  const isSubtabRequest = [
+    "replayView", "evidencePackView", "scientificView", "lineageView",
+    "analytics", "analyticsView", "reports", "reportsView", "masterdb", "masterDB", "fieldOps", "fieldops"
+  ].includes(viewKey);
+  
+  if (targetViewId === activeMainView && !isSubtabRequest && !navItem) {
     closeMobileSidebar();
     return;
   }
@@ -3285,17 +3372,57 @@ function switchMainTab(viewKey, navItem) {
 
   // Sync Sidebar
   document.querySelectorAll(".nav-item").forEach(el => el.classList.remove("active"));
-  const navElementMap = {
-    viewOverview: "navItemOverview",
-    viewMonitoring: "navItemMonitoring",
-    viewMap: "navItemMap",
-    viewDecisions: "navItemDecisions",
-    viewHistory: "navItemHistory"
-  };
-  const activeNavId = navElementMap[targetViewId];
-  if (activeNavId) {
-    const navEl = document.getElementById(activeNavId);
-    if (navEl) navEl.classList.add("active");
+  
+  let targetNavEl = null;
+  if (navItem && typeof navItem.classList?.add === "function") {
+    targetNavEl = navItem;
+  } else if (typeof navItem === "string") {
+    targetNavEl = document.getElementById(navItem);
+  }
+
+  if (!targetNavEl) {
+    const keyToNavId = {
+      overviewView: "navItemOverview",
+      overview: "navItemOverview",
+      dashboard: "navItemOverview",
+      mapView: "navItemMap",
+      map: "navItemMap",
+      spatial: "navItemMap",
+      fieldOps: "navItemFieldOps",
+      fieldops: "navItemFieldOps",
+      fieldOperations: "navItemFieldOps",
+      monitoringView: "navItemMonitoring",
+      monitoring: "navItemMonitoring",
+      sensor: "navItemMonitoring",
+      "sensor-intake": "navItemMonitoring",
+      masterdb: "navItemMasterDB",
+      masterDB: "navItemMasterDB",
+      historyView: "navItemMasterDB",
+      history: "navItemMasterDB",
+      decisionsView: "navItemDecisions",
+      decisions: "navItemDecisions",
+      pravah: "navItemDecisions",
+      niyantran: "navItemDecisions",
+      analytics: "navItemAnalytics",
+      analyticsView: "navItemAnalytics",
+      reports: "navItemAnalytics",
+      reportsView: "navItemAnalytics",
+      admin: "navItemAdmin"
+    };
+    const navId = keyToNavId[viewKey] || (
+      targetViewId === "viewHistory" ? "navItemMasterDB" : (
+        targetViewId === "viewMap" ? "navItemMap" : (
+          targetViewId === "viewMonitoring" ? "navItemMonitoring" : (
+            targetViewId === "viewDecisions" ? "navItemDecisions" : "navItemOverview"
+          )
+        )
+      )
+    );
+    targetNavEl = document.getElementById(navId) || document.getElementById("navItemHistory");
+  }
+
+  if (targetNavEl) {
+    targetNavEl.classList.add("active");
   }
 
   // Sync Mobile Bottom Nav
@@ -3324,10 +3451,37 @@ function switchMainTab(viewKey, navItem) {
   }
 
   // If specific history alias was clicked, auto-switch subtab
-  if (viewKey === "replayView") switchHistorySubTab("replay");
-  if (viewKey === "evidencePackView") switchHistorySubTab("evidence");
-  if (viewKey === "scientificView") switchHistorySubTab("scientific");
-  if (viewKey === "lineageView") switchHistorySubTab("provenance");
+  if (viewKey === "replayView" || viewKey === "replay") switchHistorySubTab("replay");
+  if (viewKey === "evidencePackView" || viewKey === "analytics" || viewKey === "analyticsView" || viewKey === "reports" || viewKey === "reportsView") {
+    switchHistorySubTab("evidence");
+  }
+  if (viewKey === "scientificView" || viewKey === "scientific") switchHistorySubTab("scientific");
+  if (viewKey === "lineageView" || viewKey === "masterdb" || viewKey === "masterDB" || viewKey === "historyView") {
+    switchHistorySubTab("provenance");
+  }
+
+  // Update URL hash cleanly without jumping
+  try {
+    const hashAliases = {
+      overviewView: "overview",
+      dashboard: "overview",
+      mapView: "spatial",
+      fieldOps: "fieldops",
+      fieldops: "fieldops",
+      monitoringView: "sensor-intake",
+      historyView: "masterdb",
+      masterdb: "masterdb",
+      decisionsView: "decisions",
+      analyticsView: "analytics",
+      analytics: "analytics"
+    };
+    const hashStr = hashAliases[viewKey] || viewKey.replace("View", "").toLowerCase();
+    if (window.location.hash.replace("#", "") !== hashStr) {
+      history.replaceState(null, "", "#" + hashStr);
+    }
+  } catch (e) {
+    // Ignore history state errors in restricted contexts
+  }
 
   // On mobile only, close the off-canvas drawer
   closeMobileSidebar();
