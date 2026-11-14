@@ -40,7 +40,7 @@
     // -------------------------------------------------------------------------
     AUTH_BASE: envApiUrl ? envApiUrl + "/auth" : "/proxy/auth",
     AUTH_LOGIN: envApiUrl ? envApiUrl + "/auth/login" : "/proxy/auth/login",
-    AUTH_REGISTER: envApiUrl ? envApiUrl + "/auth/register" : "/proxy/auth/register",
+    AUTH_LOGOUT: envApiUrl ? envApiUrl + "/auth/logout" : "/proxy/auth/logout",
     AUTH_ME: envApiUrl ? envApiUrl + "/auth/me" : "/proxy/auth/me",
 
     // -------------------------------------------------------------------------

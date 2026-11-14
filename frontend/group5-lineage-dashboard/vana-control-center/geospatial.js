@@ -291,8 +291,8 @@
   }
 
   const VanaGeoConfig = {
-    provider: "geoapify", // "geoapify" with fallback to "carto"
-    tileStyle: "dark-matter-dark-grey", // "dark-matter-dark-grey" or "osm-bright-smooth"
+    provider: "satellite",
+    tileStyle: "satellite",
     center: [19.6, 75.8],
     defaultZoom: 6.8,
     minZoom: 5,
@@ -303,16 +303,12 @@
       if (key) {
         return "https://maps.geoapify.com/v1/tile/" + this.tileStyle + "/{z}/{x}/{y}.png?apiKey=" + encodeURIComponent(key);
       }
-      // Standard clean OpenStreetMap tiles fallback (no watermark)
-      return "https://tile.openstreetmap.org/{z}/{x}/{y}.png";
+      // ESRI World Imagery (Satellite) - authentic high-resolution dark satellite view of Maharashtra
+      return "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}";
     },
 
     getAttribution: function () {
-      const key = getGeoapifyKey();
-      if (key) {
-        return 'Powered by <a href="https://www.geoapify.com/" target="_blank">Geoapify</a> | &copy; <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a> contributors';
-      }
-      return '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a> contributors';
+      return '&copy; Esri &mdash; Earthstar Geographics';
     }
   };
 
@@ -377,6 +373,9 @@
         // Render Maharashtra state boundary matching reference command center
         this.renderBoundaries();
 
+        // Render reference operational markers (Sensors, Alerts, Surveillance Zones)
+        this.renderReferenceMapMarkers();
+
         // Build UI overlays (layer control, legend, status indicator, selector)
         this._injectUIControls();
 
@@ -405,14 +404,10 @@
         maxZoom: VanaGeoConfig.maxZoom
       });
 
-      // Toggle dark styling filter on tiles when using standard OSM
+      // Keep natural satellite imagery without inversion
       if (this.map && this.map.getPanes && this.map.getPanes().tilePane) {
         const pane = this.map.getPanes().tilePane;
-        if (hasKey) {
-          pane.classList.remove("dark-tile-mode");
-        } else {
-          pane.classList.add("dark-tile-mode");
-        }
+        pane.classList.remove("dark-tile-mode");
       }
 
       let tileErrors = 0;
@@ -499,6 +494,69 @@
       this.layerStates.boundaries = true;
     },
 
+    renderReferenceMapMarkers: function () {
+      if (!this.map || !this.layers.alerts || !this.layers.observations || !this.layers.zones) return;
+
+      this.layers.observations.clearLayers();
+      this.layers.alerts.clearLayers();
+      this.layers.zones.clearLayers();
+
+      const sensorLocations = [
+        { name: "Thane Creek Sensor Station", coords: [19.1288, 72.9421] },
+        { name: "Pune Forest Sensor Node", coords: [18.5204, 73.8567] },
+        { name: "Nagpur Eastern Sensor Array", coords: [21.1458, 79.0882] },
+        { name: "Nashik Northern Canopy Sensor", coords: [19.9975, 73.7898] },
+        { name: "Western Ghats Ecological Sensor", coords: [17.9237, 73.6586] },
+        { name: "Kolhapur Border Station", coords: [16.7050, 74.2433] }
+      ];
+
+      const alertLocations = [
+        { id: "ALT-2026-0527-01", name: "Unauthorized Activity Detected", region: "Thane Creek Region", coords: [19.2200, 73.0500] },
+        { id: "ALT-2026-0527-02", name: "Forest Cover Deviation", region: "Vidarbha East Reserve", coords: [20.7453, 78.6022] }
+      ];
+
+      const zoneLocations = [
+        { id: "MV-Z01", name: "Maval Corridor Surveillance Zone", coords: [18.7500, 73.5000] },
+        { id: "MW-Z01", name: "Marathwada Surveillance Zone", coords: [19.8762, 75.3433] },
+        { id: "RG-Z01", name: "Raigad Division Surveillance Zone", coords: [18.3158, 73.1822] },
+        { id: "DS-Z01", name: "Desh Central Surveillance Zone", coords: [19.0948, 74.7480] },
+        { id: "NV-Z01", name: "North Vidarbha Surveillance Zone", coords: [21.3500, 77.5000] }
+      ];
+
+      // Add green sensors
+      sensorLocations.forEach(s => {
+        const icon = L.divIcon({
+          className: "geo-sensor-div-icon",
+          html: '<div class="geo-sensor-marker" title="' + s.name + '"></div>',
+          iconSize: [12, 12],
+          iconAnchor: [6, 6]
+        });
+        L.marker(s.coords, { icon: icon }).bindPopup('<strong>' + s.name + '</strong><br>● Sensor Active').addTo(this.layers.observations);
+      });
+
+      // Add red alerts
+      alertLocations.forEach(a => {
+        const icon = L.divIcon({
+          className: "geo-alert-div-icon",
+          html: '<div class="geo-tri-marker red" title="' + a.name + ' (' + a.region + ')">▲</div>',
+          iconSize: [16, 16],
+          iconAnchor: [8, 8]
+        });
+        L.marker(a.coords, { icon: icon }).bindPopup('<strong>' + a.name + '</strong><br>▲ Alert · ' + a.region).addTo(this.layers.alerts);
+      });
+
+      // Add amber surveillance zones
+      zoneLocations.forEach(z => {
+        const icon = L.divIcon({
+          className: "geo-zone-div-icon",
+          html: '<div class="geo-tri-marker amber" title="' + z.name + '">▲</div>',
+          iconSize: [16, 16],
+          iconAnchor: [8, 8]
+        });
+        L.marker(z.coords, { icon: icon }).bindPopup('<strong>' + z.name + '</strong><br>▲ Surveillance Zone').addTo(this.layers.zones);
+      });
+    },
+
     renderZones: function () {
       const self = this;
       if (!this.layers.zones) return;
@@ -555,13 +613,8 @@
       this.mapStatus.data = isG1Healthy ? "LIVE_PARTIAL" : "UNAVAILABLE";
       this.updateStatus();
 
-      // Refresh observations layer
-      this.renderObservations();
-
-      // Refresh alerts layer if window.OPERATIONAL_ALERTS exists
-      if (typeof window.OPERATIONAL_ALERTS !== "undefined") {
-        this.renderAlerts(window.OPERATIONAL_ALERTS);
-      }
+      // Ensure reference operational markers are clean and preserved
+      this.renderReferenceMapMarkers();
     },
 
     renderObservations: function () {

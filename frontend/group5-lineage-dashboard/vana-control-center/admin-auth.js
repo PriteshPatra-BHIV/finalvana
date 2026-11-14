@@ -48,43 +48,40 @@
 
   // ── CONFIRMED ROLE CONSTANTS ───────────────────────────────────────────
   var ROLES = Object.freeze({
-    // Canonical backend mapped roles
-    PLATFORM_ADMIN:     "PLATFORM_ADMIN",
-    APPROVED_CONSUMER:  "APPROVED_CONSUMER",
-    AUDITOR:            "AUDITOR",
-    GOVERNANCE_STEWARD: "GOVERNANCE_STEWARD",
+    // Canonical predefined roles
+    ADMIN:              "ADMIN",
+    FIELD_AGENT:        "FIELD_AGENT",
+    FOREST_OFFICER:     "FOREST_OFFICER",
 
     // Backward-compatibility aliases
-    ADMIN:              "PLATFORM_ADMIN",
-    ADMINISTRATOR:      "PLATFORM_ADMIN",
-    PARTICIPANT:        "APPROVED_CONSUMER",
-    OPERATOR:           "APPROVED_CONSUMER",
-    VIEWER:             "APPROVED_CONSUMER",
-    JUDGE:              "AUDITOR",
-    ANALYST:            "AUDITOR",
-    STEWARD:            "GOVERNANCE_STEWARD",
+    PLATFORM_ADMIN:     "ADMIN",
+    APPROVED_CONSUMER:  "FIELD_AGENT",
+    AUDITOR:            "FOREST_OFFICER",
+    GOVERNANCE_STEWARD: "FOREST_OFFICER",
+    ADMINISTRATOR:      "ADMIN",
+    PARTICIPANT:        "FIELD_AGENT",
+    OPERATOR:           "FIELD_AGENT",
+    VIEWER:             "FIELD_AGENT",
+    JUDGE:              "FOREST_OFFICER",
+    ANALYST:            "FOREST_OFFICER",
+    STEWARD:            "FOREST_OFFICER",
   });
 
   // ── ROLE PRESENTATION METADATA ─────────────────────────────────────────
   var ROLE_META = Object.freeze({
-    PLATFORM_ADMIN: {
+    ADMIN: {
       label: "Platform Admin",
       description: "Full system administration and governed execution access",
       color: "#8B5CF6",
     },
-    APPROVED_CONSUMER: {
-      label: "Approved Consumer",
-      description: "Operational observation and telemetry monitoring (Read-only execution)",
-      color: "#3A8F5C",
+    FIELD_AGENT: {
+      label: "Field Agent",
+      description: "Operational observation intake, sensor ingestion workflows, and GPS data telemetry",
+      color: "#20D66B",
     },
-    AUDITOR: {
-      label: "Auditor / Judge",
-      description: "Audit-log review, deterministic lineage verification, and evidence inspection",
-      color: "#C9822B",
-    },
-    GOVERNANCE_STEWARD: {
-      label: "Governance Steward",
-      description: "Governance policy and contextual verification oversight",
+    FOREST_OFFICER: {
+      label: "Forest Officer",
+      description: "Statutory forest cover monitoring, scientific context, and lineage audit",
       color: "#0284C7",
     },
   });
@@ -111,25 +108,32 @@
   // ── ROLE NORMALIZATION ─────────────────────────────────────────────────
   function normalizeRole(rawRole) {
     if (!rawRole || typeof rawRole !== "string") return null;
-    var clean = rawRole.trim().toLowerCase();
+    var clean = rawRole.trim().toLowerCase().replace(/[\s\-]/g, "_");
     switch (clean) {
       case "admin":
       case "administrator":
       case "platform_admin":
-        return ROLES.PLATFORM_ADMIN;
+        return ROLES.ADMIN;
+      case "field":
+      case "feild":
+      case "field_agent":
+      case "feild_agent":
+      case "agent":
       case "participant":
       case "consumer":
       case "approved_consumer":
       case "viewer":
       case "operator":
-        return ROLES.APPROVED_CONSUMER;
+        return ROLES.FIELD_AGENT;
+      case "forest":
+      case "forest_officer":
+      case "officer":
       case "judge":
       case "auditor":
       case "analyst":
-        return ROLES.AUDITOR;
       case "steward":
       case "governance_steward":
-        return ROLES.GOVERNANCE_STEWARD;
+        return ROLES.FOREST_OFFICER;
       default:
         return rawRole.toUpperCase();
     }
@@ -373,8 +377,12 @@
 
       var role = _currentUser.role;
 
-      // Fail-Closed Safeguard: Approved Consumer can NEVER execute workflows or manage users
-      if (role === ROLES.APPROVED_CONSUMER && privilegedPermissions.indexOf(permission) !== -1) {
+      // Fail-Closed Safeguard: Field Agent and Forest Officer cannot execute workflows or manage users
+      if ((role === ROLES.FIELD_AGENT || role === "APPROVED_CONSUMER") && privilegedPermissions.indexOf(permission) !== -1) {
+        return false;
+      }
+      if ((role === ROLES.FOREST_OFFICER || role === "AUDITOR" || role === "GOVERNANCE_STEWARD") &&
+          (permission === PERMISSIONS.MANAGE_USERS || permission === PERMISSIONS.MANAGE_SYSTEM_CONFIG || permission === PERMISSIONS.EXECUTE_WORKFLOW)) {
         return false;
       }
 
@@ -385,12 +393,12 @@
       }
 
       // 2. Canonical role capability fallback (only if backend perms omitted in contract)
-      if (role === ROLES.PLATFORM_ADMIN) {
+      if (role === ROLES.ADMIN || role === "PLATFORM_ADMIN") {
         return true;
       }
 
-      if (role === ROLES.AUDITOR) {
-        var auditorPerms = [
+      if (role === ROLES.FOREST_OFFICER || role === "AUDITOR" || role === "GOVERNANCE_STEWARD") {
+        var officerPerms = [
           PERMISSIONS.VIEW_DASHBOARD,
           PERMISSIONS.VIEW_MAP,
           PERMISSIONS.VIEW_ALERTS,
@@ -399,30 +407,23 @@
           PERMISSIONS.RUN_REPLAY,
           PERMISSIONS.ACKNOWLEDGE_ALERT,
           PERMISSIONS.VIEW_AUDIT_LOG,
-        ];
-        return auditorPerms.indexOf(permission) !== -1;
-      }
-
-      if (role === ROLES.APPROVED_CONSUMER) {
-        var participantPerms = [
-          PERMISSIONS.VIEW_DASHBOARD,
-          PERMISSIONS.VIEW_MAP,
-          PERMISSIONS.VIEW_ALERTS,
-          PERMISSIONS.VIEW_LINEAGE,
-        ];
-        return participantPerms.indexOf(permission) !== -1;
-      }
-
-      if (role === ROLES.GOVERNANCE_STEWARD) {
-        var stewardPerms = [
-          PERMISSIONS.VIEW_DASHBOARD,
-          PERMISSIONS.VIEW_MAP,
-          PERMISSIONS.VIEW_ALERTS,
-          PERMISSIONS.VIEW_LINEAGE,
-          PERMISSIONS.VIEW_EVIDENCE,
           PERMISSIONS.MANAGE_GOVERNANCE_POLICIES,
         ];
-        return stewardPerms.indexOf(permission) !== -1;
+        return officerPerms.indexOf(permission) !== -1;
+      }
+
+      if (role === ROLES.FIELD_AGENT || role === "APPROVED_CONSUMER") {
+        var fieldPerms = [
+          PERMISSIONS.VIEW_DASHBOARD,
+          PERMISSIONS.VIEW_MAP,
+          PERMISSIONS.VIEW_ALERTS,
+          PERMISSIONS.VIEW_LINEAGE,
+          "SUBMIT_OBSERVATION",
+          "INTAKE_SENSOR_DATA",
+          "REGISTER_SENSOR",
+          "VIEW_TELEMETRY",
+        ];
+        return fieldPerms.indexOf(permission) !== -1;
       }
 
       // Fail-closed for all unknown, tampered, or unassigned roles
@@ -447,20 +448,26 @@
      * Authenticates user against backend POST /auth/login.
      * Never stores passwords. Stores access_token in sessionStorage.
      */
-    login: async function (email, password) {
+    login: async function (email, password, selectedRole) {
       if (!email || !password || typeof email !== "string" || typeof password !== "string") {
         return { success: false, error: "Email and password are required." };
       }
 
       var loginUrl = _getAuthEndpoint("AUTH_LOGIN", "/proxy/auth/login");
       try {
+        var payload = { email: email.trim(), password: password };
+        if (selectedRole) {
+          payload.role = selectedRole;
+          payload.selected_role = selectedRole;
+        }
+
         var res = await fetch(loginUrl, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
             "Accept": "application/json",
           },
-          body: JSON.stringify({ email: email.trim(), password: password }),
+          body: JSON.stringify(payload),
         });
 
         var data = null;

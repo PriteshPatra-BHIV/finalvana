@@ -177,7 +177,7 @@ function _initAuthUI() {
         '</div>',
         '<div style="display:flex;justify-content:center;gap:10px;margin-top:14px;">',
         '  <a href="index.html" class="admin-header-btn" style="text-decoration:none;">Operational Dashboard</a>',
-        '  <button class="admin-header-btn primary" onclick="adminOpenLoginModal()">Sign In</button>',
+        '  <a href="login.html?redirect=admin.html&role=ADMIN" class="admin-header-btn primary" style="text-decoration:none;">Sign In</a>',
         '</div>',
       ].join("\n");
       barrierOverlay.style.display = "flex";
@@ -239,8 +239,8 @@ function _initAuthUI() {
     return;
   }
 
-  // Role restriction: Approved Consumer (Participant) is strictly denied (403)
-  if (user.role === auth.ROLES.APPROVED_CONSUMER) {
+  // Role restriction: Field Agent is strictly denied (403 Forbidden)
+  if (user.role === auth.ROLES.FIELD_AGENT || user.role === "APPROVED_CONSUMER" || user.role === "PARTICIPANT") {
     if (barrierOverlay && barrierContent) {
       barrierContent.innerHTML = [
         '<div class="admin-denied-icon">',
@@ -251,11 +251,11 @@ function _initAuthUI() {
         '</div>',
         '<div class="admin-denied-title">Access Restricted (403 Forbidden)</div>',
         '<div class="admin-denied-msg">',
-        '  Your authenticated role (<strong>Approved Consumer</strong>) is not authorized to access the Administration Control Plane.<br>',
-        '  Privileged administration is restricted to Platform Administrators and Authorized Auditors.',
+        '  Your authenticated role (<strong>Field Agent</strong>) is not authorized to access the Administration Control Plane.<br>',
+        '  Privileged administration is strictly restricted to Platform Administrators.',
         '</div>',
         '<div style="display:flex;justify-content:center;gap:10px;margin-top:14px;">',
-        '  <a href="index.html" class="admin-header-btn primary" style="text-decoration:none;">Return to Operational Dashboard</a>',
+        '  <a href="index.html?role=FIELD_AGENT" class="admin-header-btn primary" style="text-decoration:none;">Return to Operational Dashboard</a>',
         '  <button class="admin-header-btn" onclick="adminLogout()">Sign Out</button>',
         '</div>',
       ].join("\n");
@@ -1159,23 +1159,7 @@ function _renderAuditRows(container) {
 
 // ── AUTHENTICATED MODAL ACTIONS ─────────────────────────────────────────
 function adminOpenLoginModal() {
-  var modal = document.getElementById("adminLoginModal");
-  var barrier = document.getElementById("adminBarrierOverlay");
-  var errEl = document.getElementById("adminLoginError");
-  if (errEl) { errEl.style.display = "none"; errEl.textContent = ""; }
-
-  // Hide the barrier overlay so it does not block or conflict with the modal
-  if (barrier) {
-    barrier.style.display = "none";
-  }
-
-  if (modal) {
-    modal.style.display = "flex";
-  }
-  var emailInput = document.getElementById("adminEmailInput");
-  if (emailInput) {
-    setTimeout(function () { emailInput.focus(); }, 50);
-  }
+  window.location.href = "login.html?redirect=admin.html&role=ADMIN";
 }
 
 function adminCloseLoginModal() {
@@ -1235,9 +1219,11 @@ document.addEventListener("keydown", function (e) {
   }
 });
 
-function adminLogout() {
-  window.VANA_AUTH.logout();
-  _initAuthUI();
+async function adminLogout() {
+  if (window.VANA_AUTH) {
+    await window.VANA_AUTH.logout();
+  }
+  window.location.href = "login.html";
 }
 
 console.log("[VANA Admin] admin.js loaded successfully.");

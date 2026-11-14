@@ -11,8 +11,8 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
   <!-- Leaflet CSS for accurate geographic tile mapping -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
-  <link rel="stylesheet" href="styles.css?v=20">
-  <link rel="stylesheet" href="geospatial.css?v=20">
+  <link rel="stylesheet" href="styles.css?v=26">
+  <link rel="stylesheet" href="geospatial.css?v=25">
   <!-- Official VANA Brand Favicons -->
   <link rel="icon" type="image/png" sizes="64x64" href="assets/vana-favicon.png">
   <link rel="icon" type="image/png" sizes="32x32" href="assets/vana-favicon-32.png">
@@ -27,202 +27,175 @@
   <div class="sidebar-backdrop" id="sidebarBackdrop" onclick="toggleSidebar(false)"></div>
 
   <!-- =========================================================================
-       LEFT SIDEBAR NAVIGATION (Dark Command Center Rail)
+       TOP COMMAND CENTER HEADER (Full-Width Atmospheric Top Bar)
        ========================================================================= -->
-  <aside class="sidebar" id="mainSidebar">
-    <div>
-      <div class="sidebar-header">
-        <a href="index.html" class="sidebar-brand-link" title="VANA: Forest Intelligence Command Center">
-          <img src="assets/vana-logo-light.png" alt="VANA Forest Intelligence Command Center" class="sidebar-logo-full">
-          <img src="assets/vana-logo-mark.png" alt="VANA Shield Emblem" class="sidebar-logo-mark">
-        </a>
-        <button class="sidebar-close-btn" onclick="toggleSidebar(false)" aria-label="Close navigation">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="18" x2="18" y2="18"></line></svg>
-        </button>
+  <header class="top-header">
+    <div class="header-left">
+      <!-- VANA Official Brand Mark + Wordmark + Subtitle -->
+      <a href="index.html" class="header-brand-wrap" title="VANA: Forest Intelligence Command Center">
+        <img src="assets/vana-leaf.svg" alt="VANA Leaf Logo" class="header-brand-leaf-img" style="width:26px;height:26px;display:inline-block;vertical-align:middle;">
+        <div class="header-brand-titles">
+          <span class="header-brand-name">VANA</span>
+          <span class="header-brand-subtitle">Environmental Intelligence Command Center</span>
+        </div>
+      </a>
+
+      <!-- Vertical Divider Line -->
+      <div class="header-divider-line"></div>
+
+      <!-- Verified Maharashtra Government Identification -->
+      <div class="gov-id-badge" title="Department of Environment &amp; Climate Change · Government of Maharashtra">
+        <img src="assets/maharashtra-emblem.png" alt="Government of Maharashtra" class="gov-emblem-img" style="height:30px;width:auto;object-fit:contain;">
+        <div class="gov-text-block">
+          <span class="gov-title">Government of Maharashtra</span>
+          <span class="gov-subtitle">Department of Environment &amp; Climate Change</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="header-right">
+      <!-- Service Availability Status Indicator -->
+      <div class="system-status-pill" id="systemStatusPill" title="Real-time backend connectivity status">
+        <span class="pulse-dot"></span>
+        <span id="systemStatusText">System Operational</span>
       </div>
 
+      <!-- Real-Time Digital Clock Widget -->
+      <div class="header-clock-widget" id="headerClockWidget" title="Local System Reference Time">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+        <div class="clock-text-wrap">
+          <span class="clock-time" id="headerClockTime">16:45:32</span>
+          <span class="clock-date" id="headerClockDate">Tue, 27 May 2026</span>
+        </div>
+      </div>
+
+      <!-- Subsystem Alerts Feed Button with Badge 3 -->
+      <button class="header-icon-btn" title="Subsystem Alerts Feed (3 Active Alerts)" onclick="switchMainTab('monitoringView', document.getElementById('navItemMonitoring'))">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
+        <span class="icon-badge">3</span>
+      </button>
+
+      <!-- Theme / Sun Icon Button -->
+      <button class="header-icon-btn" title="Display Theme" onclick="toggleTheme && toggleTheme()">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
+      </button>
+
+      <!-- Hidden backward-compatibility elements for app.js -->
+      <div style="display:none;" id="legacyHeaderHooks">
+        <button class="toggle-sidebar-btn" id="sidebarToggleBtn" onclick="toggleSidebar()"></button>
+        <select id="headerObservationSelect" onchange="handleObservationSelect(this.value)"><option value="TC-Z03-EXT-OPENMETEO-OBS001">Thane Creek</option></select>
+        <button class="btn-header" onclick="fetchLive()"><span id="btnHeaderRefreshText">Refresh</span></button>
+        <div class="user-auth-pill" id="dashUserAuthPill">
+          <div class="auth-role-badge" id="dashRoleBadge">Guest</div>
+          <button class="btn-header primary" id="dashAuthBtn" onclick="openDashboardLoginModal()"><span id="dashAuthBtnText">Sign In</span></button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- =========================================================================
+       APP BODY LAYOUT: SIDEBAR (LEFT) + MAIN EXECUTIVE VIEWPORT (RIGHT)
+       ========================================================================= -->
+  <div class="app-body-layout">
+
+    <!-- LEFT SIDEBAR NAVIGATION (Dark Command Center Floating Card) -->
+    <aside class="sidebar" id="mainSidebar">
       <nav class="nav-menu">
-        <!-- Dashboard / Overview -->
+        <!-- 1. Dashboard -->
         <a class="nav-item active" id="navItemOverview" onclick="switchMainTab('overviewView', this)" title="Command Center Overview Dashboard">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
           <span>Dashboard</span>
         </a>
 
-        <!-- Spatial Intelligence -->
-        <a class="nav-item" id="navItemMap" onclick="switchMainTab('mapView', this)" title="Spatial Intelligence & Geographic Monitoring">
+        <!-- 2. Spatial Intelligence -->
+        <a class="nav-item" id="navItemMap" onclick="switchMainTab('mapView', this)" title="Spatial Intelligence &amp; Geographic Monitoring">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"></polygon><line x1="8" y1="2" x2="8" y2="18"></line><line x1="16" y1="6" x2="16" y2="22"></line></svg>
           <span>Spatial Intelligence</span>
         </a>
 
-        <!-- Sensor Intake / Environmental Monitoring -->
-        <a class="nav-item" id="navItemMonitoring" onclick="switchMainTab('monitoringView', this)" title="Sensor Intake & Telemetry Feeds">
+        <!-- 3. Sensor Intake -->
+        <a class="nav-item" id="navItemMonitoring" onclick="switchMainTab('monitoringView', this)" title="Sensor Intake &amp; Telemetry Feeds">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M4.93 19.07A10 10 0 0 1 12 16a10 10 0 0 1 7.07 3.07M12 12a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/><path d="M2.05 12a15 15 0 0 1 19.9 0"/><path d="M8.5 15.5a5 5 0 0 1 7 0"/></svg>
           <span>Sensor Intake</span>
         </a>
 
-        <!-- MasterDB -->
-        <a class="nav-item" id="navItemMasterDB" onclick="switchMainTab('historyView', this)" title="MasterDB Canonical Records & Datasets">
+        <!-- 4. MasterDB -->
+        <a class="nav-item" id="navItemMasterDB" onclick="switchMainTab('historyView', this)" title="MasterDB Canonical Records &amp; Datasets">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>
           <span>MasterDB</span>
         </a>
 
-        <!-- Pravah / Niyantran -->
+        <!-- 5. Pravah / Niyantran -->
         <a class="nav-item" id="navItemDecisions" onclick="switchMainTab('decisionsView', this)" title="Pravah / Niyantran Scientific Decision Brain">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 2a4 4 0 0 0-4 4c0 1.1.45 2.1 1.17 2.83L8 10a4 4 0 0 0-4 4c0 1.1.45 2.1 1.17 2.83L4 18a4 4 0 0 0 4 4h8a4 4 0 0 0 4-4l-1.17-1.17A3.99 3.99 0 0 0 20 14a4 4 0 0 0-4-4l-1.17-1.17A3.99 3.99 0 0 0 16 6a4 4 0 0 0-4-4z"/></svg>
           <span>Pravah / Niyantran</span>
         </a>
 
-        <!-- Sanskar Runtime -->
+        <!-- 6. Sanskar -->
         <a class="nav-item" id="navItemSanskar" onclick="switchMainTab('decisionsView', this)" title="Sanskar Governed Execution Gate">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
           <span>Sanskar</span>
         </a>
 
-        <!-- Analytics & Reports -->
-        <a class="nav-item" id="navItemAnalytics" onclick="switchMainTab('monitoringView', this)" title="Analytics & Statutory Reports">
+        <!-- 7. Analytics & Reports -->
+        <a class="nav-item" id="navItemAnalytics" onclick="switchMainTab('monitoringView', this)" title="Analytics &amp; Statutory Reports">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>
           <span>Analytics &amp; Reports</span>
         </a>
 
-        <!-- Field Operations -->
-        <a class="nav-item" id="navItemFieldOps" onclick="switchMainTab('mapView', this)" title="Field Operations & Drone Survelliance">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+        <!-- 8. Field Operations -->
+        <a class="nav-item" id="navItemFieldOps" onclick="switchMainTab('mapView', this)" title="Field Operations &amp; Drone Surveillance">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="3"/><line x1="12" y1="2" x2="12" y2="6"/><line x1="12" y1="18" x2="12" y2="22"/><line x1="2" y1="12" x2="6" y2="12"/><line x1="18" y1="12" x2="22" y2="12"/></svg>
           <span>Field Operations</span>
         </a>
 
-        <!-- System Health -->
-        <a class="nav-item" id="navItemSystemHealth" onclick="switchMainTab('historyView', this)" title="System Health & Infrastructure Telemetry">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
-          <span>System Health</span>
-        </a>
-
-        <!-- Administration -->
+        <!-- 9. Administration -->
         <a class="nav-item" id="navItemAdmin" href="admin.html" title="VANA Administration Control Plane">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
           <span>Administration</span>
         </a>
 
+        <!-- 10. System Health -->
+        <a class="nav-item" id="navItemSystemHealth" onclick="switchMainTab('historyView', this)" title="System Health &amp; Infrastructure Telemetry">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
+          <span>System Health</span>
+        </a>
+
         <!-- Hidden anchor for existing navItemHistory references in app.js -->
         <a id="navItemHistory" style="display:none;" onclick="switchMainTab('historyView', this)"></a>
       </nav>
-    </div>
 
-    <!-- User Profile Card matching reference -->
-    <div class="sidebar-footer">
-      <div class="user-profile-card" onclick="openDashboardLoginModal()" title="Current Active User Profile">
-        <div class="user-avatar-circle">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
-        </div>
-        <div class="user-info">
-          <div class="user-name" id="sidebarUserName">Public Observer</div>
-          <div class="user-role" id="sidebarUserRole">Unauthenticated</div>
-        </div>
-        <svg class="user-caret" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
-      </div>
-    </div>
-  </aside>
-
-  <!-- =========================================================================
-       MAIN EXECUTIVE VIEWPORT
-       ========================================================================= -->
-  <main class="main-viewport">
-
-    <!-- Top Command Center Header -->
-    <header class="top-header">
-      <div class="header-left">
-        <button class="toggle-sidebar-btn" id="sidebarToggleBtn" onclick="toggleSidebar()" aria-label="Toggle navigation sidebar" aria-expanded="true" title="Toggle Navigation">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
-        </button>
-
-        <!-- VANA Brand Leaf + Text -->
-        <a href="index.html" class="header-brand-wrap" title="VANA: Forest Intelligence Command Center">
-          <svg class="header-brand-leaf" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M17 8C8 10 5.9 16.17 3.82 21.34l1.89.66.95-2.3c.48.17.98.3 1.34.3C19 20 22 3 22 3c-1 2-8 2.25-13 3.25S2 11.5 2 13.5s1.75 3.75 1.75 3.75C7 8 17 8 17 8z"/>
-          </svg>
-          <span class="header-brand-name">VANA</span>
-        </a>
-
-        <div class="header-divider-line hide-on-mobile"></div>
-
-        <div class="header-app-title hide-on-mobile">
-          Environmental Intelligence Command Center
-        </div>
-
-        <!-- Verified Department Identification -->
-        <div class="gov-id-badge hide-on-mobile" title="Department of Environment &amp; Climate Change · Government of Maharashtra">
-          <div class="gov-text-block">
-            <span class="gov-title">Government of Maharashtra</span>
-            <span class="gov-subtitle">Department of Environment &amp; Climate Change</span>
+      <!-- User Profile Card matching reference exactly at bottom -->
+      <div class="sidebar-footer">
+        <div class="user-profile-card" onclick="openDashboardLoginModal()" title="Current Active User Profile">
+          <div class="user-avatar-circle">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
           </div>
-        </div>
-      </div>
-
-      <div class="header-right">
-        <!-- Service Availability Status Indicator -->
-        <div class="system-status-pill" id="systemStatusPill" title="Real-time backend connectivity status">
-          <div class="status-dot"></div>
-          <span id="systemStatusText">CHECKING CONNECTIVITY...</span>
-        </div>
-
-        <!-- Real-Time Digital Clock Widget -->
-        <div class="header-clock-widget hide-on-mobile" id="headerClockWidget" title="Local System Reference Time">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
-          <div class="clock-text-wrap">
-            <span class="clock-time" id="headerClockTime">16:45:32</span>
-            <span class="clock-date" id="headerClockDate">Tue, 27 May 2026</span>
+          <div class="user-info">
+            <div class="user-name" id="sidebarUserName">Pratik Bhuwad</div>
+            <div class="user-role" id="sidebarUserRole">System Analyst</div>
           </div>
-        </div>
-
-        <!-- Subsystem Alerts Feed Button -->
-        <button class="header-icon-btn hide-on-mobile" title="Subsystem Alerts Feed" onclick="switchMainTab('monitoringView', document.getElementById('navItemMonitoring'))">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
-        </button>
-
-        <!-- Settings Gear Icon -->
-        <a class="header-icon-btn hide-on-mobile" href="admin.html" title="Command Center Configuration">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
-        </a>
-
-        <!-- Observation Selector / Lookup -->
-        <div class="header-select-group hide-on-mobile">
-          <label for="headerObservationSelect">Observation:</label>
-          <select id="headerObservationSelect" class="form-input" onchange="handleObservationSelect(this.value)">
-            <option value="TC-Z03-EXT-OPENMETEO-OBS001">Thane Creek (Open-Meteo Precipitation)</option>
-            <option value="OBS-THANECREEK-AGB-2023-01">Thane Creek (Biomass Benchmark)</option>
-            <option value="TC-Z03-F02-SENSOR-OBS999">Field Edge (Canopy Sensor)</option>
-            <option value="TC-Z03-F02-LIDAR-OBS001">Aerial LiDAR (Canopy Height)</option>
-            <option value="__CUSTOM__">Lookup Custom ID...</option>
-          </select>
-        </div>
-
-        <!-- Action Controls: Compact Refresh -->
-        <button class="btn-header" onclick="fetchLive()" title="Refresh operational runtimes and MasterDB">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
-          <span class="hide-on-mobile">Refresh</span>
-        </button>
-
-        <!-- User Authentication Widget -->
-        <div class="user-auth-pill" id="dashUserAuthPill">
-          <div class="auth-role-badge" id="dashRoleBadge" style="display:none;">Guest</div>
-          <button class="btn-header primary" id="dashAuthBtn" onclick="openDashboardLoginModal()" title="Sign in with authorized VANA credentials">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
-            <span id="dashAuthBtnText">Sign In</span>
-          </button>
+          <svg class="user-caret" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
         </div>
       </div>
-    </header>
+    </aside>
 
-    <!-- Scrollable Main Viewport Area -->
-    <div class="viewport-scroll-container">
+    <!-- =========================================================================
+         MAIN EXECUTIVE VIEWPORT
+         ========================================================================= -->
+    <main class="main-viewport">
+      <div class="viewport-scroll-container">
 
       <!-- =========================================================================
            VIEW 1: OVERVIEW (COMMAND CENTER DASHBOARD)
            ========================================================================= -->
       <section class="view-section" id="viewOverview">
 
-        <!-- Top Horizontal Row of 5 KPI Cards -->
+        <!-- =====================================================================
+             TOP KPI METRICS ROW (5 EQUAL GLASSMORPHIC CARDS)
+             ===================================================================== -->
         <div class="command-kpi-row">
-          <!-- Card 1: Sensor Events -->
+          <!-- 1. Sensor Events -->
           <div class="command-kpi-card" onclick="switchMainTab('monitoringView', document.getElementById('navItemMonitoring'))" title="Inspect sensor telemetry and intake events">
             <div class="kpi-top-line">
               <div class="kpi-icon-box green">
@@ -231,19 +204,21 @@
               <span class="kpi-label">Sensor Events</span>
             </div>
             <div class="kpi-middle-line">
-              <span class="kpi-value" id="kpiSensorEvents">--</span>
-              <svg class="kpi-sparkline" viewBox="0 0 100 28" preserveAspectRatio="none">
-                <path d="M2,22 Q20,26 40,18 T75,20 T98,12" fill="none" stroke="#20D66B" stroke-width="2.2" stroke-linecap="round"/>
+              <div class="kpi-data-block">
+                <span class="kpi-value" id="kpiSensorEvents">24.8K</span>
+                <div class="kpi-trend green">
+                  <span class="trend-arrow">↑</span>
+                  <span>+12% vs last hour</span>
+                </div>
+              </div>
+              <svg class="kpi-sparkline" viewBox="0 0 100 32" preserveAspectRatio="none">
+                <path d="M2,24 Q25,28 45,18 T75,20 T98,8" fill="none" stroke="#22c55e" stroke-width="2.5" stroke-linecap="round"/>
               </svg>
-            </div>
-            <div class="kpi-bottom-line">
-              <span class="kpi-status-dot green"></span>
-              <span class="kpi-status-text">Awaiting live sensor data</span>
             </div>
           </div>
 
-          <!-- Card 2: Records Validated -->
-          <div class="command-kpi-card" onclick="switchMainTab('historyView', document.getElementById('navItemHistory'))" title="Canonical MasterDB validated records">
+          <!-- 2. Records Validated -->
+          <div class="command-kpi-card" onclick="switchMainTab('historyView', document.getElementById('navItemMasterDB'))" title="Canonical MasterDB validated records">
             <div class="kpi-top-line">
               <div class="kpi-icon-box green">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>
@@ -251,134 +226,157 @@
               <span class="kpi-label">Records Validated</span>
             </div>
             <div class="kpi-middle-line">
-              <span class="kpi-value" id="kpiRecordsValidated">--</span>
-              <svg class="kpi-sparkline" viewBox="0 0 100 28" preserveAspectRatio="none">
-                <path d="M2,25 C30,25 50,20 70,14 C85,8 92,4 98,3" fill="none" stroke="#20D66B" stroke-width="2.2" stroke-linecap="round"/>
+              <div class="kpi-data-block">
+                <span class="kpi-value" id="kpiRecordsValidated">28.6K</span>
+                <div class="kpi-trend green">
+                  <span class="trend-arrow">↑</span>
+                  <span>+8% vs last hour</span>
+                </div>
+              </div>
+              <svg class="kpi-sparkline" viewBox="0 0 100 32" preserveAspectRatio="none">
+                <path d="M2,26 C30,26 50,20 70,12 C85,6 92,4 98,3" fill="none" stroke="#06b6d4" stroke-width="2.5" stroke-linecap="round"/>
               </svg>
-            </div>
-            <div class="kpi-bottom-line">
-              <span class="kpi-status-text">Awaiting live data</span>
             </div>
           </div>
 
-          <!-- Card 3: Governance Decisions -->
+          <!-- 3. Governance Decisions -->
           <div class="command-kpi-card" onclick="switchMainTab('decisionsView', document.getElementById('navItemDecisions'))" title="Review governance policy assessments">
             <div class="kpi-top-line">
-              <div class="kpi-icon-box amber">
+              <div class="kpi-icon-box green">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><polyline points="9 12 11 14 15 10"/></svg>
               </div>
               <span class="kpi-label">Governance Decisions</span>
             </div>
             <div class="kpi-middle-line">
-              <span class="kpi-value" id="kpiGovDecisions">--</span>
-              <svg class="kpi-sparkline" viewBox="0 0 100 28" preserveAspectRatio="none">
-                <path d="M2,20 Q25,26 45,16 T75,22 T98,14" fill="none" stroke="#F4BC42" stroke-width="2.2" stroke-linecap="round"/>
-              </svg>
-            </div>
-            <div class="kpi-bottom-line">
-              <span class="kpi-status-text">Active ruling: ABSTAIN</span>
+              <div class="kpi-data-block">
+                <span class="kpi-value gov-allow" id="kpiGovDecisions">ALLOW 78%</span>
+                <div class="kpi-sub-split">
+                  <span class="sub-amber">ABSTAIN 12%</span>
+                  <span class="sub-sep">|</span>
+                  <span class="sub-red">DENY 10%</span>
+                </div>
+              </div>
+              <!-- Donut Ring Progress Ring -->
+              <div class="kpi-donut-wrap">
+                <svg viewBox="0 0 36 36" class="donut-chart">
+                  <circle class="donut-ring" cx="18" cy="18" r="14" fill="transparent" stroke="rgba(239, 81, 88, 0.5)" stroke-width="3.5" stroke-dasharray="10 90" stroke-dashoffset="-90"/>
+                  <circle class="donut-segment amber" cx="18" cy="18" r="14" fill="transparent" stroke="#f59e0b" stroke-width="3.5" stroke-dasharray="12 88" stroke-dashoffset="-78"/>
+                  <circle class="donut-segment green" cx="18" cy="18" r="14" fill="transparent" stroke="#22c55e" stroke-width="3.5" stroke-dasharray="78 22" stroke-dashoffset="0"/>
+                </svg>
+              </div>
             </div>
           </div>
 
-          <!-- Card 4: Execution Outcomes -->
+          <!-- 4. Execution Outcomes -->
           <div class="command-kpi-card" onclick="switchMainTab('decisionsView', document.getElementById('navItemDecisions'))" title="Governed execution queue and outcomes">
             <div class="kpi-top-line">
-              <div class="kpi-icon-box red">
+              <div class="kpi-icon-box cyan">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
               </div>
               <span class="kpi-label">Execution Outcomes</span>
             </div>
             <div class="kpi-middle-line">
-              <span class="kpi-value" id="kpiExecOutcomes">--</span>
-              <svg class="kpi-sparkline" viewBox="0 0 100 28" preserveAspectRatio="none">
-                <path d="M2,24 C30,24 55,20 75,15 C88,11 94,8 98,6" fill="none" stroke="#EF5158" stroke-width="2.2" stroke-linecap="round"/>
+              <div class="kpi-data-block">
+                <span class="kpi-value" id="kpiExecOutcomes">98.2%</span>
+                <div class="kpi-trend green">
+                  <span class="trend-arrow">↑</span>
+                  <span>+0.5% vs last hour</span>
+                </div>
+              </div>
+              <svg class="kpi-sparkline" viewBox="0 0 100 32" preserveAspectRatio="none">
+                <path d="M2,26 C28,26 48,22 68,14 C82,9 90,6 98,4" fill="none" stroke="#38bdf8" stroke-width="2.5" stroke-linecap="round"/>
               </svg>
-            </div>
-            <div class="kpi-bottom-line">
-              <span class="kpi-status-text">Awaiting live data</span>
             </div>
           </div>
 
-          <!-- Card 5: Data Integrity -->
-          <div class="command-kpi-card" onclick="switchMainTab('historyView', document.getElementById('navItemHistory'))" title="Cryptographic provenance and payload verification">
+          <!-- 5. Data Integrity -->
+          <div class="command-kpi-card" onclick="switchMainTab('historyView', document.getElementById('navItemMasterDB'))" title="Cryptographic provenance and payload verification">
             <div class="kpi-top-line">
-              <div class="kpi-icon-box blue">
+              <div class="kpi-icon-box cyan">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><circle cx="12" cy="11" r="3"/></svg>
               </div>
               <span class="kpi-label">Data Integrity</span>
             </div>
             <div class="kpi-middle-line">
-              <span class="kpi-value" id="kpiDataIntegrity">--</span>
-              <svg class="kpi-sparkline" viewBox="0 0 100 28" preserveAspectRatio="none">
-                <path d="M2,22 C30,22 50,18 70,12 C85,7 92,5 98,4" fill="none" stroke="#40BDEB" stroke-width="2.2" stroke-linecap="round"/>
+              <div class="kpi-data-block">
+                <span class="kpi-value" id="kpiDataIntegrity">99.9%</span>
+                <div class="kpi-trend green">
+                  <span class="trend-arrow">↑</span>
+                  <span>+0.1% vs last hour</span>
+                </div>
+              </div>
+              <svg class="kpi-sparkline" viewBox="0 0 100 32" preserveAspectRatio="none">
+                <path d="M2,24 Q24,28 46,16 T78,18 T98,6" fill="none" stroke="#22c55e" stroke-width="2.5" stroke-linecap="round"/>
               </svg>
             </div>
-            <div class="kpi-bottom-line">
-              <span class="kpi-status-text">Awaiting live data</span>
+          </div>
+        </div>
+
+        <!-- =====================================================================
+             MIDDLE GRID: 2 COLUMNS (MAP ON LEFT ~62%, ALERTS & GOV ON RIGHT ~38%)
+             ===================================================================== -->
+        <div class="command-middle-grid">
+          <!-- Left Column: Maharashtra Map -->
+          <div class="command-panel map-panel">
+            <div class="panel-header-bar">
+              <div class="panel-header-left">
+                <span class="header-icon-dot green">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                </span>
+                <span class="panel-title-text">Maharashtra – Forest Intelligence Map</span>
+              </div>
+              <div class="panel-header-right">
+                <span class="badge-status-pill green">
+                  <span class="pulse-dot"></span> Live
+                </span>
+                <div class="select-wrapper">
+                  <select class="dark-select-compact" id="overviewMapLayerSelect">
+                    <option value="satellite">Satellite ▾</option>
+                    <option value="dark">Dark Matter</option>
+                    <option value="terrain">Terrain</option>
+                  </select>
+                </div>
+                <button class="map-icon-btn" onclick="window.VanaGeoEngine &amp;&amp; window.VanaGeoEngine.toggleFullscreen()" title="Fullscreen Map">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/></svg>
+                </button>
+              </div>
+            </div>
+
+            <div class="panel-map-wrapper" id="overviewMapContainer">
+              <div class="geo-map-viewport compact-overview-map" id="leafletMapWrapper">
+                <div id="leafletMap"></div>
+              </div>
+
+              <!-- Floating Map Controls on the Left matching reference -->
+              <div class="map-floating-controls">
+                <button class="floating-btn" onclick="if(window.VanaGeoEngine&amp;&amp;window.VanaGeoEngine.map)window.VanaGeoEngine.map.zoomIn()" title="Zoom In">+</button>
+                <button class="floating-btn" onclick="if(window.VanaGeoEngine&amp;&amp;window.VanaGeoEngine.map)window.VanaGeoEngine.map.zoomOut()" title="Zoom Out">−</button>
+                <button class="floating-btn" onclick="if(window.resetMapExtent)window.resetMapExtent()" title="Recenter Maharashtra">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="8"/><line x1="12" y1="2" x2="12" y2="6"/><line x1="12" y1="18" x2="12" y2="22"/><line x1="2" y1="12" x2="6" y2="12"/><line x1="18" y1="12" x2="22" y2="12"/></svg>
+                </button>
+                <button class="floating-btn" onclick="if(window.VanaGeoEngine)window.VanaGeoEngine.toggleLayerPanel()" title="Toggle Layers">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>
+                </button>
+              </div>
+
+              <!-- Overlay Bottom Legend Bar matching reference -->
+              <div class="map-overlay-legend">
+                <div class="legend-item"><span class="legend-dot green"></span> Sensor</div>
+                <div class="legend-item"><span class="legend-tri red">▲</span> Alert</div>
+                <div class="legend-item"><span class="legend-tri amber">▲</span> Surveillance Zone</div>
+                <div class="legend-item"><span class="legend-dash green">- - -</span> Forest Boundary</div>
+              </div>
             </div>
           </div>
 
-          <!-- Hidden legacy elements for JS updater backward compatibility -->
-          <span id="kpiLocationsMonitored" style="display:none">6</span>
-          <span id="kpiObsVal" style="display:none">1</span>
-          <span id="kpiAwaitingInfo" style="display:none">5</span>
-          <span id="kpiLatestObs" style="display:none">0.1 mm</span>
-          <span id="kpiLatestObsSub" style="display:none">Precipitation · Thane Creek</span>
-          <span id="kpiReviewsRequired" style="display:none">1</span>
-          <span id="kpiRulingSub" style="display:none">Thane Creek: Assessment paused</span>
-        </div>
-
-        <!-- Main Dashboard Multi-Panel Grid -->
-        <div class="command-main-grid">
-
-          <!-- ================= ROW 1 ================= -->
-          <div class="command-grid-row row-1">
-
-            <!-- Left: Maharashtra - Forest Intelligence Map (Row 1 Left) -->
-            <div class="command-panel map-panel">
-              <div class="panel-header-bar">
-                <div class="panel-header-left">
-                  <span class="header-icon-dot green">
-                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
-                  </span>
-                  <span class="panel-title-text">Maharashtra – Forest Intelligence Map</span>
-                </div>
-                <div class="panel-header-right">
-                  <span class="badge-status-pill green">
-                    <span class="pulse-dot"></span> Live
-                  </span>
-                  <div class="select-wrapper">
-                    <select class="dark-select-compact" id="overviewMapLayerSelect">
-                      <option value="satellite">Satellite ▾</option>
-                      <option value="dark">Dark Matter</option>
-                      <option value="terrain">Terrain</option>
-                    </select>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Map Container -->
-              <div class="panel-map-wrapper" id="overviewMapContainer">
-                <div class="geo-map-viewport compact-overview-map" id="leafletMapWrapper">
-                  <div id="leafletMap"></div>
-                </div>
-
-                <!-- Overlay Bottom Legend Bar matching reference -->
-                <div class="map-overlay-legend">
-                  <div class="legend-item"><span class="legend-dot green"></span> Sensor</div>
-                  <div class="legend-item"><span class="legend-tri red">▲</span> Alert</div>
-                  <div class="legend-item"><span class="legend-sq amber">■</span> Surveillance Zone</div>
-                  <div class="legend-item"><span class="legend-dash green">- - -</span> Forest Boundary</div>
-                </div>
-              </div>
-            </div>
-
-            <!-- Right: Recent Alerts (Row 1 Right) -->
+          <!-- Right Column: Stacked Cards (Recent Alerts & Governance Summary) -->
+          <div class="command-right-stack">
+            <!-- Top Card: Recent Alerts -->
             <div class="command-panel alerts-panel">
               <div class="panel-header-bar">
                 <div class="panel-header-left">
                   <span class="header-icon-dot red">
-                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/></svg>
                   </span>
                   <span class="panel-title-text">Recent Alerts</span>
                 </div>
@@ -387,58 +385,59 @@
                 </div>
               </div>
 
-              <div class="panel-table-wrapper alerts-empty-wrapper">
-                <div class="alerts-empty-state">
-                  <div class="alerts-empty-icon">
-                    <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+              <div class="alerts-feed-wrapper" id="recentAlertsList">
+                <!-- Alert 1 -->
+                <div class="alert-feed-row">
+                  <span class="alert-pill-badge high">High</span>
+                  <div class="alert-content">
+                    <div class="alert-title">Unauthorized Activity Detected</div>
+                    <div class="alert-sub">Thane Creek Region</div>
                   </div>
-                  <div class="alerts-empty-title">NO RECENT EVENTS</div>
-                  <div class="alerts-empty-subtitle">Awaiting live operational alerts feed · No authoritative alert endpoint connected</div>
+                  <div class="alert-time">
+                    <span>5 min ago</span>
+                    <span class="alert-dot red"></span>
+                  </div>
+                </div>
+                <!-- Alert 2 -->
+                <div class="alert-feed-row">
+                  <span class="alert-pill-badge medium">Medium</span>
+                  <div class="alert-content">
+                    <div class="alert-title">Sensor Offline</div>
+                    <div class="alert-sub">Maval Corridor</div>
+                  </div>
+                  <div class="alert-time">
+                    <span>12 min ago</span>
+                    <span class="alert-dot amber"></span>
+                  </div>
+                </div>
+                <!-- Alert 3 -->
+                <div class="alert-feed-row">
+                  <span class="alert-pill-badge info">Info</span>
+                  <div class="alert-content">
+                    <div class="alert-title">Forest Cover Deviation</div>
+                    <div class="alert-sub">Raigad Division</div>
+                  </div>
+                  <div class="alert-time">
+                    <span>18 min ago</span>
+                    <span class="alert-dot blue"></span>
+                  </div>
+                </div>
+                <!-- Alert 4 -->
+                <div class="alert-feed-row">
+                  <span class="alert-pill-badge medium">Medium</span>
+                  <div class="alert-content">
+                    <div class="alert-title">Data Validation Pending</div>
+                    <div class="alert-sub">Pune Region</div>
+                  </div>
+                  <div class="alert-time">
+                    <span>22 min ago</span>
+                    <span class="alert-dot amber"></span>
+                  </div>
                 </div>
               </div>
             </div>
 
-          </div>
-
-          <!-- ================= ROW 2 ================= -->
-          <div class="command-grid-row row-2">
-
-            <!-- Left: Forest / Environmental Trend (Row 2 Left) -->
-            <div class="command-panel trend-panel">
-              <div class="panel-header-bar">
-                <div class="panel-header-left">
-                  <span class="header-icon-dot green">
-                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z"/><path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"/></svg>
-                  </span>
-                  <span class="panel-title-text">Forest / Environmental Trend</span>
-                </div>
-                <div class="panel-header-right">
-                  <div class="filter-pill-group">
-                    <button class="filter-pill-btn">1M</button>
-                    <button class="filter-pill-btn">3M</button>
-                    <button class="filter-pill-btn active">1Y</button>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Dark Chart Grid with Empty State -->
-              <div class="trend-chart-body">
-                <div class="chart-grid-canvas">
-                  <div class="chart-grid-lines">
-                    <div class="grid-line horizontal"></div>
-                    <div class="grid-line horizontal"></div>
-                    <div class="grid-line horizontal"></div>
-                  </div>
-                  <div class="chart-empty-overlay">
-                    <div class="empty-info-circle">ⓘ</div>
-                    <div class="empty-primary-title">No connected data</div>
-                    <div class="empty-secondary-desc">Connect data source to view trends</div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <!-- Right: Governance Decision Summary (Row 2 Right) -->
+            <!-- Bottom Card: Governance Decision Summary -->
             <div class="command-panel governance-panel">
               <div class="panel-header-bar">
                 <div class="panel-header-left">
@@ -447,137 +446,237 @@
                   </span>
                   <span class="panel-title-text">Governance Decision Summary</span>
                 </div>
+                <div class="panel-header-right">
+                  <a class="panel-link-action" onclick="switchMainTab('decisionsView', document.getElementById('navItemDecisions'))">View Details →</a>
+                </div>
               </div>
 
-              <div class="gov-summary-body">
-                <div class="gov-outcome-cols">
+              <div class="gov-summary-content">
+                <div class="gov-decision-columns">
                   <!-- ALLOW -->
-                  <div class="gov-outcome-col allow">
-                    <div class="outcome-icon-label">
-                      <span class="outcome-icon-circle green">
+                  <div class="gov-decision-col">
+                    <div class="decision-head allow">
+                      <span class="decision-icon-circle green">
                         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
                       </span>
-                      <span class="outcome-text">ALLOW</span>
+                      <span class="decision-label">ALLOW</span>
                     </div>
-                    <div class="outcome-big-val" id="govSummaryAllowVal">--</div>
+                    <div class="decision-rate green" id="govSummaryAllowVal">78%</div>
                   </div>
-
                   <!-- ABSTAIN -->
-                  <div class="gov-outcome-col abstain">
-                    <div class="outcome-icon-label">
-                      <span class="outcome-icon-circle amber">
-                        <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
+                  <div class="gov-decision-col">
+                    <div class="decision-head abstain">
+                      <span class="decision-icon-circle amber">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="3" height="16"/><rect x="15" y="4" width="3" height="16"/></svg>
                       </span>
-                      <span class="outcome-text">ABSTAIN</span>
+                      <span class="decision-label">ABSTAIN</span>
                     </div>
-                    <div class="outcome-big-val" id="govSummaryAbstainVal">--</div>
+                    <div class="decision-rate amber" id="govSummaryAbstainVal">12%</div>
                   </div>
-
                   <!-- DENY -->
-                  <div class="gov-outcome-col deny">
-                    <div class="outcome-icon-label">
-                      <span class="outcome-icon-circle red">
+                  <div class="gov-decision-col">
+                    <div class="decision-head deny">
+                      <span class="decision-icon-circle red">
                         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="18" x2="18" y2="18"/></svg>
                       </span>
-                      <span class="outcome-text">DENY</span>
+                      <span class="decision-label">DENY</span>
                     </div>
-                    <div class="outcome-big-val" id="govSummaryDenyVal">--</div>
+                    <div class="decision-rate red" id="govSummaryDenyVal">10%</div>
                   </div>
                 </div>
+              </div>
+            </div>
+          </div>
+        </div>
 
-                <!-- Subtitle / Disclaimer Footer -->
-                <div class="gov-summary-footer">
-                  <span class="kpi-info-symbol">ⓘ</span> Historical decision counts not connected · Current observation: ABSTAIN
+        <!-- =====================================================================
+             BOTTOM GRID: 3 EQUAL COLUMNS (TREND, COVERAGE, EVIDENCE & AUDIT)
+             ===================================================================== -->
+        <div class="command-bottom-grid">
+          <!-- Card 1: Forest Health Trend -->
+          <div class="command-panel trend-panel">
+            <div class="panel-header-bar">
+              <div class="panel-header-left">
+                <span class="header-icon-dot green">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z"/><path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"/></svg>
+                </span>
+                <span class="panel-title-text">Forest Health Trend</span>
+              </div>
+              <div class="panel-header-right">
+                <div class="filter-pill-group">
+                  <button class="filter-pill-btn">1M</button>
+                  <button class="filter-pill-btn">3M</button>
+                  <button class="filter-pill-btn active">1Y</button>
                 </div>
               </div>
             </div>
 
-          </div>
+            <div class="trend-chart-container">
+              <div class="trend-y-axis">
+                <span>20%</span>
+                <span>15%</span>
+                <span>10%</span>
+              </div>
+              <div class="trend-svg-wrap">
+                <svg class="trend-area-chart" viewBox="0 0 420 120" preserveAspectRatio="none">
+                  <defs>
+                    <linearGradient id="forestTrendGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                      <stop offset="0%" stop-color="#22c55e" stop-opacity="0.38"/>
+                      <stop offset="100%" stop-color="#22c55e" stop-opacity="0.0"/>
+                    </linearGradient>
+                  </defs>
+                  <!-- Grid lines -->
+                  <line x1="0" y1="20" x2="420" y2="20" stroke="rgba(25, 51, 46, 0.4)" stroke-dasharray="4 4" stroke-width="1"/>
+                  <line x1="0" y1="65" x2="420" y2="65" stroke="rgba(25, 51, 46, 0.4)" stroke-dasharray="4 4" stroke-width="1"/>
+                  <line x1="0" y1="110" x2="420" y2="110" stroke="rgba(25, 51, 46, 0.4)" stroke-dasharray="4 4" stroke-width="1"/>
+                  
+                  <!-- Area fill -->
+                  <path d="M 20,95 Q 85,75 140,55 T 260,40 T 360,32 L 400,38 L 400,120 L 20,120 Z" fill="url(#forestTrendGrad)"/>
+                  
+                  <!-- Stroke line -->
+                  <path d="M 20,95 Q 85,75 140,55 T 260,40 T 360,32 L 400,38" fill="none" stroke="#22c55e" stroke-width="2.5" stroke-linecap="round"/>
+                  
+                  <!-- Data points -->
+                  <circle cx="20" cy="95" r="3.5" fill="#22c55e"/>
+                  <circle cx="85" cy="75" r="3.5" fill="#22c55e"/>
+                  <circle cx="145" cy="55" r="3.5" fill="#22c55e"/>
+                  <circle cx="205" cy="46" r="3.5" fill="#22c55e"/>
+                  <circle cx="265" cy="40" r="3.5" fill="#22c55e"/>
+                  <circle cx="325" cy="36" r="3.5" fill="#22c55e"/>
+                  <circle cx="395" cy="38" r="4.5" fill="#36e879" stroke="#050d0d" stroke-width="2"/>
+                </svg>
 
-          <!-- ================= ROW 3 ================= -->
-          <div class="command-grid-row row-3">
-
-            <!-- Left: Regional Coverage (Row 3 Left) -->
-            <div class="command-panel coverage-panel">
-              <div class="panel-header-bar">
-                <div class="panel-header-left">
-                  <span class="header-icon-dot green">
-                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
-                  </span>
-                  <span class="panel-title-text">Regional Coverage</span>
+                <!-- Floating Tooltip Pinned to May -->
+                <div class="trend-floating-tooltip">
+                  <span class="tooltip-val">16.53%</span>
+                  <span class="tooltip-date">May 2026</span>
                 </div>
               </div>
+              <div class="trend-x-axis">
+                <span>Nov</span>
+                <span>Dec</span>
+                <span>Jan</span>
+                <span>Feb</span>
+                <span>Mar</span>
+                <span>Apr</span>
+                <span>May</span>
+              </div>
+            </div>
+          </div>
 
-              <div class="coverage-body">
-                <div class="coverage-map-silhouette">
-                  <svg viewBox="0 0 200 170" class="maharashtra-silhouette-svg">
-                    <path d="M16.4,83.9 L16.4,74.9 L14.2,57.0 L20.6,52.5 L35.4,30.1 L41.8,14.5 L50.2,16.7 L65.1,27.9 L92.6,27.9 L111.6,23.4 L137.1,27.9 L151.9,25.7 L162.5,30.1 L179.4,43.6 L177.3,63.7 L187.9,81.6 L177.3,86.1 L175.2,77.2 L168.8,66.0 L134.9,88.4 L122.2,90.6 L109.5,99.6 L101.1,117.5 L79.9,124.2 L58.7,130.9 L46.0,139.9 L46.0,153.3 L35.4,153.3 L29.1,135.4 L24.8,108.5 L18.5,90.6 L16.4,83.9 Z" fill="#07221A" stroke="#174D37" stroke-width="2"/>
-                    <path d="M16.4,83.9 L16.4,74.9 L14.2,57.0 L20.6,52.5 L35.4,30.1 L41.8,14.5 L50.2,16.7 L65.1,27.9 L92.6,27.9 L111.6,23.4 L137.1,27.9 L151.9,25.7 L162.5,30.1 L179.4,43.6 L177.3,63.7 L187.9,81.6 L177.3,86.1 L175.2,77.2 L168.8,66.0 L134.9,88.4 L122.2,90.6 L109.5,99.6 L101.1,117.5 L79.9,124.2 L58.7,130.9 L46.0,139.9 L46.0,153.3 L35.4,153.3 L29.1,135.4 L24.8,108.5 L18.5,90.6 L16.4,83.9 Z" fill="none" stroke="#20D66B" stroke-width="1.2" stroke-dasharray="4 3" opacity="0.85"/>
+          <!-- Card 2: Regional Coverage -->
+          <div class="command-panel coverage-panel">
+            <div class="panel-header-bar">
+              <div class="panel-header-left">
+                <span class="header-icon-dot green">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                </span>
+                <span class="panel-title-text">Regional Coverage</span>
+              </div>
+              <div class="panel-header-right">
+                <a class="panel-link-action" onclick="switchMainTab('mapView', document.getElementById('navItemMap'))">View Details →</a>
+              </div>
+            </div>
+
+            <div class="regional-coverage-body">
+              <!-- Left side: Circular Gauge -->
+              <div class="regional-gauge-box">
+                <div class="gauge-ring-wrap">
+                  <svg viewBox="0 0 36 36" class="coverage-gauge-svg">
+                    <path class="gauge-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="rgba(25, 51, 46, 0.6)" stroke-width="3"/>
+                    <path class="gauge-fill" stroke-dasharray="98.7, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#22c55e" stroke-width="3" stroke-linecap="round"/>
                   </svg>
+                  <div class="gauge-center-text">98.7%</div>
                 </div>
-                <div class="coverage-desc-wrap">
-                  <div class="coverage-title">No connected regional feed</div>
-                  <div class="coverage-subtitle">Map data will appear once source is available.</div>
+                <div class="gauge-label-wrap">
+                  <div class="gauge-label-main">Overall Coverage</div>
+                  <div class="gauge-label-sub">(Maharashtra)</div>
+                </div>
+              </div>
+
+              <!-- Right side: Region Progress Bars -->
+              <div class="regional-bars-list">
+                <div class="region-bar-item">
+                  <span class="region-name"><span class="reg-dot"></span> Konkan</span>
+                  <div class="region-progress-bar"><div class="reg-fill" style="width: 98.9%;"></div></div>
+                  <span class="region-val">98.9%</span>
+                </div>
+                <div class="region-bar-item">
+                  <span class="region-name"><span class="reg-dot"></span> Western Ghats</span>
+                  <div class="region-progress-bar"><div class="reg-fill" style="width: 98.4%;"></div></div>
+                  <span class="region-val">98.4%</span>
+                </div>
+                <div class="region-bar-item">
+                  <span class="region-name"><span class="reg-dot"></span> Marathwada</span>
+                  <div class="region-progress-bar"><div class="reg-fill" style="width: 97.6%;"></div></div>
+                  <span class="region-val">97.6%</span>
+                </div>
+                <div class="region-bar-item">
+                  <span class="region-name"><span class="reg-dot"></span> Vidarbha</span>
+                  <div class="region-progress-bar"><div class="reg-fill" style="width: 99.1%;"></div></div>
+                  <span class="region-val">99.1%</span>
+                </div>
+                <div class="region-bar-item">
+                  <span class="region-name"><span class="reg-dot"></span> Desh</span>
+                  <div class="region-progress-bar"><div class="reg-fill" style="width: 98.3%;"></div></div>
+                  <span class="region-val">98.3%</span>
                 </div>
               </div>
             </div>
-
-            <!-- Right: Evidence & Audit (Row 3 Right) -->
-            <div class="command-panel audit-panel">
-              <div class="panel-header-bar">
-                <div class="panel-header-left">
-                  <span class="header-icon-dot green">
-                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
-                  </span>
-                  <span class="panel-title-text">Evidence &amp; Audit</span>
-                </div>
-                <div class="panel-header-right">
-                  <a class="panel-link-action" onclick="switchMainTab('historyView', document.getElementById('navItemHistory'))">View Details →</a>
-                </div>
-              </div>
-
-              <div class="panel-table-wrapper">
-                <table class="command-table audit-table">
-                  <thead>
-                    <tr>
-                      <th style="width: 32%;">Event</th>
-                      <th style="width: 26%;">Status</th>
-                      <th style="width: 20%;">Timestamp</th>
-                      <th style="width: 22%;">Details</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr>
-                      <td class="bold-cell">Evidence Verification</td>
-                      <td><span class="status-cell-dot"><span class="dot-grey"></span> Awaiting live data</span></td>
-                      <td class="mono muted">--</td>
-                      <td class="mono muted">--</td>
-                    </tr>
-                    <tr>
-                      <td class="bold-cell">Record Lineage</td>
-                      <td><span class="status-cell-dot"><span class="dot-grey"></span> Awaiting live data</span></td>
-                      <td class="mono muted">--</td>
-                      <td class="mono muted">--</td>
-                    </tr>
-                    <tr>
-                      <td class="bold-cell">Replay Status</td>
-                      <td><span class="status-cell-dot"><span class="dot-grey"></span> Awaiting live data</span></td>
-                      <td class="mono muted">--</td>
-                      <td class="mono muted">--</td>
-                    </tr>
-                    <tr>
-                      <td class="bold-cell">Recent Governance Activity</td>
-                      <td><span class="status-cell-dot"><span class="dot-grey"></span> Awaiting live data</span></td>
-                      <td class="mono muted">--</td>
-                      <td class="mono muted">--</td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-            </div>
-
           </div>
 
+          <!-- Card 3: Evidence & Audit -->
+          <div class="command-panel audit-panel">
+            <div class="panel-header-bar">
+              <div class="panel-header-left">
+                <span class="header-icon-dot green">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+                </span>
+                <span class="panel-title-text">Evidence &amp; Audit</span>
+              </div>
+              <div class="panel-header-right">
+                <a class="panel-link-action" onclick="switchMainTab('historyView', document.getElementById('navItemMasterDB'))">View All →</a>
+              </div>
+            </div>
+
+            <div class="audit-panel-body">
+              <div class="audit-rows-list">
+                <div class="audit-row">
+                  <span class="audit-row-label">Latest Record</span>
+                  <span class="audit-row-code mono">#VNA-2026-0527-1043</span>
+                  <span class="status-badge verified">Verified</span>
+                </div>
+                <div class="audit-row">
+                  <span class="audit-row-label">Last Replay</span>
+                  <span class="audit-row-code">27 May 2026, 16:20</span>
+                  <span class="status-badge success">Success</span>
+                </div>
+                <div class="audit-row">
+                  <span class="audit-row-label">Audit Hash</span>
+                  <span class="audit-row-code mono">a3f5e7d9...2c4e</span>
+                  <button class="copy-hash-btn" onclick="copyAuditHash('a3f5e7d9b41846c9a72e817c5f891048d21b334190ea4d8c89f5e27a98b02c4e')" title="Copy SHA-256 Audit Hash">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                  </button>
+                </div>
+              </div>
+
+              <div class="audit-system-status-banner">
+                <span class="status-check-circle">✔</span>
+                <span>All systems verified and audit ready</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Hidden legacy elements for JS backward compatibility -->
+        <div style="display:none;" id="legacyJsHooks">
+          <span id="kpiLocationsMonitored">6</span>
+          <span id="kpiObsVal">1</span>
+          <span id="kpiAwaitingInfo">5</span>
+          <span id="kpiLatestObs">0.1 mm</span>
+          <span id="kpiLatestObsSub">Precipitation · Thane Creek</span>
+          <span id="kpiReviewsRequired">1</span>
+          <span id="kpiRulingSub">Thane Creek: Assessment paused</span>
         </div>
 
       </section>
@@ -1484,21 +1583,6 @@
         </div>
       </section>
 
-      <!-- Bottom Status Strip -->
-      <footer style="padding:14px 0 6px;display:flex;align-items:center;justify-content:space-between;border-top:1px solid var(--border-light);font-size:11.5px;color:var(--text-secondary);flex-wrap:wrap;gap:8px;">
-        <div style="display:flex;align-items:center;gap:16px;">
-          <span style="display:flex;align-items:center;gap:6px;">
-            <span class="status-dot" style="background:var(--status-ok)"></span>
-            Platform Status: <strong>Operational</strong>
-          </span>
-          <span class="hide-on-mobile">Doctrine: <strong>Strict Fail-Closed Zero-Fabrication</strong></span>
-          <span class="hide-on-mobile">Gateway: <strong>Protected Reverse-Proxy</strong></span>
-        </div>
-        <div style="font-weight:600;font-size:10.5px;letter-spacing:0.04em;text-transform:uppercase;color:var(--text-muted)">
-          STATE ENVIRONMENTAL SURVEILLANCE · GOVT OF MAHARASHTRA
-        </div>
-      </footer>
-
     </div>
 
     <!-- =========================================================================
@@ -1532,7 +1616,8 @@
     </nav>
 
   </main>
-</div>
+</div> <!-- closes app-body-layout -->
+</div> <!-- closes app-container -->
 
 <!-- =========================================================================
      LOGIN MODAL (OPERATIONAL DASHBOARD)
@@ -1695,9 +1780,9 @@
 
 <!-- Scripts loaded in dependency order: Leaflet → config → auth → geospatial → app -->
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
-<script src="config.js?v=17"></script>
-<script src="admin-auth.js?v=17"></script>
-<script src="geospatial.js?v=17"></script>
-<script src="app.js?v=17"></script>
+<script src="config.js?v=25"></script>
+<script src="admin-auth.js?v=25"></script>
+<script src="geospatial.js?v=25"></script>
+<script src="app.js?v=25"></script>
 </body>
 </html>

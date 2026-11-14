@@ -472,6 +472,35 @@
   transition: all 0.3s ease;
 }
 
+/* Command Center Marker Icons (Sensor, Alert, Surveillance Zone) */
+.geo-sensor-marker {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #22c55e;
+  border: 2px solid #050d0d;
+  box-shadow: 0 0 8px #22c55e;
+  cursor: pointer;
+  display: block;
+}
+
+.geo-tri-marker {
+  font-size: 15px;
+  font-weight: 900;
+  cursor: pointer;
+  line-height: 1;
+  text-align: center;
+  display: block;
+}
+.geo-tri-marker.red {
+  color: #ef4444;
+  filter: drop-shadow(0 0 6px rgba(239, 68, 68, 0.9));
+}
+.geo-tri-marker.amber {
+  color: #f59e0b;
+  filter: drop-shadow(0 0 6px rgba(245, 158, 11, 0.9));
+}
+
 /* Default state: Collapse floating layer & legend panels in command center */
 .geo-layer-panel {
   display: none !important;

@@ -45,7 +45,7 @@ TARGETS = {
 }
 
 # Explicitly allowed subpaths for authentication to prevent open proxy misuse
-ALLOWED_AUTH_SUBPATHS = {"/login", "/register", "/me"}
+ALLOWED_AUTH_SUBPATHS = {"/login", "/me", "/logout"}
 
 class VANAHandler(http.server.SimpleHTTPRequestHandler):
     def __init__(self, *args, **kwargs):
@@ -87,6 +87,18 @@ class VANAHandler(http.server.SimpleHTTPRequestHandler):
         # Restrict /proxy/auth to explicitly expected authentication routes
         if matched_prefix == "/proxy/auth":
             base_subpath = clean_path.rstrip("/")
+            if base_subpath in ("/register", "register"):
+                err_payload = json.dumps({
+                    "error": "Registration Disabled",
+                    "message": "Public registration is disabled. VANA operates under a strict predefined role-based access control policy.",
+                    "status_code": 403
+                }).encode("utf-8")
+                self.send_response(403)
+                self.send_header("Content-Type", "application/json")
+                self.send_header("Content-Length", str(len(err_payload)))
+                self.end_headers()
+                self.wfile.write(err_payload)
+                return True
             if base_subpath not in ALLOWED_AUTH_SUBPATHS:
                 self.send_error(404, "Endpoint not found on auth proxy")
                 return True
@@ -147,6 +159,18 @@ class VANAHandler(http.server.SimpleHTTPRequestHandler):
         if self.path.startswith("/proxy/"):
             if self._handle_proxy("GET"):
                 return
+
+        parsed = urllib.parse.urlparse(self.path)
+        clean_path = parsed.path.rstrip("/")
+        if clean_path in ("/login", "login"):
+            self.path = "/login.html" + (("?" + parsed.query) if parsed.query else "")
+        elif clean_path in ("/admin", "admin"):
+            self.path = "/admin.html" + (("?" + parsed.query) if parsed.query else "")
+        elif clean_path in ("/field-agent", "/forest-officer"):
+            role_param = "FIELD_AGENT" if "field" in clean_path else "FOREST_OFFICER"
+            query = f"role={role_param}" + (("&" + parsed.query) if parsed.query else "")
+            self.path = "/index.html?" + query
+
         super().do_GET()
 
     def do_POST(self):
