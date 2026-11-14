@@ -680,14 +680,14 @@ async function fetchLive(targetObservationId) {
   renderDashboard(data);
 
   const okCount = (g1Success ? 1 : 0) + (g2Success ? 1 : 0) + (g4Success ? 1 : 0);
-  if (g1Success && g2Success) {
-    if (statusText) statusText.textContent = "System Operational";
+  if (okCount === 3) {
+    if (statusText) statusText.textContent = "SYSTEM OPERATIONAL";
     if (statusPill) statusPill.className = "system-status-pill";
   } else if (okCount > 0) {
-    if (statusText) statusText.textContent = "System Degraded";
+    if (statusText) statusText.textContent = `${okCount} OF 3 SERVICES REACHABLE`;
     if (statusPill) statusPill.className = "system-status-pill warn";
   } else {
-    if (statusText) statusText.textContent = "System Offline";
+    if (statusText) statusText.textContent = "0 OF 3 SERVICES REACHABLE";
     if (statusPill) statusPill.className = "system-status-pill error";
   }
 }

@@ -291,8 +291,8 @@
   }
 
   const VanaGeoConfig = {
-    provider: "satellite",
-    tileStyle: "satellite",
+    provider: "geoapify", // "geoapify" with fallback to "carto"
+    tileStyle: "dark-matter-dark-grey", // "dark-matter-dark-grey" or "osm-bright-smooth"
     center: [19.6, 75.8],
     defaultZoom: 6.8,
     minZoom: 5,
@@ -303,12 +303,16 @@
       if (key) {
         return "https://maps.geoapify.com/v1/tile/" + this.tileStyle + "/{z}/{x}/{y}.png?apiKey=" + encodeURIComponent(key);
       }
-      // ESRI World Imagery (Satellite) - authentic high-resolution dark satellite view of Maharashtra
-      return "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}";
+      // Standard clean OpenStreetMap tiles fallback (no watermark)
+      return "https://tile.openstreetmap.org/{z}/{x}/{y}.png";
     },
 
     getAttribution: function () {
-      return '&copy; Esri &mdash; Earthstar Geographics';
+      const key = getGeoapifyKey();
+      if (key) {
+        return 'Powered by <a href="https://www.geoapify.com/" target="_blank">Geoapify</a> | &copy; <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a> contributors';
+      }
+      return '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a> contributors';
     }
   };
 
@@ -404,10 +408,14 @@
         maxZoom: VanaGeoConfig.maxZoom
       });
 
-      // Keep natural satellite imagery without inversion
+      // Toggle dark styling filter on tiles when using standard OSM
       if (this.map && this.map.getPanes && this.map.getPanes().tilePane) {
         const pane = this.map.getPanes().tilePane;
-        pane.classList.remove("dark-tile-mode");
+        if (hasKey) {
+          pane.classList.remove("dark-tile-mode");
+        } else {
+          pane.classList.add("dark-tile-mode");
+        }
       }
 
       let tileErrors = 0;
@@ -495,11 +503,7 @@
     },
 
     renderReferenceMapMarkers: function () {
-      if (!this.map || !this.layers.alerts || !this.layers.observations || !this.layers.zones) return;
-
-      this.layers.observations.clearLayers();
-      this.layers.alerts.clearLayers();
-      this.layers.zones.clearLayers();
+      if (!this.map || !this.layers.alerts) return;
 
       const sensorLocations = [
         { name: "Thane Creek Sensor Station", coords: [19.1288, 72.9421] },
@@ -613,8 +617,13 @@
       this.mapStatus.data = isG1Healthy ? "LIVE_PARTIAL" : "UNAVAILABLE";
       this.updateStatus();
 
-      // Ensure reference operational markers are clean and preserved
-      this.renderReferenceMapMarkers();
+      // Refresh observations layer
+      this.renderObservations();
+
+      // Refresh alerts layer if window.OPERATIONAL_ALERTS exists
+      if (typeof window.OPERATIONAL_ALERTS !== "undefined") {
+        this.renderAlerts(window.OPERATIONAL_ALERTS);
+      }
     },
 
     renderObservations: function () {
