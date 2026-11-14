@@ -14,8 +14,10 @@ from pathlib import Path
 from jsonschema import Draft202012Validator, FormatChecker
 
 ROOT = Path(__file__).resolve().parent
-SCHEMA = json.loads((ROOT / "observation.schema.json").read_text(encoding="utf-8"))
-PACKAGE = json.loads((ROOT / "sample_mission_package.json").read_text(encoding="utf-8"))
+SCHEMA_PATH = ROOT / "group3-sensor-contracts" / "observation.schema.json"
+PACKAGE_PATH = ROOT / "group3-sensor-contracts" / "sample_mission_package.json"
+SCHEMA = json.loads(SCHEMA_PATH.read_text(encoding="utf-8"))
+PACKAGE = json.loads(PACKAGE_PATH.read_text(encoding="utf-8"))
 V = Draft202012Validator(SCHEMA, format_checker=FormatChecker())
 
 KNOWN_DEVICES = {o["device_id"] for o in PACKAGE["observations"]}

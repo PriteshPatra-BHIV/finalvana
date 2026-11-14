@@ -1,18 +1,21 @@
 import copy
 import json
+import sys
 import sqlite3
 from pathlib import Path
 
 import pytest
-from fastapi.testclient import TestClient
+from starlette.testclient import TestClient
 
+ROOT = Path(__file__).resolve().parents[1]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
 
-TEST_DB = Path(__file__).resolve().parents[1] / "test_vana_official_api.db"
+TEST_DB = ROOT / "test_vana_official_api.db"
 
 import api.db
 from api.db import initialize_database
 from api.main import app
-
 
 client = TestClient(app)
 FIXTURE = Path(__file__).resolve().parents[1] / "sample_fsi_isfr_2023_forest_cover.json"

@@ -27,29 +27,24 @@ from datetime import datetime
 
 
 def ts(v):
-    """Parse an ISO-8601 UTC timestamp to an instant.
-
-    Timestamps MUST be compared as instants, never as strings. Arya's metadata
-    contract section 6 permits fractional seconds, and '+00:00' and 'Z' are both
-    valid UTC designators - so three spellings of the SAME instant are legal:
-
-        2026-08-13T09:14:22Z
-        2026-08-13T09:14:22+00:00
-        2026-08-13T09:14:22.172677Z
-
-    Under string comparison '09:14:22Z' > '09:14:22.172677Z' (because 'Z' sorts
-    after '.'), and '...Z' != '...+00:00'. An earlier version of this file
-    compared strings, so it reported a source_timestamp as being AFTER the
-    observation when the two named the same second, and reported provenance
-    captured_at as disagreeing with observation_timestamp when both were the
-    same instant written two legal ways. Found by audit 2026-08-20.
-    """
+    """Parse an ISO-8601 UTC timestamp to an instant."""
     if not v:
         return None
     try:
         return datetime.fromisoformat(str(v).replace("Z", "+00:00"))
-    except ValueError:
+    except (ValueError, TypeError):
         return None
+
+
+def validate_calendar_date(timestamp_str: str) -> bool:
+    """Validate that timestamp_str represents a real Gregorian calendar date."""
+    if not timestamp_str or not isinstance(timestamp_str, str):
+        return False
+    try:
+        datetime.fromisoformat(timestamp_str.replace("Z", "+00:00"))
+        return True
+    except (ValueError, TypeError):
+        return False
 
 from pathlib import Path
 
@@ -91,6 +86,12 @@ def semantic_errors(o):
     loc = o.get("location") or {}
     integ = o.get("raw_artifact_integrity") or {}
     m = o.get("measurement")
+
+    # --- 0. Gregorian calendar validity check (reject impossible dates like Feb 30)
+    for tf in ("observation_timestamp", "source_timestamp"):
+        val = o.get(tf)
+        if val and not validate_calendar_date(val):
+            errs.append(f"{tf} {val!r} is not a valid Gregorian calendar date")
 
     # --- 1. device must be known to the register [stand-in]
     dev_id = o.get("device_id")

@@ -1,22 +1,23 @@
-﻿import json
+import json
 import os
+import sys
 import sqlite3
 from pathlib import Path
 
 import pytest
-from fastapi.testclient import TestClient
+from starlette.testclient import TestClient
 
+ROOT = Path(__file__).resolve().parents[1]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
 
 # Use a dedicated SQLite database for API integration tests.
-TEST_DB = Path(__file__).resolve().parents[1] / "test_vana_api.db"
+TEST_DB = ROOT / "test_vana_api.db"
 os.environ["VANA_DATABASE_URL"] = f"sqlite:///{TEST_DB}"
-
 
 from api.db import initialize_database
 from api.main import app
 
-
-ROOT = Path(__file__).resolve().parents[1]
 client = TestClient(app)
 
 
