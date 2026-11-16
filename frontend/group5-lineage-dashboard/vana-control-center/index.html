@@ -11,8 +11,8 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
   <!-- Leaflet CSS for accurate geographic tile mapping -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
-  <link rel="stylesheet" href="styles.css?v=34">
-  <link rel="stylesheet" href="geospatial.css?v=25">
+  <link rel="stylesheet" href="styles.css?v=35">
+  <link rel="stylesheet" href="geospatial.css?v=35">
   <!-- Official VANA Brand Favicons -->
   <link rel="icon" type="image/png" sizes="64x64" href="assets/vana-favicon.png">
   <link rel="icon" type="image/png" sizes="32x32" href="assets/vana-favicon-32.png">
@@ -143,7 +143,14 @@
           <span>Field Operations</span>
         </a>
 
-        <!-- 8. Administration -->
+        <!-- 8. System Health -->
+        <a class="nav-item" id="navItemSystemHealth" onclick="switchMainTab('historyView', this); return false;" title="System Health &amp; Infrastructure Telemetry">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
+          <span>System Health</span>
+        </a>
+
+        <!-- Administration (Administrative Section) -->
+        <div class="nav-divider" id="adminNavDivider" style="height:1px;background:rgba(34,197,94,0.18);margin:6px 8px;display:none;"></div>
         <a class="nav-item" id="navItemAdmin" href="admin.html" title="VANA Administration Control Plane">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
           <span>Administration</span>
@@ -1738,9 +1745,9 @@
 
 <!-- Scripts loaded in dependency order: Leaflet → config → auth → geospatial → app -->
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
-<script src="config.js?v=25"></script>
-<script src="admin-auth.js?v=25"></script>
-<script src="geospatial.js?v=25"></script>
-<script src="app.js?v=27"></script>
+<script src="config.js?v=35"></script>
+<script src="admin-auth.js?v=35"></script>
+<script src="geospatial.js?v=35"></script>
+<script src="app.js?v=35"></script>
 </body>
 </html>
