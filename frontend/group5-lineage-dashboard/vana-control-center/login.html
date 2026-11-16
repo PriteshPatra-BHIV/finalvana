@@ -68,15 +68,23 @@
       margin-bottom: 24px;
     }
 
-    /* Official VANA Brand: [GREEN LEAF LOGO] VANA */
+    /* Official VANA Brand Logo */
     .login-brand-wrap {
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      gap: 10px;
       margin-bottom: 12px;
       text-decoration: none;
       user-select: none;
+    }
+
+    .login-brand-logo {
+      height: 44px;
+      width: auto;
+      object-fit: contain;
+      filter: drop-shadow(0 2px 8px rgba(32, 214, 107, 0.35));
+      display: inline-block;
+      vertical-align: middle;
     }
 
     .login-brand-leaf {
@@ -99,6 +107,9 @@
     }
 
     @media (max-width: 480px) {
+      .login-brand-logo {
+        height: 36px;
+      }
       .login-brand-leaf {
         width: 30px;
         height: 30px;
@@ -405,10 +416,9 @@
     
     <!-- Branding Header -->
     <div class="login-header">
-      <!-- Official VANA Brand: [OFFICIAL GREEN LEAF LOGO] VANA -->
+      <!-- Official VANA Brand Logo -->
       <div class="login-brand-wrap" title="VANA: Forest Intelligence Command Center">
-        <img src="assets/vana-leaf.svg" alt="VANA Leaf Logo" class="login-brand-leaf" style="width:38px;height:38px;display:inline-block;vertical-align:middle;">
-        <span class="login-brand-name">VANA</span>
+        <img src="assets/vana-logo.svg" alt="VANA Logo" class="login-brand-logo">
       </div>
       <h1 class="login-title">Sign In</h1>
       <div class="login-subtitle">Environmental Intelligence Command Center</div>

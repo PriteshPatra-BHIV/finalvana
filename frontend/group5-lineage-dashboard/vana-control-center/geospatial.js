@@ -506,17 +506,17 @@
       if (!this.map || !this.layers.alerts) return;
 
       const sensorLocations = [
-        { name: "Thane Creek Sensor Station", coords: [19.1288, 72.9421] },
-        { name: "Pune Forest Sensor Node", coords: [18.5204, 73.8567] },
-        { name: "Nagpur Eastern Sensor Array", coords: [21.1458, 79.0882] },
-        { name: "Nashik Northern Canopy Sensor", coords: [19.9975, 73.7898] },
-        { name: "Western Ghats Ecological Sensor", coords: [17.9237, 73.6586] },
-        { name: "Kolhapur Border Station", coords: [16.7050, 74.2433] }
+        { name: "Thane Creek Sensor Station", coords: [19.1288, 72.9421], active: true, statusText: "Active Sensor (Controlled Synthetic Benchmark)" },
+        { name: "Pune Forest Sensor Node", coords: [18.5204, 73.8567], active: false, statusText: "Planned Sensor Station (Phase 2 Deployment · Standby)" },
+        { name: "Nagpur Eastern Sensor Array", coords: [21.1458, 79.0882], active: false, statusText: "Planned Sensor Station (Phase 2 Deployment · Standby)" },
+        { name: "Nashik Northern Canopy Sensor", coords: [19.9975, 73.7898], active: false, statusText: "Planned Sensor Station (Phase 2 Deployment · Standby)" },
+        { name: "Western Ghats Ecological Sensor", coords: [17.9237, 73.6586], active: false, statusText: "Planned Sensor Station (Phase 2 Deployment · Standby)" },
+        { name: "Kolhapur Border Station", coords: [16.7050, 74.2433], active: false, statusText: "Planned Sensor Station (Phase 2 Deployment · Standby)" }
       ];
 
       const alertLocations = [
-        { id: "ALT-2026-0527-01", name: "Unauthorized Activity Detected", region: "Thane Creek Region", coords: [19.2200, 73.0500] },
-        { id: "ALT-2026-0527-02", name: "Forest Cover Deviation", region: "Vidarbha East Reserve", coords: [20.7453, 78.6022] }
+        { id: "ALT-SYS-01", name: "SANSKAR Fail-Closed Active", region: "Thane Creek Corridor", coords: [19.2200, 73.0500], desc: "Automated field execution halted pending physical GNSS calibration." },
+        { id: "ALT-SYS-02", name: "Statutory Baseline Sealed", region: "Vidarbha Zone", coords: [20.7453, 78.6022], desc: "FSI ISFR 2023 16.53% benchmark cryptographically verified." }
       ];
 
       const zoneLocations = [
@@ -527,26 +527,32 @@
         { id: "NV-Z01", name: "North Vidarbha Surveillance Zone", coords: [21.3500, 77.5000] }
       ];
 
-      // Add green sensors
+      // Add sensors (Thane Creek = Active green, others = Standby gray)
       sensorLocations.forEach(s => {
+        const isLive = s.active;
         const icon = L.divIcon({
-          className: "geo-sensor-div-icon",
-          html: '<div class="geo-sensor-marker" title="' + s.name + '"></div>',
+          className: isLive ? "geo-sensor-div-icon" : "geo-sensor-div-icon standby",
+          html: isLive 
+            ? '<div class="geo-sensor-marker" title="' + s.name + '"></div>'
+            : '<div class="geo-sensor-marker standby" style="background:#475569;border-color:#94a3b8;box-shadow:none;" title="' + s.name + ' (Standby)"></div>',
           iconSize: [12, 12],
           iconAnchor: [6, 6]
         });
-        L.marker(s.coords, { icon: icon }).bindPopup('<strong>' + s.name + '</strong><br>● Sensor Active').addTo(this.layers.observations);
+        const statusHtml = isLive 
+          ? '<span style="color:#22c55e;">● ' + s.statusText + '</span>'
+          : '<span style="color:#94a3b8;">○ ' + s.statusText + '</span>';
+        L.marker(s.coords, { icon: icon }).bindPopup('<strong>' + s.name + '</strong><br>' + statusHtml).addTo(this.layers.observations);
       });
 
-      // Add red alerts
+      // Add system audit markers
       alertLocations.forEach(a => {
         const icon = L.divIcon({
           className: "geo-alert-div-icon",
-          html: '<div class="geo-tri-marker red" title="' + a.name + ' (' + a.region + ')">▲</div>',
+          html: '<div class="geo-tri-marker amber" title="' + a.name + ' (' + a.region + ')">▲</div>',
           iconSize: [16, 16],
           iconAnchor: [8, 8]
         });
-        L.marker(a.coords, { icon: icon }).bindPopup('<strong>' + a.name + '</strong><br>▲ Alert · ' + a.region).addTo(this.layers.alerts);
+        L.marker(a.coords, { icon: icon }).bindPopup('<strong>' + a.name + '</strong><br><span>' + a.region + '</span><br><small style="color:var(--text-muted);">' + a.desc + '</small>').addTo(this.layers.alerts);
       });
 
       // Add amber surveillance zones

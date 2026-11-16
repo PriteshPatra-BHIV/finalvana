@@ -168,7 +168,7 @@ function _initAuthUI() {
     if (barrierOverlay && barrierContent) {
       barrierContent.innerHTML = [
         '<div class="admin-denied-icon" style="margin-bottom:8px;">',
-        '  <img src="assets/vana-logo-mark.png" alt="VANA Shield Emblem" class="admin-barrier-emblem">',
+        '  <img src="assets/vana-logo.svg" alt="VANA Logo" class="admin-barrier-emblem" style="height:36px;width:auto;">',
         '</div>',
         '<div class="admin-denied-title">Authentication Required</div>',
         '<div class="admin-denied-msg">',
