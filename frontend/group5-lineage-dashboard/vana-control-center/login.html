@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=30">
+  <link rel="stylesheet" href="styles.css?v=21">
   <link rel="icon" type="image/png" sizes="64x64" href="assets/vana-favicon.png">
   <link rel="icon" type="image/png" sizes="32x32" href="assets/vana-favicon-32.png">
   <link rel="shortcut icon" href="favicon.ico">
@@ -537,8 +537,8 @@
 </div>
 
 <!-- Load Scripts in Correct Dependency Order -->
-<script src="config.js?v=30"></script>
-<script src="admin-auth.js?v=30"></script>
+<script src="config.js?v=21"></script>
+<script src="admin-auth.js?v=21"></script>
 
 <script>
   // ── ROLE SELECTION INTERACTIVITY ─────────────────────────────────────────
@@ -660,9 +660,9 @@
 
         const verifiedRole = (res.user.role || "").toUpperCase();
 
-        // Role-Based Redirection: Admin MUST land directly on the MAIN OPERATIONAL DASHBOARD (index.html)
+        // Role-Based Dashboard Routing
         if (verifiedRole === "ADMIN" || verifiedRole === "PLATFORM_ADMIN") {
-          window.location.href = "index.html";
+          window.location.href = redirectParam && redirectParam.includes("admin") ? redirectParam : "admin.html";
         } else if (verifiedRole === "FIELD_AGENT") {
           window.location.href = "index.html?role=FIELD_AGENT";
         } else if (verifiedRole === "FOREST_OFFICER") {
@@ -683,32 +683,8 @@
     }
   }
 
-  // Pre-select role or auto-redirect if already authenticated
-  window.addEventListener("DOMContentLoaded", async () => {
-    // If user already holds an active session and is not explicitly re-authenticating, route according to role
-    if (window.VANA_AUTH) {
-      try {
-        await window.VANA_AUTH.restoreSession();
-        const curUser = window.VANA_AUTH.getCurrentUser();
-        const urlParams = new URLSearchParams(window.location.search);
-        if (curUser && urlParams.get("action") !== "reauth") {
-          const role = (curUser.role || "").toUpperCase();
-          if (role === "ADMIN" || role === "PLATFORM_ADMIN") {
-            window.location.href = "index.html";
-            return;
-          } else if (role === "FIELD_AGENT") {
-            window.location.href = "index.html?role=FIELD_AGENT";
-            return;
-          } else if (role === "FOREST_OFFICER") {
-            window.location.href = "index.html?role=FOREST_OFFICER";
-            return;
-          }
-        }
-      } catch (err) {
-        console.warn("[VANA Login] Session check:", err);
-      }
-    }
-
+  // Pre-select role if specified in query param (e.g. login.html?role=ADMIN)
+  window.addEventListener("DOMContentLoaded", () => {
     const urlParams = new URLSearchParams(window.location.search);
     const roleParam = urlParams.get("role");
     if (roleParam) {
