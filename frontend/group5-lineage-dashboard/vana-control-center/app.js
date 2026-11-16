@@ -224,8 +224,11 @@ function initDashboardAuthUI() {
     }
 
     // Role-based sidebar menu gating: ADMIN sees administration nav item, others hidden
+    const adminDivider = document.getElementById("adminNavDivider");
     if (navAdmin) {
-      navAdmin.style.display = (normalizedRole === "ADMIN" || normalizedRole === "PLATFORM_ADMIN") ? "flex" : "none";
+      const isAdmin = (normalizedRole === "ADMIN" || normalizedRole === "PLATFORM_ADMIN");
+      navAdmin.style.display = isAdmin ? "flex" : "none";
+      if (adminDivider) adminDivider.style.display = isAdmin ? "block" : "none";
     }
   } else {
     // Default reference state
@@ -252,14 +255,18 @@ function initDashboardAuthUI() {
     }
 
     // Hide privileged admin link for unauthenticated visitors
+    const adminDivider = document.getElementById("adminNavDivider");
     if (navAdmin) {
       navAdmin.style.display = "none";
+    }
+    if (adminDivider) {
+      adminDivider.style.display = "none";
     }
   }
 }
 
 function openDashboardLoginModal() {
-  window.location.href = "login.html?redirect=index.html";
+  window.location.href = "login.html";
 }
 
 function closeDashboardLoginModal() {
@@ -290,11 +297,11 @@ async function handleDashboardLogin(event) {
   const res = await window.VANA_AUTH.login(email, pass);
   if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = "Sign In"; }
 
-  if (res.success) {
+  if (res.success && res.user) {
     passInput.value = "";
     closeDashboardLoginModal();
     initDashboardAuthUI();
-    // Re-run pipeline to execute authenticated step
+    // Re-run pipeline to execute authenticated step and refresh dashboard cards
     await fetchLive();
   } else {
     if (errEl) {

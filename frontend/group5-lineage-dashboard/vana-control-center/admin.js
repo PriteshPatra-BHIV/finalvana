@@ -114,7 +114,7 @@ document.addEventListener("DOMContentLoaded", async function () {
   const urlParams = new URLSearchParams(window.location.search);
   if (urlParams.get("autologin") === "admin" && !window.VANA_AUTH.isAuthenticated()) {
     try {
-      await window.VANA_AUTH.login("admin@vana.gov.in", "admin123");
+      await window.VANA_AUTH.login("vana@gmail.com", "vana");
     } catch (e) {
       console.warn("Autologin:", e);
     }
@@ -168,20 +168,25 @@ function _initAuthUI() {
     if (barrierOverlay && barrierContent) {
       barrierContent.innerHTML = [
         '<div class="admin-denied-icon" style="margin-bottom:8px;">',
+<<<<<<< HEAD
         '  <img src="assets/vana-logo.svg" alt="VANA Logo" class="admin-barrier-emblem" style="height:36px;width:auto;">',
+=======
+        '  <img src="assets/vana-leaf.svg" alt="VANA Leaf Logo" class="admin-barrier-emblem" style="width:42px;height:42px;">',
+>>>>>>> e508a13c2cbc6e1b089ce8391cc51e91b1af3fef
         '</div>',
         '<div class="admin-denied-title">Authentication Required</div>',
         '<div class="admin-denied-msg">',
-        '  The Administration Control Plane requires an authenticated session.<br>',
+        '  The Administration Control Plane requires an authenticated administrator session.<br>',
         '  Please sign in with authorized administrative credentials.',
         '</div>',
         '<div style="display:flex;justify-content:center;gap:10px;margin-top:14px;">',
-        '  <a href="index.html" class="admin-header-btn" style="text-decoration:none;">Operational Dashboard</a>',
-        '  <a href="login.html?redirect=admin.html&role=ADMIN" class="admin-header-btn primary" style="text-decoration:none;">Sign In</a>',
+        '  <a href="index.html?view=operational" class="admin-header-btn" style="text-decoration:none;">Operational Dashboard</a>',
+        '  <a href="login.html?role=ADMIN" class="admin-header-btn primary" style="text-decoration:none;">Sign In</a>',
         '</div>',
       ].join("\n");
       barrierOverlay.style.display = "flex";
     }
+    _disableAllAdminNav();
     return;
   }
 
@@ -230,55 +235,39 @@ function _initAuthUI() {
         '  Cached offline profiles cannot access administrative controls without live verification.',
         '</div>',
         '<div style="display:flex;justify-content:center;gap:10px;margin-top:14px;">',
-        '  <a href="index.html" class="admin-header-btn" style="text-decoration:none;">Operational Dashboard</a>',
+        '  <a href="index.html?view=operational" class="admin-header-btn" style="text-decoration:none;">Operational Dashboard</a>',
         '  <button class="admin-header-btn primary" onclick="adminOpenLoginModal()">Re-authenticate</button>',
         '</div>',
       ].join("\n");
       barrierOverlay.style.display = "flex";
     }
+    _disableAllAdminNav();
     return;
   }
 
-  // Role restriction: Field Agent is strictly denied (403 Forbidden)
-  if (user.role === auth.ROLES.FIELD_AGENT || user.role === "APPROVED_CONSUMER" || user.role === "PARTICIPANT") {
+  // Role restriction: Non-admin roles (Field Agent and Forest Officer) strictly restricted (403 Forbidden)
+  if (user.role !== auth.ROLES.ADMIN && user.role !== "PLATFORM_ADMIN") {
     if (barrierOverlay && barrierContent) {
       barrierContent.innerHTML = [
         '<div class="admin-denied-icon">',
-        '  <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="color:var(--status-critical)">',
+        '  <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="color:var(--status-critical, #EF5158)">',
         '    <circle cx="12" cy="12" r="10"></circle>',
         '    <line x1="4.93" y1="4.93" x2="19.07" y2="19.07"></line>',
         '  </svg>',
         '</div>',
         '<div class="admin-denied-title">Access Restricted (403 Forbidden)</div>',
         '<div class="admin-denied-msg">',
-        '  Your authenticated role (<strong>Field Agent</strong>) is not authorized to access the Administration Control Plane.<br>',
+        '  Your authenticated role (<strong>' + (user.roleLabel || user.role) + '</strong>) is not authorized to access the Administration Control Plane.<br>',
         '  Privileged administration is strictly restricted to Platform Administrators.',
         '</div>',
-        '<div style="display:flex;justify-content:center;gap:10px;margin-top:14px;">',
-        '  <a href="index.html?role=FIELD_AGENT" class="admin-header-btn primary" style="text-decoration:none;">Return to Operational Dashboard</a>',
+        '<div style="display:flex;justify-content:center;gap:10px;margin-top:16px;">',
+        '  <a href="index.html?role=' + encodeURIComponent(user.role) + '" class="admin-header-btn primary" style="text-decoration:none;">Return to Operational Dashboard</a>',
         '  <button class="admin-header-btn" onclick="adminLogout()">Sign Out</button>',
         '</div>',
       ].join("\n");
       barrierOverlay.style.display = "flex";
     }
-    return;
-  }
-
-  // Role restriction: Auditor / Judge allowed access to Audit Log only
-  if (user.role === auth.ROLES.AUDITOR) {
-    if (barrierOverlay) barrierOverlay.style.display = "none";
-    _configureAuditorNav();
-    _renderAllSections();
-    adminNav("audit-trace", document.getElementById("nav-audit-trace"));
-    return;
-  }
-
-  // Role restriction: Governance Steward allowed access to Governance Doctrine and Overview only
-  if (user.role === auth.ROLES.GOVERNANCE_STEWARD) {
-    if (barrierOverlay) barrierOverlay.style.display = "none";
-    _configureStewardNav();
-    _renderAllSections();
-    adminNav("admin-overview", document.getElementById("nav-admin-overview"));
+    _disableAllAdminNav();
     return;
   }
 
@@ -286,29 +275,20 @@ function _initAuthUI() {
   if (barrierOverlay) barrierOverlay.style.display = "none";
   _enableAllAdminNav();
   _renderAllSections();
-  adminNav("admin-overview", document.getElementById("nav-admin-overview"));
+
+  // Preserved requested section from URL hash if valid, otherwise default to admin-overview
+  var hash = window.location.hash ? window.location.hash.replace("#", "") : "";
+  var validSections = ["admin-overview", "system-services", "access-management", "gov-doctrine", "geo-config", "audit-trace"];
+  var targetSection = validSections.indexOf(hash) !== -1 ? hash : "admin-overview";
+  adminNav(targetSection, document.getElementById("nav-" + targetSection));
 }
 
-function _configureAuditorNav() {
+function _disableAllAdminNav() {
   const allNavItems = document.querySelectorAll(".admin-nav-item");
   allNavItems.forEach(function (btn) {
-    if (btn.id === "nav-audit-trace") {
-      btn.style.display = "flex";
-      btn.disabled = false;
-    } else {
+    if (btn.id !== "nav-operational-dashboard") {
       btn.style.display = "none";
-    }
-  });
-}
-
-function _configureStewardNav() {
-  const allNavItems = document.querySelectorAll(".admin-nav-item");
-  allNavItems.forEach(function (btn) {
-    if (btn.id === "nav-admin-overview" || btn.id === "nav-gov-doctrine") {
-      btn.style.display = "flex";
-      btn.disabled = false;
-    } else {
-      btn.style.display = "none";
+      btn.disabled = true;
     }
   });
 }
@@ -416,14 +396,23 @@ function adminNav(sectionKey, navEl) {
   if (breadcrumb) {
     const titles = {
       "admin-overview": "Overview",
-      "system-services": "System Health & Gateway Services",
+      "system-services": "System Health & Services",
       "access-management": "User & Access Management",
       "gov-doctrine": "Governance Doctrine & Invariants",
       "geo-config": "Geospatial Configuration",
       "audit-trace": "Audit & Operational Trace"
     };
-    breadcrumb.textContent = titles[canonicalKey] || "Administration";
+    breadcrumb.textContent = "System Administration → " + (titles[canonicalKey] || "Overview");
   }
+
+  // Preserve active section in URL hash
+  try {
+    if (window.history && window.history.replaceState) {
+      window.history.replaceState(null, "", "#" + canonicalKey);
+    } else {
+      window.location.hash = canonicalKey;
+    }
+  } catch (_) {}
 
   // Close mobile drawer on navigation
   toggleAdminSidebar(false);
@@ -568,11 +557,53 @@ function renderAdminOverview() {
   '  <div class="admin-card">' +
   '    <div class="admin-card-head"><span class="admin-card-title">System Status & Security Doctrine</span></div>' +
   '    <div class="admin-card-body" style="display:flex;flex-direction:column;gap:8px;font-size:12px;color:var(--text-secondary);">' +
-  '      <div><strong>Constitutional Governance:</strong> Sequential G3 to G1 to G2 to G4 pipeline enforcement active.</div>' +
+  '      <div><strong>Constitutional Governance:</strong> Sequential Sensor Intake to MasterDB to Pravah / Niyantran to Sanskar pipeline enforcement active.</div>' +
   '      <div><strong>Fail-Closed Doctrine:</strong> Missing upstream context or telemetry halts downstream execution.</div>' +
   '      <div><strong>Zero-Fabrication Invariant:</strong> Unpersisted telemetry is explicitly acknowledged as a declared gap; data is never fabricated.</div>' +
   '      <div><strong>Credential Security:</strong> Tokens are stored in tab-scoped sessionStorage; zero secrets committed to git.</div>' +
   '    </div>' +
+  '  </div>' +
+  '</div>' +
+
+  // System Health & Gateway Services Panel in Overview
+  '<div class="admin-card" style="margin-top:16px;">' +
+  '  <div class="admin-card-head">' +
+  '    <span class="admin-card-title">System Health & Gateway Services</span>' +
+  '    <span class="admin-card-tag">Live Diagnostics</span>' +
+  '  </div>' +
+  '  <div class="admin-card-body" style="padding:0;">' +
+  '    <div style="padding:12px 16px 8px;font-size:12px;color:var(--text-secondary);border-bottom:1px solid var(--border-light);">' +
+  '      <strong>Backend API Subsystem Reachability</strong> — Probes live /health endpoints across all core subsystems via gateway reverse-proxy.' +
+  '    </div>' +
+  '    <div id="overviewHealthRows">' + _buildHealthPlaceholders("overview") + '</div>' +
+  '    <div style="padding:12px 18px;border-top:1px solid var(--border-light);background:var(--bg-surface-subtle);display:flex;justify-content:space-between;align-items:center;">' +
+  '      <button class="admin-header-btn primary btn-run-health-check" onclick="runHealthCheck()">' +
+  '        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>' +
+  '        Run Health Checks' +
+  '      </button>' +
+  '      <span style="font-size:11px;color:var(--text-muted);">Probes live /health endpoints</span>' +
+  '    </div>' +
+  '  </div>' +
+  '</div>' +
+
+  // Configured Gateway Proxy Routes Table in Overview
+  '<div class="admin-card" style="margin-top:16px;">' +
+  '  <div class="admin-card-head">' +
+  '    <span class="admin-card-title">Configured Gateway Proxy Routes</span>' +
+  '    <span class="admin-card-tag">config.js + vercel.json</span>' +
+  '  </div>' +
+  '  <div class="admin-table-wrap">' +
+  '    <table class="admin-table">' +
+  '      <thead>' +
+  '        <tr><th>Route Prefix</th><th>Subsystem</th><th>Operational Purpose</th><th>Method</th><th>Auth Requirement</th></tr>' +
+  '      </thead>' +
+  '      <tbody>' +
+  '        <tr><td class="mono cell-primary">/proxy/g1/*</td><td>MasterDB</td><td>Canonical Observation Retrieval & MasterDB Ledger</td><td class="mono">GET / POST</td><td>Public / Header</td></tr>' +
+  '        <tr><td class="mono cell-primary">/proxy/g2/*</td><td>Pravah / Niyantran</td><td>Scientific Context & Decision Resolution</td><td class="mono">POST</td><td>Forwarded Bearer</td></tr>' +
+  '        <tr><td class="mono cell-primary">/proxy/g4/*</td><td>Sanskar</td><td>Governed Execution & Abstention Gate</td><td class="mono">POST</td><td>Privileged Bearer</td></tr>' +
+  '        <tr><td class="mono cell-primary">/proxy/auth/*</td><td>Auth Central</td><td>Unified Authentication & Token Verification (/me)</td><td class="mono">GET / POST</td><td>Bearer Token</td></tr>' +
+  '      </tbody>' +
+  '    </table>' +
   '  </div>' +
   '</div>' +
 
@@ -581,6 +612,13 @@ function renderAdminOverview() {
     "The VANA Administration Control Plane operates under strict backend authorization. Runtime capabilities reflect genuine backend services. Administrative actions do not simulate unpersisted operations.",
     "Session User ID: " + (user.id || "usr-anon") + "\nRole Authority: " + (user.role || "UNASSIGNED") + "\nEnforcement: Backend-validated access control"
   );
+
+  // Automatically trigger initial health check probe for Overview
+  setTimeout(function () {
+    if (typeof runHealthCheck === "function") {
+      runHealthCheck();
+    }
+  }, 350);
 }
 
 // =============================================================================
@@ -608,13 +646,13 @@ function renderSystemServices() {
   '    <span class="admin-card-title">Backend API Subsystems Reachability</span>' +
   '    <span class="admin-card-tag">via /proxy/* gateway</span>' +
   '  </div>' +
-  '  <div id="healthServiceRows">' + _buildHealthPlaceholders() + '</div>' +
+  '  <div id="healthServiceRows">' + _buildHealthPlaceholders("system") + '</div>' +
   '  <div style="padding:14px 18px;border-top:1px solid var(--border-light);background:var(--bg-surface-subtle);display:flex;justify-content:space-between;align-items:center;">' +
-  '    <button class="admin-header-btn primary" onclick="runHealthCheck()" id="btnHealthCheck">' +
+  '    <button class="admin-header-btn primary btn-run-health-check" onclick="runHealthCheck()" id="btnHealthCheck">' +
   '      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>' +
   '      Run Health Checks' +
   '    </button>' +
-  '    <span style="font-size:11px;color:var(--text-muted);">Probes live /health endpoints across all three groups</span>' +
+  '    <span style="font-size:11px;color:var(--text-muted);">Probes live /health endpoints across all subsystems</span>' +
   '  </div>' +
   '</div>' +
 
@@ -630,9 +668,9 @@ function renderSystemServices() {
   '        <tr><th>Route Prefix</th><th>Subsystem</th><th>Operational Purpose</th><th>Method</th><th>Auth Requirement</th></tr>' +
   '      </thead>' +
   '      <tbody>' +
-  '        <tr><td class="mono cell-primary">/proxy/g1/*</td><td>Group 1</td><td>Canonical Observation Retrieval & MasterDB Ledger</td><td class="mono">GET / POST</td><td>Public / Header</td></tr>' +
-  '        <tr><td class="mono cell-primary">/proxy/g2/*</td><td>Group 2</td><td>Scientific Context & Decision Resolution (Pravah)</td><td class="mono">POST</td><td>Forwarded Bearer</td></tr>' +
-  '        <tr><td class="mono cell-primary">/proxy/g4/*</td><td>Group 4</td><td>Governed Execution & Abstention Gate (SANSKAR)</td><td class="mono">POST</td><td>Privileged Bearer</td></tr>' +
+  '        <tr><td class="mono cell-primary">/proxy/g1/*</td><td>MasterDB</td><td>Canonical Observation Retrieval & MasterDB Ledger</td><td class="mono">GET / POST</td><td>Public / Header</td></tr>' +
+  '        <tr><td class="mono cell-primary">/proxy/g2/*</td><td>Pravah / Niyantran</td><td>Scientific Context & Decision Resolution</td><td class="mono">POST</td><td>Forwarded Bearer</td></tr>' +
+  '        <tr><td class="mono cell-primary">/proxy/g4/*</td><td>Sanskar</td><td>Governed Execution & Abstention Gate</td><td class="mono">POST</td><td>Privileged Bearer</td></tr>' +
   '        <tr><td class="mono cell-primary">/proxy/auth/*</td><td>Auth Central</td><td>Unified Authentication & Token Verification (/me)</td><td class="mono">GET / POST</td><td>Bearer Token</td></tr>' +
   '      </tbody>' +
   '    </table>' +
@@ -649,9 +687,9 @@ function renderSystemServices() {
   '    <table class="admin-table">' +
   '      <thead><tr><th>Parameter Key</th><th>Resolved Value</th><th>Description</th></tr></thead>' +
   '      <tbody>' +
-  '        <tr><td class="mono cell-primary">G1_BASE</td><td class="mono">' + (cfg.G1_BASE || "/proxy/g1") + '</td><td>Group 1 MasterDB proxy base path</td></tr>' +
-  '        <tr><td class="mono cell-primary">G2_ENDPOINT</td><td class="mono">' + (cfg.G2_ENDPOINT || "/proxy/g2/api/group2/context/resolve") + '</td><td>Group 2 scientific context resolution endpoint</td></tr>' +
-  '        <tr><td class="mono cell-primary">G4_ENDPOINT</td><td class="mono">' + (cfg.G4_ENDPOINT || "/proxy/g4/vana/execute") + '</td><td>Group 4 governed execution endpoint</td></tr>' +
+  '        <tr><td class="mono cell-primary">G1_BASE</td><td class="mono">' + (cfg.G1_BASE || "/proxy/g1") + '</td><td>MasterDB proxy base path</td></tr>' +
+  '        <tr><td class="mono cell-primary">G2_ENDPOINT</td><td class="mono">' + (cfg.G2_ENDPOINT || "/proxy/g2/api/group2/context/resolve") + '</td><td>Pravah / Niyantran context resolution endpoint</td></tr>' +
+  '        <tr><td class="mono cell-primary">G4_ENDPOINT</td><td class="mono">' + (cfg.G4_ENDPOINT || "/proxy/g4/vana/execute") + '</td><td>Sanskar governed execution endpoint</td></tr>' +
   '        <tr><td class="mono cell-primary">AUTH_BASE</td><td class="mono">' + (cfg.AUTH_BASE || "/proxy/auth") + '</td><td>Unified authentication service base route</td></tr>' +
   '        <tr><td class="mono cell-primary">REQUEST_TIMEOUT_MS</td><td class="mono">' + (cfg.REQUEST_TIMEOUT_MS || 10000) + ' ms</td><td>Network fetch timeout applied to all API calls</td></tr>' +
   '      </tbody>' +
@@ -662,22 +700,23 @@ function renderSystemServices() {
   _boundaryNotice(
     "Gateway Architecture & Zero-Secret Doctrine",
     "Configured proxy routes are handled transparently by the local Python proxy (server.py) or production edge rewrites (vercel.json). Direct backend IP addresses are never exposed to browser client code.",
-    "Route Mapping: /proxy/g1/* -> MasterDB (Port 8013)\n               /proxy/g2/* -> Pravah API (Production)\n               /proxy/g4/* -> SANSKAR Runtime (Port 8010)"
+    "Route Mapping: /proxy/g1/* -> MasterDB (Port 8013)\n               /proxy/g2/* -> Pravah / Niyantran (Production)\n               /proxy/g4/* -> Sanskar Runtime (Port 8010)"
   );
 }
 
-function _buildHealthPlaceholders() {
+function _buildHealthPlaceholders(prefix) {
+  var pfx = prefix ? prefix + "-" : "";
   var services = [
-    { key: "g1", label: "Group 1: Canonical Observation Retrieval (MasterDB)", proxy: (window.VANA_CONFIG && window.VANA_CONFIG.G1_BASE) || "/proxy/g1" },
-    { key: "g2", label: "Group 2: Scientific Context & Decision Resolve (Pravah)", proxy: (window.VANA_CONFIG && window.VANA_CONFIG.G2_ENDPOINT) || "/proxy/g2" },
-    { key: "g4", label: "Group 4: Governed Execution & Abstention Gate (SANSKAR)", proxy: (window.VANA_CONFIG && window.VANA_CONFIG.G4_ENDPOINT) || "/proxy/g4" },
+    { key: "g1", label: "MasterDB: Canonical Observation Retrieval", proxy: (window.VANA_CONFIG && window.VANA_CONFIG.G1_BASE) || "/proxy/g1" },
+    { key: "g2", label: "Pravah / Niyantran: Scientific Context & Decision Resolve", proxy: (window.VANA_CONFIG && window.VANA_CONFIG.G2_ENDPOINT) || "/proxy/g2" },
+    { key: "g4", label: "Sanskar: Governed Execution & Abstention Gate", proxy: (window.VANA_CONFIG && window.VANA_CONFIG.G4_ENDPOINT) || "/proxy/g4" },
   ];
   return services.map(function (s) {
-    return '<div class="admin-status-row" id="health-row-' + s.key + '">' +
-      '<span class="status-dot" id="health-dot-' + s.key + '" style="background:var(--border-strong);"></span>' +
+    return '<div class="admin-status-row" id="' + pfx + 'health-row-' + s.key + '">' +
+      '<span class="status-dot health-dot-' + s.key + '" id="' + pfx + 'health-dot-' + s.key + '" style="background:var(--border-strong);"></span>' +
       '<div class="admin-status-name">' + s.label + '</div>' +
-      '<div class="admin-status-detail mono" id="health-detail-' + s.key + '">Pending check...</div>' +
-      '<div class="admin-status-badge" id="health-badge-' + s.key + '">NOT CHECKED</div>' +
+      '<div class="admin-status-detail mono health-detail-' + s.key + '" id="' + pfx + 'health-detail-' + s.key + '">Pending check...</div>' +
+      '<div class="admin-status-badge health-badge-' + s.key + '" id="' + pfx + 'health-badge-' + s.key + '">NOT CHECKED</div>' +
       '</div>';
   }).join("");
 }
@@ -688,23 +727,23 @@ async function runHealthCheck() {
     return;
   }
 
-  const btn = document.getElementById("btnHealthCheck");
-  if (btn) { btn.disabled = true; btn.textContent = "Checking..."; }
+  const buttons = document.querySelectorAll(".btn-run-health-check");
+  buttons.forEach(function (btn) { btn.disabled = true; btn.textContent = "Checking..."; });
   _pushAuditEntry("HEALTH_CHECK", "/proxy/*", "RUNNING");
 
   const checks = [
-    { key: "g1", label: "G1", url: window.VANA_CONFIG.G1_BASE + "/health" },
-    { key: "g2", label: "G2", url: window.VANA_CONFIG.G2_ENDPOINT.replace("/api/group2/context/resolve", "/health") },
-    { key: "g4", label: "G4", url: window.VANA_CONFIG.G4_ENDPOINT.replace("/vana/execute", "/health") },
+    { key: "g1", label: "MasterDB", url: window.VANA_CONFIG.G1_BASE + "/health" },
+    { key: "g2", label: "Pravah / Niyantran", url: window.VANA_CONFIG.G2_ENDPOINT.replace("/api/group2/context/resolve", "/health") },
+    { key: "g4", label: "Sanskar", url: window.VANA_CONFIG.G4_ENDPOINT.replace("/vana/execute", "/health") },
   ];
 
   var allOk = true;
 
   for (var i = 0; i < checks.length; i++) {
     var c = checks[i];
-    var dot = document.getElementById("health-dot-" + c.key);
-    var detail = document.getElementById("health-detail-" + c.key);
-    var badge = document.getElementById("health-badge-" + c.key);
+    var dots = document.querySelectorAll(".health-dot-" + c.key);
+    var details = document.querySelectorAll(".health-detail-" + c.key);
+    var badges = document.querySelectorAll(".health-badge-" + c.key);
 
     var t0 = Date.now();
     var checkedAt = new Date().toLocaleTimeString();
@@ -712,29 +751,29 @@ async function runHealthCheck() {
       var res = await adminFetch(c.url, { method: "GET", headers: { "Accept": "application/json" } });
       var latency = Date.now() - t0;
       if (res.ok) {
-        if (dot) { dot.style.background = "var(--status-ok)"; }
-        if (detail) detail.innerHTML = '<span style="color:var(--status-ok);font-weight:600;">' + latency + "ms</span> · HTTP " + res.status + " · " + checkedAt;
-        if (badge) { badge.textContent = "REACHABLE"; badge.className = "admin-status-badge ok"; }
+        dots.forEach(function (dot) { dot.style.background = "var(--status-ok)"; });
+        details.forEach(function (det) { det.innerHTML = '<span style="color:var(--status-ok);font-weight:600;">' + latency + "ms</span> · HTTP " + res.status + " · " + checkedAt; });
+        badges.forEach(function (bdg) { bdg.textContent = "REACHABLE"; bdg.className = "admin-status-badge ok health-badge-" + c.key; });
       } else {
         allOk = false;
-        if (dot) dot.style.background = "var(--status-warn)";
-        if (detail) detail.innerHTML = '<span style="color:var(--status-warn);font-weight:600;">' + latency + "ms</span> · HTTP " + res.status + " · " + checkedAt;
-        if (badge) { badge.textContent = "DEGRADED (" + res.status + ")"; badge.className = "admin-status-badge warn"; }
+        dots.forEach(function (dot) { dot.style.background = "var(--status-warn)"; });
+        details.forEach(function (det) { det.innerHTML = '<span style="color:var(--status-warn);font-weight:600;">' + latency + "ms</span> · HTTP " + res.status + " · " + checkedAt; });
+        badges.forEach(function (bdg) { bdg.textContent = "DEGRADED (" + res.status + ")"; bdg.className = "admin-status-badge warn health-badge-" + c.key; });
       }
     } catch (err) {
       allOk = false;
       var latency2 = Date.now() - t0;
-      if (dot) dot.style.background = "var(--status-critical)";
-      if (detail) detail.innerHTML = '<span style="color:var(--status-critical);font-weight:600;">' + latency2 + "ms</span> · Unavailable · " + checkedAt;
-      if (badge) { badge.textContent = "UNAVAILABLE"; badge.className = "admin-status-badge error"; }
+      dots.forEach(function (dot) { dot.style.background = "var(--status-critical)"; });
+      details.forEach(function (det) { det.innerHTML = '<span style="color:var(--status-critical);font-weight:600;">' + latency2 + "ms</span> · Unavailable · " + checkedAt; });
+      badges.forEach(function (bdg) { bdg.textContent = "UNAVAILABLE"; bdg.className = "admin-status-badge error health-badge-" + c.key; });
     }
   }
 
   _pushAuditEntry("HEALTH_CHECK", "/proxy/*", allOk ? "OK" : "PARTIAL_FAILURE");
-  if (btn) {
+  buttons.forEach(function (btn) {
     btn.disabled = false;
     btn.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg> Run Health Checks';
-  }
+  });
 }
 
 // =============================================================================
@@ -852,7 +891,7 @@ function renderGovDoctrine() {
 
   el.innerHTML = _sectionHeader(
     "Governance Doctrine & Invariants",
-    "Authoritative pipeline execution sequence, fail-closed principles, and Group 3 contract clauses.",
+    "Authoritative pipeline execution sequence, fail-closed principles, and Sensor Intake contract clauses.",
     "Constitutional",
     "live"
   ) +
@@ -862,13 +901,13 @@ function renderGovDoctrine() {
   '  <div class="admin-card-head"><span class="admin-card-title">Authoritative Pipeline Execution Sequence</span></div>' +
   '  <div class="admin-card-body">' +
   '    <div style="display:flex;align-items:center;gap:8px;justify-content:center;flex-wrap:wrap;padding:8px 0;">' +
-  '      <span class="admin-role-badge approved_consumer" style="padding:6px 12px;font-size:11.5px;">Stage 1: G3 Sensor Contract</span>' +
+  '      <span class="admin-role-badge approved_consumer" style="padding:6px 12px;font-size:11.5px;">Stage 1: Sensor Intake Contract</span>' +
   '      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--text-muted);"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>' +
-  '      <span class="admin-role-badge platform_admin" style="padding:6px 12px;font-size:11.5px;">Stage 2: G1 MasterDB Ledger</span>' +
+  '      <span class="admin-role-badge platform_admin" style="padding:6px 12px;font-size:11.5px;">Stage 2: MasterDB Ledger</span>' +
   '      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--text-muted);"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>' +
-  '      <span class="admin-role-badge auditor" style="padding:6px 12px;font-size:11.5px;">Stage 3: G2 Pravah Context</span>' +
+  '      <span class="admin-role-badge auditor" style="padding:6px 12px;font-size:11.5px;">Stage 3: Pravah / Niyantran Context</span>' +
   '      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--text-muted);"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>' +
-  '      <span class="admin-role-badge governance_steward" style="padding:6px 12px;font-size:11.5px;">Stage 4: G4 SANSKAR Execution Gate</span>' +
+  '      <span class="admin-role-badge governance_steward" style="padding:6px 12px;font-size:11.5px;">Stage 4: Sanskar Execution Gate</span>' +
   '    </div>' +
   '  </div>' +
   '</div>' +
@@ -878,14 +917,14 @@ function renderGovDoctrine() {
   '  <div class="admin-card-head"><span class="admin-card-title">Enforced Fail-Closed Invariants</span><span class="admin-card-tag">Code-Enforced</span></div>' +
   '  <div class="admin-card-body">' +
   '    <div class="fail-closed-rule">' +
-  '      <div class="fail-closed-rule-num">Rule 1: Group 1 Retrieval Gate</div>' +
+  '      <div class="fail-closed-rule-num">Rule 1: MasterDB Retrieval Gate</div>' +
   '      <div class="fail-closed-rule-text">No authoritative observation retrieval halts downstream processing</div>' +
-  '      <div class="fail-closed-rule-desc">If Group 1 canonical retrieval returns an error, times out, or fails to resolve the observation record, the pipeline halts immediately. Group 2 context resolution and Group 4 execution gates are bypassed fail-closed.</div>' +
+  '      <div class="fail-closed-rule-desc">If MasterDB canonical retrieval returns an error, times out, or fails to resolve the observation record, the pipeline halts immediately. Pravah / Niyantran context resolution and Sanskar execution gates are bypassed fail-closed.</div>' +
   '    </div>' +
   '    <div class="fail-closed-rule">' +
-  '      <div class="fail-closed-rule-num">Rule 2: Group 2 Context Gate</div>' +
+  '      <div class="fail-closed-rule-num">Rule 2: Pravah / Niyantran Context Gate</div>' +
   '      <div class="fail-closed-rule-text">Unverified scientific context results in governed ABSTAIN</div>' +
-  '      <div class="fail-closed-rule-desc">If Group 2 context resolution indicates missing evidence thresholds, unverified provenance, or missing timestamps, the ruling fails closed to ABSTAIN with action_eligibility false. Governed execution dispatches NOOP.</div>' +
+  '      <div class="fail-closed-rule-desc">If Pravah / Niyantran context resolution indicates missing evidence thresholds, unverified provenance, or missing timestamps, the ruling fails closed to ABSTAIN with action_eligibility false. Governed execution dispatches NOOP.</div>' +
   '    </div>' +
   '    <div class="fail-closed-rule" style="margin-bottom:0;">' +
   '      <div class="fail-closed-rule-num">Rule 3: Zero-Fabrication Invariant</div>' +
@@ -895,9 +934,9 @@ function renderGovDoctrine() {
   '  </div>' +
   '</div>' +
 
-  // Group 3 Contract Clauses
+  // Sensor Intake Contract Clauses
   '<div class="admin-card">' +
-  '  <div class="admin-card-head"><span class="admin-card-title">Group 3 Ingestion Contract Specification</span><span class="admin-card-tag">Contract v2.2</span></div>' +
+  '  <div class="admin-card-head"><span class="admin-card-title">Sensor Intake Contract Specification</span><span class="admin-card-tag">Contract v2.2</span></div>' +
   '  <div class="admin-table-wrap">' +
   '    <table class="admin-table">' +
   '      <thead><tr><th>Clause Reference</th><th>Type</th><th>Specification & Compliance Requirement</th></tr></thead>' +
@@ -912,8 +951,8 @@ function renderGovDoctrine() {
 
   _boundaryNotice(
     "Contract Integrity Notice",
-    "Clauses §26 and §49.1 are authoritative provisions of the Group 3 Ingestion Contract v2.2, not statutory state legislation. Invariant enforcement is immutable at runtime.",
-    "Pipeline Status: Strictly sequential G3 -> G1 -> G2 -> G4\nFail-Closed Overrides: Prohibited\nModifiable via UI: No (Constitutional constraints)"
+    "Clauses §26 and §49.1 are authoritative provisions of the Sensor Intake Contract v2.2, not statutory state legislation. Invariant enforcement is immutable at runtime.",
+    "Pipeline Status: Strictly sequential Sensor Intake -> MasterDB -> Pravah / Niyantran -> Sanskar\nFail-Closed Overrides: Prohibited\nModifiable via UI: No (Constitutional constraints)"
   );
 }
 
@@ -948,7 +987,7 @@ function renderGeoConfig() {
   var layerDefs = [
     { name: "Base Map (Geoapify Dark Matter / OSM Development Fallback)", type: "Base Tile Layer", status: "ACTIVE", detail: "Cartographic surface with automatic OSM direct-tile fallback" },
     { name: "Regional Reference Points (6 Monitored Locations)", type: "Vector Points", status: "ACTIVE", detail: "1 Record Retrieved (Thane Creek), 5 Regional Monitoring Locations" },
-    { name: "Authoritative Observations Layer", type: "Telemetry Overlay", status: "ACTIVE", detail: "Bound to Group 1 canonical record CR-b4615a27..." },
+    { name: "Authoritative Observations Layer", type: "Telemetry Overlay", status: "ACTIVE", detail: "Bound to MasterDB canonical record CR-b4615a27..." },
     { name: "Active Alerts Overlay", type: "Exception Badges", status: "ACTIVE", detail: "ALT-001 through ALT-006 plotted at canonical coordinates" },
     { name: "Administrative Boundaries", type: "Vector Polygons", status: "DISABLED", detail: "Unavailable: Boundary shapefiles not yet connected in repository" },
     { name: "Weather Satellite / Radar Ingestion", type: "Raster Stream", status: "DISABLED", detail: "Unavailable: Future capability: radar feed not connected" },
@@ -1070,9 +1109,9 @@ function renderAuditTrace() {
 
   // Operational Exceptions
   const alerts = [
-    { id: "ALT-001", severity: "CRITICAL", title: "canonical_record_id Not Returned by Group 1 Live Runtime", category: "DATA_GAP", ts: "Live Session" },
-    { id: "ALT-002", severity: "ABSTAIN", title: "Group 4 Abstention Gate Triggered: NOOP Enforced", category: "GOVERNANCE_ABSTENTION", ts: "Live Session" },
-    { id: "ALT-003", severity: "GAP", title: "Missing Source Timestamp (observation_timestamp = null) in G1", category: "DATA_GAP", ts: "Live Session" },
+    { id: "ALT-001", severity: "CRITICAL", title: "canonical_record_id Not Returned by MasterDB Live Runtime", category: "DATA_GAP", ts: "Live Session" },
+    { id: "ALT-002", severity: "ABSTAIN", title: "Sanskar Abstention Gate Triggered: NOOP Enforced", category: "GOVERNANCE_ABSTENTION", ts: "Live Session" },
+    { id: "ALT-003", severity: "GAP", title: "Missing Source Timestamp (observation_timestamp = null) in MasterDB", category: "DATA_GAP", ts: "Live Session" },
     { id: "ALT-004", severity: "GAP", title: "observation_type and measurement.unit Gap in Source Evidence", category: "DATA_GAP", ts: "Live Session" },
     { id: "ALT-005", severity: "INFO", title: "5 Regional Surveillance Zones Pending Ingestion", category: "PENDING_REGIONAL_FEEDS", ts: "Live Session" },
     { id: "ALT-006", severity: "INFO", title: "CORS Reverse-Proxy Gateway Active", category: "RUNTIME_GATEWAY", ts: "Live Session" },
