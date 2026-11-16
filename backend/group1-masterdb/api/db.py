@@ -59,6 +59,12 @@ def get_connection() -> VANAConn:
     """
     if DB_URL.startswith("sqlite:///"):
         path = DB_URL.replace("sqlite:///", "", 1)
+        if not os.path.isabs(path):
+            candidate = ROOT / path
+            if candidate.exists():
+                path = str(candidate)
+            elif (ROOT / "vana_api.db").exists():
+                path = str(ROOT / "vana_api.db")
         conn = sqlite3.connect(
             path,
             check_same_thread=False,
