@@ -1,0 +1,126 @@
+server {
+    listen 80;
+    server_name _;
+
+    root /usr/share/nginx/html;
+    index index.html;
+
+    # Basic security headers
+    add_header X-Content-Type-Options "nosniff" always;
+    add_header X-Frame-Options "SAMEORIGIN" always;
+    add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+
+    # Container healthcheck endpoint
+    location = /nginx-health {
+        access_log off;
+        default_type text/plain;
+        return 200 "ok\n";
+    }
+
+    # ------------------------------------------------------------------
+    # Clean UI routes (mirrors local server.py behavior)
+    # ------------------------------------------------------------------
+    location = /login {
+        rewrite ^ /login.html last;
+    }
+
+    location = /admin {
+        rewrite ^ /admin.html last;
+    }
+
+    location = /field-agent {
+        rewrite ^ /index.html?role=FIELD_AGENT last;
+    }
+
+    location = /forest-officer {
+        rewrite ^ /index.html?role=FOREST_OFFICER last;
+    }
+
+    # ------------------------------------------------------------------
+    # Reverse Proxy: Unified Auth (/proxy/auth/*)
+    # Public registration is strictly blocked; only login/me/logout allowed.
+    # ------------------------------------------------------------------
+    location = /proxy/auth/register {
+        default_type application/json;
+        return 403 '{"error":"Registration Disabled","message":"Public registration is disabled. VANA operates under a strict predefined role-based access control policy.","status_code":403}';
+    }
+
+    location = /proxy/auth/login {
+        proxy_pass ${VANA_BACKEND_URL}/auth/login;
+        proxy_http_version 1.1;
+        proxy_set_header Host $proxy_host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+
+    location = /proxy/auth/me {
+        proxy_pass ${VANA_BACKEND_URL}/auth/me;
+        proxy_http_version 1.1;
+        proxy_set_header Host $proxy_host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+
+    location = /proxy/auth/logout {
+        proxy_pass ${VANA_BACKEND_URL}/auth/logout;
+        proxy_http_version 1.1;
+        proxy_set_header Host $proxy_host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+
+    location /proxy/auth/ {
+        return 404;
+    }
+
+    # ------------------------------------------------------------------
+    # Reverse Proxy: Group 1 MasterDB (/proxy/g1/*)
+    # ------------------------------------------------------------------
+    location /proxy/g1/ {
+        proxy_pass ${VANA_G1_URL}/;
+        proxy_http_version 1.1;
+        proxy_set_header Host $proxy_host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_connect_timeout 10s;
+        proxy_read_timeout 30s;
+    }
+
+    # ------------------------------------------------------------------
+    # Reverse Proxy: Group 2 Pravah Science API (/proxy/g2/*)
+    # ------------------------------------------------------------------
+    location /proxy/g2/ {
+        proxy_pass ${VANA_G2_URL}/;
+        proxy_http_version 1.1;
+        proxy_ssl_server_name on;
+        proxy_set_header Host $proxy_host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_connect_timeout 10s;
+        proxy_read_timeout 30s;
+    }
+
+    # ------------------------------------------------------------------
+    # Reverse Proxy: Group 4 SANSKAR Execution Gate (/proxy/g4/*)
+    # ------------------------------------------------------------------
+    location /proxy/g4/ {
+        proxy_pass ${VANA_G4_URL}/;
+        proxy_http_version 1.1;
+        proxy_set_header Host $proxy_host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_connect_timeout 10s;
+        proxy_read_timeout 30s;
+    }
+
+    # Static assets
+    location / {
+        try_files $uri $uri/ =404;
+    }
+}

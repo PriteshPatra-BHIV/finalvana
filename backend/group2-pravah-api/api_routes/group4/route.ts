@@ -1,10 +1,19 @@
 import { NextResponse } from 'next/server';
 
-const GROUP4_VANA_URL =
-  process.env.NEXT_PUBLIC_VANA_GROUP4_URL || 'http://163.128.209.18:8010';
+const GROUP4_VANA_URL = (
+  process.env.VANA_G4_URL ||
+  process.env.NEXT_PUBLIC_VANA_GROUP4_URL ||
+  ''
+).replace(/\/+$/, '');
 
 export async function POST(request: Request) {
   try {
+    if (!GROUP4_VANA_URL) {
+      return NextResponse.json(
+        { error: 'Group 4 service URL is not configured (set VANA_G4_URL or NEXT_PUBLIC_VANA_GROUP4_URL).' },
+        { status: 500 }
+      );
+    }
     const body = await request.json();
     
     const res = await fetch(`${GROUP4_VANA_URL}/vana/execute`, {

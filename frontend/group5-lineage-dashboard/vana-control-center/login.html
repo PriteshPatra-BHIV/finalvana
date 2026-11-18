@@ -410,7 +410,7 @@
             type="email" 
             id="loginEmail" 
             class="login-input" 
-            placeholder="feild@gmail.com" 
+            placeholder="field@vana.gov.in" 
             required 
             autocomplete="username"
             autofocus>
@@ -472,18 +472,18 @@
     const emailInput = document.getElementById("loginEmail");
     if (role === "ADMIN") {
       document.getElementById("roleCardAdmin").classList.add("active");
-      if (!emailInput.value || emailInput.value.includes("@gmail.com")) {
-        emailInput.placeholder = "vana@gmail.com";
+      if (!emailInput.value) {
+        emailInput.placeholder = "admin@vana.gov.in";
       }
     } else if (role === "FIELD_AGENT") {
       document.getElementById("roleCardField").classList.add("active");
-      if (!emailInput.value || emailInput.value.includes("@gmail.com")) {
-        emailInput.placeholder = "feild@gmail.com";
+      if (!emailInput.value) {
+        emailInput.placeholder = "field@vana.gov.in";
       }
     } else if (role === "FOREST_OFFICER") {
       document.getElementById("roleCardForest").classList.add("active");
-      if (!emailInput.value || emailInput.value.includes("@gmail.com")) {
-        emailInput.placeholder = "forest@gmail.com";
+      if (!emailInput.value) {
+        emailInput.placeholder = "forest@vana.gov.in";
       }
     }
     clearError();

@@ -10,9 +10,9 @@ const express = require('express');
 const router = express.Router();
 const axios = require('axios'); // Requires axios for SANSKAR forwarding
 
-// SANSKAR Endpoint configuration
-const SANSKAR_API = process.env.SANSKAR_SERVICE_URL || 'http://163.128.209.18:8010';
-const GROUP1_API = process.env.GROUP1_SERVICE_URL || 'http://163.128.209.18:8013';
+// SANSKAR & Group 1 MasterDB endpoint configuration (driven by environment variables)
+const SANSKAR_API = (process.env.SANSKAR_SERVICE_URL || process.env.VANA_G4_URL || '').replace(/\/+$/, '');
+const GROUP1_API = (process.env.GROUP1_SERVICE_URL || process.env.VANA_G1_URL || '').replace(/\/+$/, '');
 
 /**
  * POST /api/group2/context/resolve
@@ -44,6 +44,13 @@ router.post('/resolve', async (req, res) => {
         }
 
         // 2. Dynamic Retrieval from Group 1 Canonical Record Source
+        if (!GROUP1_API || !SANSKAR_API) {
+            return res.status(500).json({
+                ok: false,
+                error: "BACKEND_ENV_NOT_CONFIGURED",
+                message: "SANSKAR_SERVICE_URL and GROUP1_SERVICE_URL must be configured via environment variables."
+            });
+        }
         let canonicalRecord;
         try {
             // Request actual canonical record dynamically—no static registries or mock fixtures

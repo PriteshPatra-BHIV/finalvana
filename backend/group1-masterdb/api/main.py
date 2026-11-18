@@ -1,3 +1,4 @@
+import os
 from uuid import uuid4
 
 from fastapi import FastAPI, Header, HTTPException
@@ -31,9 +32,12 @@ app = FastAPI(
     description="Consumer-facing Group 3 observation ingestion and retrieval API.",
 )
 
+_raw_cors = os.environ.get("VANA_CORS_ORIGINS", "").strip()
+_cors_origins = [o.strip().rstrip("/") for o in _raw_cors.split(",") if o.strip()] if _raw_cors else ["*"]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=_cors_origins,
     allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],

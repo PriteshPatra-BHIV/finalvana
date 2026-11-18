@@ -111,15 +111,6 @@ document.addEventListener("DOMContentLoaded", async function () {
   console.log("[VANA Admin] Initializing Administration Control Plane...");
   await window.VANA_AUTH.restoreSession();
 
-  const urlParams = new URLSearchParams(window.location.search);
-  if (urlParams.get("autologin") === "admin" && !window.VANA_AUTH.isAuthenticated()) {
-    try {
-      await window.VANA_AUTH.login("admin@vana.gov.in", "admin123");
-    } catch (e) {
-      console.warn("Autologin:", e);
-    }
-  }
-
   _initAuthUI();
   _pushAuditEntry("ADMIN_SESSION_START", "admin.html", "OK");
 

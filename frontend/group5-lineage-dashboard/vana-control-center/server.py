@@ -2,17 +2,18 @@
 VANA Control Center — Local Development Server & CORS Proxy Gateway
 ====================================================================
 Serves the static web interface and transparently reverse-proxies
-Group 1, Group 2, and Group 4 backend endpoints to eliminate CORS
-and mixed-content issues during local development.
+Group 1, Group 2, Group 4, and Auth endpoints during local development.
 
-FOR LOCAL USE ONLY. In production (Vercel), the same /proxy/* routes
-are handled by Vercel rewrites defined in vercel.json — no Python
-server is required or used in production.
+FOR LOCAL DEV ONLY. On the VM in production, the same /proxy/* routes
+are handled by Nginx (see nginx.conf.template) using values from .env.
 
-Proxy targets mirror vercel.json rewrites exactly:
-  /proxy/g1  →  http://163.128.209.18:8013
-  /proxy/g2  →  https://niyantran.blackholeinfiverse.com
-  /proxy/g4  →  http://163.128.209.18:8010
+Environment variables (loaded from root .env if present):
+  VANA_FRONTEND_PORT : Local listen port (default: 8080)
+  VANA_BACKEND_URL   : Auth & Group 4 base URL (default: http://localhost:8000)
+  VANA_G1_URL        : Group 1 MasterDB URL (default: http://127.0.0.1:8013)
+  VANA_G2_URL        : Group 2 Pravah API URL (default: https://niyantran.blackholeinfiverse.com)
+  VANA_G4_URL        : Group 4 SANSKAR URL (default: VANA_BACKEND_URL)
+  VANA_CORS_ORIGINS  : CORS allow origin header (default: *)
 """
 
 import http.server
@@ -23,25 +24,48 @@ import urllib.parse
 import json
 import os
 import sys
+from pathlib import Path
 
-PORT = 8080
 DIRECTORY = os.path.dirname(os.path.abspath(__file__))
+REPO_ROOT = Path(DIRECTORY).resolve().parents[2]
+
+
+def _load_dotenv_if_present():
+    env_file = REPO_ROOT / ".env"
+    if not env_file.is_file():
+        return
+    try:
+        for raw_line in env_file.read_text(encoding="utf-8").splitlines():
+            line = raw_line.strip()
+            if not line or line.startswith("#") or "=" not in line:
+                continue
+            key, val = line.split("=", 1)
+            key = key.strip()
+            val = val.strip().strip('"').strip("'")
+            if key:
+                os.environ.setdefault(key, val)
+    except Exception:
+        pass
+
+
+_load_dotenv_if_present()
+
+PORT = int(os.environ.get("VANA_FRONTEND_PORT", "8080"))
+CORS_ALLOW_ORIGIN = os.environ.get("VANA_CORS_ORIGINS", "*").split(",")[0].strip() or "*"
 
 # Unified runtime base URL for authentication and governed execution.
-# Default is http://localhost:8000 as confirmed by the backend contract.
 UNIFIED_BACKEND = os.environ.get(
     "VANA_BACKEND_URL",
     os.environ.get("VITE_API_URL", "http://localhost:8000")
 ).rstrip("/")
 
-# Local MasterDB runs on port 8013; falls back to VM host if configured
 DEFAULT_G1 = "http://127.0.0.1:8013"
 
 TARGETS = {
     "/proxy/auth": UNIFIED_BACKEND + "/auth",
-    "/proxy/g1": os.environ.get("VANA_G1_URL", DEFAULT_G1),
-    "/proxy/g2": os.environ.get("VANA_G2_URL", "https://niyantran.blackholeinfiverse.com"),
-    "/proxy/g4": os.environ.get("VANA_G4_URL", UNIFIED_BACKEND),
+    "/proxy/g1": os.environ.get("VANA_G1_URL", DEFAULT_G1).rstrip("/"),
+    "/proxy/g2": os.environ.get("VANA_G2_URL", "https://niyantran.blackholeinfiverse.com").rstrip("/"),
+    "/proxy/g4": os.environ.get("VANA_G4_URL", UNIFIED_BACKEND).rstrip("/"),
 }
 
 # Explicitly allowed subpaths for authentication to prevent open proxy misuse
@@ -52,7 +76,7 @@ class VANAHandler(http.server.SimpleHTTPRequestHandler):
         super().__init__(*args, directory=DIRECTORY, **kwargs)
 
     def end_headers(self):
-        self.send_header("Access-Control-Allow-Origin", "*")
+        self.send_header("Access-Control-Allow-Origin", CORS_ALLOW_ORIGIN)
         self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS, PUT, DELETE")
         self.send_header("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Requested-With, traceparent, Idempotency-Key, X-Product-Id, X-API-Key")
         super().end_headers()
@@ -192,8 +216,8 @@ class VANAHandler(http.server.SimpleHTTPRequestHandler):
         self.send_error(404, "Endpoint not found")
 
 def run():
-    socketserver.TCPServer.allow_reuse_address = True
-    with socketserver.TCPServer(("", PORT), VANAHandler) as httpd:
+    socketserver.ThreadingTCPServer.allow_reuse_address = True
+    with socketserver.ThreadingTCPServer(("", PORT), VANAHandler) as httpd:
         print(f"============================================================")
         print(f"  VANA Control Center Server Running at http://localhost:{PORT}")
         print(f"  Proxy Gateways:")

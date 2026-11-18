@@ -5,8 +5,8 @@
  * Loaded before app.js. Defines window.VANA_CONFIG.
  *
  * Deployment model:
- *   Local dev : Python proxy on :8080 rewrites /proxy/* → real backends
- *   Production: Vercel rewrites /proxy/* → real backends (server-side, no mixed-content)
+ *   Local dev : Python proxy (server.py) rewrites /proxy/* -> local backends
+ *   VM Prod   : Nginx reverse proxy (nginx.conf.template) rewrites /proxy/* -> backend services from .env
  *
  * No secrets, API keys, or direct backend IPs belong here.
  * All routes use /proxy/* so this file is identical in every environment.

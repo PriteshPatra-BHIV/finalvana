@@ -4,30 +4,45 @@ VANA Unified Authentication & SANSKAR Governed Execution Service
 Fulfills the backend contracts for:
   - POST /auth/login
   - GET  /auth/me
-  - POST /auth/register
+  - POST /auth/logout
+  - POST /auth/register (strictly disabled -> 403)
   - POST /vana/execute
   - GET  /health
-Runs on port 8000 (UNIFIED_BACKEND default).
 """
 
+import os
+import sys
 import time
 import uuid
 from datetime import datetime, timezone
+from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 from fastapi import FastAPI, Header, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
-import sys
-from pathlib import Path
 BACKEND_DIR = Path(__file__).resolve().parent
 if str(BACKEND_DIR) not in sys.path:
     sys.path.insert(0, str(BACKEND_DIR))
 import auth_service
 
-# Initialize users table on service start
+# Initialize users & session tables on service start
 auth_service.init_users_table()
+
+
+def _parse_cors_origins() -> List[str]:
+    raw = os.environ.get("VANA_CORS_ORIGINS", "").strip()
+    if raw:
+        origins = [o.strip().rstrip("/") for o in raw.split(",") if o.strip()]
+        if origins:
+            return origins
+    # Safe local dev defaults when VANA_CORS_ORIGINS is not configured
+    return ["http://localhost:8080", "http://127.0.0.1:8080"]
+
+
+_CORS_ORIGINS = _parse_cors_origins()
+_ALLOW_CREDENTIALS = "*" not in _CORS_ORIGINS
 
 app = FastAPI(
     title="VANA Unified Auth & Execution Runtime",
@@ -37,84 +52,16 @@ app = FastAPI(
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
+    allow_origins=_CORS_ORIGINS,
+    allow_credentials=_ALLOW_CREDENTIALS,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# In-memory users and token sessions
-USERS = {
-    "admin@vana.gov.in": {
-        "id": "adm-001",
-        "email": "admin@vana.gov.in",
-        "name": "VANA Administrator",
-        "role": "admin",
-        "permissions": [
-            "VIEW_DASHBOARD",
-            "VIEW_MAP",
-            "VIEW_ALERTS",
-            "VIEW_LINEAGE",
-            "VIEW_AUDIT_LOG",
-            "RUN_REPLAY",
-            "MANAGE_USERS",
-            "MANAGE_SYSTEM_CONFIG",
-            "EXECUTE_WORKFLOW",
-        ],
-    },
-    "participant@vana.gov.in": {
-        "id": "part-002",
-        "email": "participant@vana.gov.in",
-        "name": "Field Participant",
-        "role": "participant",
-        "permissions": [
-            "VIEW_DASHBOARD",
-            "VIEW_MAP",
-            "VIEW_ALERTS",
-            "VIEW_LINEAGE",
-        ],
-    },
-    "judge@vana.gov.in": {
-        "id": "judge-003",
-        "email": "judge@vana.gov.in",
-        "name": "Lineage Judge",
-        "role": "judge",
-        "permissions": [
-            "VIEW_DASHBOARD",
-            "VIEW_AUDIT_LOG",
-            "RUN_REPLAY",
-        ],
-    },
-    "auditor@vana.gov.in": {
-        "id": "audit-004",
-        "email": "auditor@vana.gov.in",
-        "name": "Governance Auditor",
-        "role": "auditor",
-        "permissions": [
-            "VIEW_DASHBOARD",
-            "VIEW_AUDIT_LOG",
-            "RUN_REPLAY",
-        ],
-    },
-    "steward@vana.gov.in": {
-        "id": "stew-005",
-        "email": "steward@vana.gov.in",
-        "name": "Governance Steward",
-        "role": "steward",
-        "permissions": [
-            "VIEW_DASHBOARD",
-            "VIEW_AUDIT_LOG",
-        ],
-    },
-}
-
-SESSIONS: Dict[str, dict] = {}
-SESSION_TTL_SECONDS = 86400  # 24 hours session validity
-
 
 def get_authenticated_user(authorization: Optional[str]) -> dict:
     """
-    Validates the Authorization Bearer header against server-managed sessions.
+    Validates the Authorization Bearer header against DB-persisted sessions.
     Strictly fail-closed: rejects missing, malformed, expired, or unauthenticated tokens with HTTP 401.
     """
     ok, msg, code, user = auth_service.get_session_user(authorization)
@@ -154,7 +101,7 @@ def login(req: LoginRequest, request: Request):
         email=identifier,
         password=req.password,
         selected_role=selected_role,
-        client_ip=client_ip
+        client_ip=client_ip,
     )
     if not ok:
         raise HTTPException(status_code=code, detail=msg)
@@ -238,4 +185,3 @@ def vana_execute(payload: Dict[str, Any], authorization: Optional[str] = Header(
             "recorded_at": now_iso,
         },
     }
-

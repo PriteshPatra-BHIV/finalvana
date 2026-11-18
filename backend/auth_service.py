@@ -2,36 +2,157 @@
 VANA Unified Authentication & Identity Management Service
 =========================================================
 Centralized authentication service implementing:
-  - Phase 1: Removal / strict blocking of public registration (POST /auth/register -> 403 Forbidden).
-  - Phase 2: Predefined user accounts seeded into MasterDB SQLite via bcrypt (never plaintext).
-  - Phase 5: Secure bcrypt password verification, role matching enforcement, session tokens, rate limiting.
-  - Phase 6: Canonical SQLite `users` schema with migrations and idempotent seeding.
+  - Strict blocking of public registration (POST /auth/register -> 403 Forbidden).
+  - Predefined RBAC accounts seeded idempotently via bcrypt (never plaintext).
+  - Dual database backend: PostgreSQL (production VM) & SQLite (local development)
+    driven by VANA_DATABASE_URL.
+  - Persistent DB-backed session storage (`user_sessions`) so sessions survive
+    restarts and work across multiple Uvicorn workers.
+  - Production fail-closed guard refusing weak/placeholder credentials when
+    VANA_ENV=production.
 """
 
+import json
 import os
+import sqlite3
 import time
 import uuid
-import sqlite3
-import bcrypt
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Optional, Dict, Any, Tuple
+from typing import Any, Dict, List, Optional, Tuple
+
+import bcrypt
 
 # ---------------------------------------------------------------------------
-# Path & Database Configuration
+# Path & Optional .env Bootstrap
 # ---------------------------------------------------------------------------
 BACKEND_DIR = Path(__file__).resolve().parent
+REPO_ROOT = BACKEND_DIR.parent
 MASTERDB_DIR = BACKEND_DIR / "group1-masterdb"
 DEFAULT_DB_PATH = (MASTERDB_DIR / "vana_api.db").resolve().as_posix()
 
+
+def _load_dotenv_if_present() -> None:
+    """Load root .env without overriding already-set environment variables."""
+    env_file = REPO_ROOT / ".env"
+    if not env_file.is_file():
+        return
+    try:
+        for raw_line in env_file.read_text(encoding="utf-8").splitlines():
+            line = raw_line.strip()
+            if not line or line.startswith("#") or "=" not in line:
+                continue
+            key, val = line.split("=", 1)
+            key = key.strip()
+            val = val.strip().strip('"').strip("'")
+            if key:
+                os.environ.setdefault(key, val)
+    except Exception:
+        pass
+
+
+_load_dotenv_if_present()
+
+
+def is_production() -> bool:
+    return os.environ.get("VANA_ENV", "development").strip().lower() in ("production", "prod")
+
+
+def get_database_url() -> str:
+    env_url = os.environ.get("VANA_DATABASE_URL", "").strip()
+    if env_url:
+        return env_url
+    if os.path.exists(DEFAULT_DB_PATH):
+        return f"sqlite:///{DEFAULT_DB_PATH}"
+    return f"sqlite:///{(REPO_ROOT / 'vana_api.db').resolve().as_posix()}"
+
+
+def is_postgres_url(url: str) -> bool:
+    return url.startswith("postgresql://") or url.startswith("postgres://")
+
+
 def get_db_path() -> str:
-    env_url = os.environ.get("VANA_DATABASE_URL", "")
-    if env_url.startswith("sqlite:///"):
-        return env_url.replace("sqlite:///", "", 1)
+    """Return SQLite file path when using SQLite backend."""
+    url = get_database_url()
+    if url.startswith("sqlite:///"):
+        return url.replace("sqlite:///", "", 1)
     if os.path.exists(DEFAULT_DB_PATH):
         return DEFAULT_DB_PATH
-    # Fallback to local vana_api.db
-    return "vana_api.db"
+    return (REPO_ROOT / "vana_api.db").resolve().as_posix()
+
+
+# ---------------------------------------------------------------------------
+# Unified DB Adapter (PostgreSQL + SQLite)
+# ---------------------------------------------------------------------------
+class _AuthCursor:
+    def __init__(self, raw_cursor: Any, is_postgres: bool):
+        self._cursor = raw_cursor
+        self.is_postgres = is_postgres
+
+    def execute(self, sql: str, params: Tuple[Any, ...] = ()) -> "_AuthCursor":
+        if self.is_postgres:
+            sql = sql.replace("?", "%s")
+        self._cursor.execute(sql, params)
+        return self
+
+    def fetchone_dict(self) -> Optional[Dict[str, Any]]:
+        row = self._cursor.fetchone()
+        if row is None:
+            return None
+        cols = [desc[0] for desc in self._cursor.description]
+        return dict(zip(cols, row))
+
+    def fetchone(self) -> Any:
+        return self._cursor.fetchone()
+
+
+class _AuthConn:
+    def __init__(self, raw_conn: Any, is_postgres: bool):
+        self._conn = raw_conn
+        self.is_postgres = is_postgres
+
+    def cursor(self) -> _AuthCursor:
+        return _AuthCursor(self._conn.cursor(), self.is_postgres)
+
+    def commit(self) -> None:
+        self._conn.commit()
+
+    def rollback(self) -> None:
+        self._conn.rollback()
+
+    def close(self) -> None:
+        self._conn.close()
+
+
+def _open_connection(db_path: Optional[str] = None) -> _AuthConn:
+    if db_path:
+        if is_postgres_url(db_path):
+            url = db_path
+        elif db_path.startswith("sqlite:///"):
+            url = db_path
+        else:
+            url = f"sqlite:///{db_path}"
+    else:
+        url = get_database_url()
+
+    if is_postgres_url(url):
+        try:
+            import psycopg2
+        except ImportError as exc:
+            raise RuntimeError(
+                "PostgreSQL backend requires psycopg2-binary (pip install psycopg2-binary)."
+            ) from exc
+        raw = psycopg2.connect(url)
+        return _AuthConn(raw, is_postgres=True)
+
+    if url.startswith("sqlite:///"):
+        sqlite_path = url.replace("sqlite:///", "", 1)
+        os.makedirs(os.path.dirname(os.path.abspath(sqlite_path)), exist_ok=True)
+        raw = sqlite3.connect(sqlite_path, check_same_thread=False)
+        return _AuthConn(raw, is_postgres=False)
+
+    raise RuntimeError(f"Unsupported VANA_DATABASE_URL scheme: {url}")
+
 
 # ---------------------------------------------------------------------------
 # Canonical Role & Permission Definitions
@@ -42,7 +163,7 @@ ROLE_FOREST_OFFICER = "FOREST_OFFICER"
 
 VALID_ROLES = {ROLE_ADMIN, ROLE_FIELD_AGENT, ROLE_FOREST_OFFICER}
 
-ROLE_PERMISSIONS: Dict[str, list] = {
+ROLE_PERMISSIONS: Dict[str, List[str]] = {
     ROLE_ADMIN: [
         "VIEW_DASHBOARD",
         "VIEW_MAP",
@@ -89,36 +210,59 @@ ROLE_PERMISSIONS: Dict[str, list] = {
     ],
 }
 
-# Predefined Accounts (Configurable via environment variables)
-PREDEFINED_USERS = [
-    {
-        "id": "usr-admin-001",
-        "email": os.environ.get("VANA_ADMIN_EMAIL", "vana@gmail.com").strip().lower(),
-        "password": os.environ.get("VANA_ADMIN_PASSWORD", "vana"),
-        "role": ROLE_ADMIN,
-        "name": "VANA Administrator",
-    },
-    {
-        "id": "usr-field-002",
-        "email": os.environ.get("VANA_FIELD_EMAIL", "feild@gmail.com").strip().lower(),
-        "password": os.environ.get("VANA_FIELD_PASSWORD", "vana"),
-        "role": ROLE_FIELD_AGENT,
-        "name": "Field Operations Agent",
-    },
-    {
-        "id": "usr-forest-003",
-        "email": os.environ.get("VANA_FOREST_EMAIL", "forest@gmail.com").strip().lower(),
-        "password": os.environ.get("VANA_FOREST_PASSWORD", "vana"),
-        "role": ROLE_FOREST_OFFICER,
-        "name": "Statutory Forest Officer",
-    },
-]
+_DISALLOWED_PROD_PASSWORDS = {"", "vana", "admin123", "password", "changeme"}
+
+
+def get_predefined_users() -> List[Dict[str, str]]:
+    """
+    Build predefined RBAC seed accounts from environment variables.
+    In production (VANA_ENV=production), fail closed if credentials are missing
+    or still set to insecure defaults / CHANGE_ME placeholders.
+    """
+    prod = is_production()
+    specs = [
+        ("usr-admin-001", "VANA_ADMIN_EMAIL", "VANA_ADMIN_PASSWORD", "vana@gmail.com", "vana", ROLE_ADMIN, "VANA Administrator"),
+        ("usr-field-002", "VANA_FIELD_EMAIL", "VANA_FIELD_PASSWORD", "feild@gmail.com", "vana", ROLE_FIELD_AGENT, "Field Operations Agent"),
+        ("usr-forest-003", "VANA_FOREST_EMAIL", "VANA_FOREST_PASSWORD", "forest@gmail.com", "vana", ROLE_FOREST_OFFICER, "Statutory Forest Officer"),
+    ]
+    users: List[Dict[str, str]] = []
+    for uid, email_var, pw_var, dev_email, dev_pw, role, name in specs:
+        email = os.environ.get(email_var, "" if prod else dev_email).strip().lower()
+        password = os.environ.get(pw_var, "" if prod else dev_pw)
+        if prod:
+            if not email or email.startswith("change_me"):
+                raise RuntimeError(
+                    f"[Auth Bootstrap] Production startup blocked: {email_var} must be configured in .env."
+                )
+            if (
+                not password
+                or password.strip().lower() in _DISALLOWED_PROD_PASSWORDS
+                or password.upper().startswith("CHANGE_ME")
+            ):
+                raise RuntimeError(
+                    f"[Auth Bootstrap] Production startup blocked: {pw_var} must be set to a strong non-default password in .env."
+                )
+        users.append({
+            "id": uid,
+            "email": email,
+            "password": password,
+            "role": role,
+            "name": name,
+        })
+    return users
+
 
 # ---------------------------------------------------------------------------
-# In-Memory Session Store & Rate Limiting Tracker
+# Session TTL & Rate Limiting Tracker
 # ---------------------------------------------------------------------------
-SESSIONS: Dict[str, Dict[str, Any]] = {}
-SESSION_TTL_SECONDS = 86400  # 24 hours
+def get_session_ttl_seconds() -> int:
+    try:
+        return max(300, int(os.environ.get("VANA_SESSION_TTL_SECONDS", "86400")))
+    except ValueError:
+        return 86400
+
+
+SESSION_TTL_SECONDS = get_session_ttl_seconds()
 
 FAILED_LOGIN_ATTEMPTS: Dict[str, list] = {}
 RATE_LIMIT_MAX_ATTEMPTS = 5
@@ -140,81 +284,79 @@ def normalize_role(role_str: Optional[str]) -> Optional[str]:
 
 
 # ---------------------------------------------------------------------------
-# Database Initialization & Seeding (Idempotent)
+# Database Initialization & Seeding (Idempotent, Postgres + SQLite)
 # ---------------------------------------------------------------------------
 def init_users_table(db_path: Optional[str] = None) -> None:
     """
-    Creates the canonical users table if it does not exist and seeds the three
-    predefined user accounts with bcrypt password hashes.
-    Ensures idempotency: does not overwrite existing records or passwords on server restarts.
+    Creates `users` and `user_sessions` tables if they do not exist and seeds
+    the predefined user accounts with bcrypt password hashes idempotently.
     """
-    targets = []
-    if db_path:
-        targets.append(db_path)
-    else:
-        configured_path = get_db_path()
-        targets.append(configured_path)
-        # Also ensure MasterDB directory and root db are synchronized if they exist
-        if DEFAULT_DB_PATH not in targets:
-            targets.append(DEFAULT_DB_PATH)
-        root_db = (BACKEND_DIR.parent.parent / "vana_api.db").resolve().as_posix()
-        if os.path.exists(root_db) and root_db not in targets:
-            targets.append(root_db)
+    predefined_users = get_predefined_users()
+    target_url = db_path if db_path else get_database_url()
 
-    for target in targets:
-        try:
-            os.makedirs(os.path.dirname(os.path.abspath(target)), exist_ok=True)
-            conn = sqlite3.connect(target, check_same_thread=False)
-            cur = conn.cursor()
+    conn = _open_connection(target_url)
+    try:
+        cur = conn.cursor()
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS users (
+                id TEXT PRIMARY KEY,
+                email TEXT UNIQUE NOT NULL,
+                password_hash TEXT NOT NULL,
+                role TEXT NOT NULL,
+                name TEXT NOT NULL,
+                is_active INTEGER DEFAULT 1,
+                created_at TEXT NOT NULL,
+                updated_at TEXT NOT NULL,
+                last_login_at TEXT
+            );
+        """)
+        cur.execute("CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);")
 
-            # Create users table with all required fields
-            cur.execute("""
-                CREATE TABLE IF NOT EXISTS users (
-                    id TEXT PRIMARY KEY,
-                    email TEXT UNIQUE NOT NULL,
-                    password_hash TEXT NOT NULL,
-                    role TEXT NOT NULL,
-                    name TEXT NOT NULL,
-                    is_active INTEGER DEFAULT 1,
-                    created_at TEXT NOT NULL,
-                    updated_at TEXT NOT NULL,
-                    last_login_at TEXT
-                );
-            """)
-            cur.execute("CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);")
-            conn.commit()
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS user_sessions (
+                token TEXT PRIMARY KEY,
+                user_id TEXT NOT NULL,
+                user_json TEXT NOT NULL,
+                created_at DOUBLE PRECISION NOT NULL,
+                expires_at DOUBLE PRECISION NOT NULL
+            );
+        """)
+        cur.execute("CREATE INDEX IF NOT EXISTS idx_user_sessions_expires_at ON user_sessions(expires_at);")
+        conn.commit()
 
-            # Seed predefined accounts idempotently
-            now_iso = datetime.now(timezone.utc).isoformat()
-            for u in PREDEFINED_USERS:
-                email = u["email"].lower()
-                cur.execute("SELECT id, password_hash, role FROM users WHERE email = ?", (email,))
-                existing = cur.fetchone()
-                if not existing:
-                    pw_hash = bcrypt.hashpw(u["password"].encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
-                    cur.execute("""
-                        INSERT INTO users (id, email, password_hash, role, name, is_active, created_at, updated_at)
-                        VALUES (?, ?, ?, ?, ?, 1, ?, ?)
-                    """, (u["id"], email, pw_hash, u["role"], u["name"], now_iso, now_iso))
-                    conn.commit()
-                    print(f"[*] [Auth Bootstrap] Seeded predefined account '{email}' with role '{u['role']}' in {target}", flush=True)
-
-            conn.close()
-        except Exception as e:
-            print(f"[!] [Auth Bootstrap] Error initializing database at {target}: {e}", flush=True)
+        now_iso = datetime.now(timezone.utc).isoformat()
+        for u in predefined_users:
+            email = u["email"].lower()
+            cur.execute("SELECT id, password_hash, role FROM users WHERE email = ?", (email,))
+            existing = cur.fetchone()
+            if not existing:
+                pw_hash = bcrypt.hashpw(u["password"].encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
+                cur.execute(
+                    """
+                    INSERT INTO users (id, email, password_hash, role, name, is_active, created_at, updated_at)
+                    VALUES (?, ?, ?, ?, ?, 1, ?, ?)
+                    """,
+                    (u["id"], email, pw_hash, u["role"], u["name"], now_iso, now_iso),
+                )
+                conn.commit()
+                backend_label = "PostgreSQL" if conn.is_postgres else "SQLite"
+                print(
+                    f"[*] [Auth Bootstrap] Seeded predefined account '{email}' with role '{u['role']}' ({backend_label})",
+                    flush=True,
+                )
+    except Exception:
+        conn.rollback()
+        raise
+    finally:
+        conn.close()
 
 
 # ---------------------------------------------------------------------------
 # Rate Limiting Logic
 # ---------------------------------------------------------------------------
 def check_rate_limit(key: str) -> Tuple[bool, Optional[int]]:
-    """
-    Checks whether key (IP or email) is currently rate-limited.
-    Returns (is_limited, retry_after_seconds).
-    """
     now = time.time()
     attempts = FAILED_LOGIN_ATTEMPTS.get(key, [])
-    # Filter attempts within the window
     valid_attempts = [ts for ts in attempts if now - ts < RATE_LIMIT_WINDOW_SECONDS]
     FAILED_LOGIN_ATTEMPTS[key] = valid_attempts
 
@@ -247,18 +389,11 @@ def authenticate_user(
     password: str,
     selected_role: Optional[str] = None,
     client_ip: Optional[str] = None,
-    db_path: Optional[str] = None
+    db_path: Optional[str] = None,
 ) -> Tuple[bool, str, int, Optional[Dict[str, Any]]]:
     """
-    Verifies user credentials against SQLite users table.
-    Enforces:
-      - Rate limiting against brute-force attacks.
-      - Password verification using bcrypt.
-      - Account active status.
-      - Strict Role Match: Rejects mismatch if selected_role doesn't match database role.
-      - Session creation with 24h validity.
-
-    Returns: (success: bool, message: str, status_code: int, session_data: Optional[dict])
+    Verifies user credentials against the users table (PostgreSQL or SQLite)
+    and persists the issued session token into `user_sessions`.
     """
     rate_key = (client_ip or email or "unknown").strip().lower()
     is_limited, retry_after = check_rate_limit(rate_key)
@@ -267,37 +402,34 @@ def authenticate_user(
             False,
             f"Too many failed login attempts. Please wait {retry_after} seconds before trying again.",
             429,
-            None
+            None,
         )
 
     if not email or not password:
         return False, "Email and password are required.", 400, None
 
     clean_email = email.strip().lower()
-    active_db = db_path or get_db_path()
+    conn = None
 
     try:
-        conn = sqlite3.connect(active_db, check_same_thread=False)
-        conn.row_factory = sqlite3.Row
+        conn = _open_connection(db_path)
         cur = conn.cursor()
-        cur.execute("""
+        cur.execute(
+            """
             SELECT id, email, password_hash, role, name, is_active, created_at
             FROM users WHERE email = ?
-        """, (clean_email,))
-        row = cur.fetchone()
+            """,
+            (clean_email,),
+        )
+        user = cur.fetchone_dict()
 
-        if not row:
+        if not user:
             record_failed_attempt(rate_key)
-            conn.close()
             return False, "Invalid email or password.", 401, None
 
-        user = dict(row)
-
         if not user.get("is_active", 1):
-            conn.close()
             return False, "Account is disabled. Contact system administrator.", 403, None
 
-        # Verify password using bcrypt
         password_bytes = password.encode("utf-8")
         hash_bytes = user["password_hash"].encode("utf-8")
         try:
@@ -307,35 +439,29 @@ def authenticate_user(
 
         if not pw_match:
             record_failed_attempt(rate_key)
-            conn.close()
             return False, "Invalid email or password.", 401, None
 
-        # Enforce Role Matching Gate
         user_role = normalize_role(user["role"])
         if selected_role:
             norm_selected = normalize_role(selected_role)
             if norm_selected and norm_selected != user_role:
                 record_failed_attempt(rate_key)
-                conn.close()
                 return (
                     False,
                     f"Role mismatch: User '{clean_email}' is registered as {user_role}, but {norm_selected} was selected.",
                     403,
-                    None
+                    None,
                 )
 
-        # Login successful — reset failed attempts
         clear_failed_attempts(rate_key)
 
         now_iso = datetime.now(timezone.utc).isoformat()
         cur.execute("UPDATE users SET last_login_at = ? WHERE id = ?", (now_iso, user["id"]))
-        conn.commit()
-        conn.close()
 
-        # Build user profile with permissions
-        permissions = ROLE_PERMISSIONS.get(user_role, [
-            "VIEW_DASHBOARD", "VIEW_MAP", "VIEW_ALERTS", "VIEW_LINEAGE"
-        ])
+        permissions = ROLE_PERMISSIONS.get(
+            user_role,
+            ["VIEW_DASHBOARD", "VIEW_MAP", "VIEW_ALERTS", "VIEW_LINEAGE"],
+        )
 
         user_profile = {
             "id": user["id"],
@@ -346,34 +472,49 @@ def authenticate_user(
             "last_login_at": now_iso,
         }
 
-        # Issue secure bearer token & register session
+        ttl = get_session_ttl_seconds()
         token = f"vana_sec_{uuid.uuid4().hex}"
         now_ts = time.time()
-        expires_at = now_ts + SESSION_TTL_SECONDS
+        expires_at = now_ts + ttl
 
-        SESSIONS[token] = {
-            "token": token,
-            "user": user_profile,
-            "created_at": now_ts,
-            "expires_at": expires_at,
-        }
+        # Opportunistically prune expired sessions and persist the new session
+        cur.execute("DELETE FROM user_sessions WHERE expires_at < ?", (now_ts,))
+        cur.execute(
+            """
+            INSERT INTO user_sessions (token, user_id, user_json, created_at, expires_at)
+            VALUES (?, ?, ?, ?, ?)
+            """,
+            (token, user["id"], json.dumps(user_profile), now_ts, expires_at),
+        )
+        conn.commit()
 
         session_payload = {
             "access_token": token,
             "token_type": "bearer",
-            "expires_in": SESSION_TTL_SECONDS,
+            "expires_in": ttl,
             "user": user_profile,
         }
 
         return True, "Login successful.", 200, session_payload
 
     except Exception as e:
+        if conn is not None:
+            try:
+                conn.rollback()
+            except Exception:
+                pass
         return False, f"Internal authentication error: {str(e)}", 500, None
+    finally:
+        if conn is not None:
+            conn.close()
 
 
-def get_session_user(auth_header: Optional[str]) -> Tuple[bool, str, int, Optional[Dict[str, Any]]]:
+def get_session_user(
+    auth_header: Optional[str],
+    db_path: Optional[str] = None,
+) -> Tuple[bool, str, int, Optional[Dict[str, Any]]]:
     """
-    Validates the Authorization Bearer header against server-managed sessions.
+    Validates the Authorization Bearer header against DB-persisted sessions.
     Strict fail-closed: rejects missing, malformed, expired, or revoked tokens.
     """
     if not auth_header:
@@ -386,31 +527,53 @@ def get_session_user(auth_header: Optional[str]) -> Tuple[bool, str, int, Option
     if not token:
         return False, "Empty bearer token. Authentication required.", 401, None
 
-    session = SESSIONS.get(token)
-    if not session:
-        return False, "Session invalid or expired. Sign in again.", 401, None
+    conn = None
+    try:
+        conn = _open_connection(db_path)
+        cur = conn.cursor()
+        cur.execute(
+            "SELECT token, user_json, expires_at FROM user_sessions WHERE token = ?",
+            (token,),
+        )
+        row = cur.fetchone_dict()
+        if not row:
+            return False, "Session invalid or expired. Sign in again.", 401, None
 
-    if time.time() > session.get("expires_at", 0):
-        SESSIONS.pop(token, None)
-        return False, "Session has expired. Sign in again.", 401, None
+        if time.time() > float(row["expires_at"]):
+            cur.execute("DELETE FROM user_sessions WHERE token = ?", (token,))
+            conn.commit()
+            return False, "Session has expired. Sign in again.", 401, None
 
-    user = session.get("user")
-    if not user or not isinstance(user, dict):
-        return False, "Session corrupted or invalid. Sign in again.", 401, None
+        user = json.loads(row["user_json"])
+        if not user or not isinstance(user, dict):
+            return False, "Session corrupted or invalid. Sign in again.", 401, None
 
-    return True, "Authenticated", 200, user
+        return True, "Authenticated", 200, user
+    except Exception:
+        return False, "Session verification unavailable. Sign in again.", 401, None
+    finally:
+        if conn is not None:
+            conn.close()
 
 
-def revoke_token(auth_header: Optional[str]) -> Tuple[bool, str, int]:
-    """
-    Invalidates session associated with the bearer token.
-    """
+def revoke_token(
+    auth_header: Optional[str],
+    db_path: Optional[str] = None,
+) -> Tuple[bool, str, int]:
+    """Invalidates the persisted session associated with the bearer token."""
     if not auth_header or not auth_header.startswith("Bearer "):
         return False, "Invalid Authorization header.", 400
 
     token = auth_header.split("Bearer ", 1)[1].strip()
-    if token in SESSIONS:
-        SESSIONS.pop(token, None)
+    conn = None
+    try:
+        conn = _open_connection(db_path)
+        cur = conn.cursor()
+        cur.execute("DELETE FROM user_sessions WHERE token = ?", (token,))
+        conn.commit()
         return True, "Session successfully revoked.", 200
-    return True, "Session already inactive or revoked.", 200
-
+    except Exception as e:
+        return False, f"Failed to revoke session: {str(e)}", 500
+    finally:
+        if conn is not None:
+            conn.close()
