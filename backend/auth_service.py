@@ -105,6 +105,16 @@ class _AuthCursor:
     def fetchone(self) -> Any:
         return self._cursor.fetchone()
 
+    def fetchall(self) -> List[Any]:
+        return self._cursor.fetchall()
+
+    def fetchall_dict(self) -> List[Dict[str, Any]]:
+        rows = self._cursor.fetchall()
+        if not rows:
+            return []
+        cols = [desc[0] for desc in self._cursor.description]
+        return [dict(zip(cols, r)) for r in rows]
+
 
 class _AuthConn:
     def __init__(self, raw_conn: Any, is_postgres: bool):

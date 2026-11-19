@@ -10,6 +10,7 @@ Fulfills the backend contracts for:
   - GET  /health
 """
 
+import json
 import os
 import sys
 import time
@@ -27,8 +28,42 @@ if str(BACKEND_DIR) not in sys.path:
     sys.path.insert(0, str(BACKEND_DIR))
 import auth_service
 
-# Initialize users & session tables on service start
+# Initialize users, session, and governance audit tables on service start
 auth_service.init_users_table()
+
+
+def init_governance_audit_table():
+    conn = None
+    try:
+        conn = auth_service._open_connection()
+        cur = conn.cursor()
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS governance_execution_audit (
+                audit_id VARCHAR(64) PRIMARY KEY,
+                event_id VARCHAR(64) NOT NULL,
+                execution_id VARCHAR(64),
+                abstention_record_id VARCHAR(64),
+                observation_id VARCHAR(128),
+                canonical_record_id VARCHAR(128),
+                caller_ruling VARCHAR(32),
+                effective_ruling VARCHAR(32) NOT NULL,
+                action_taken VARCHAR(32) NOT NULL,
+                operator_id VARCHAR(64),
+                operator_role VARCHAR(64),
+                decision_reason TEXT,
+                payload_json TEXT,
+                recorded_at TEXT NOT NULL
+            )
+        """)
+        conn.commit()
+    except Exception as e:
+        print(f"[Governance Audit] Table init note: {e}")
+    finally:
+        if conn is not None:
+            conn.close()
+
+
+init_governance_audit_table()
 
 
 def _parse_cors_origins() -> List[str]:
@@ -160,26 +195,115 @@ def vana_execute(payload: Dict[str, Any], authorization: Optional[str] = Header(
     abstention_record_id = f"ABS-{uuid.uuid4().hex[:12].upper()}"
     now_iso = datetime.now(timezone.utc).isoformat()
 
-    ruling = payload.get("ruling", "ABSTAIN")
-    obs_id = payload.get("observation_id", "TC-Z03-EXT-OPENMETEO-OBS001")
+    caller_ruling = str(payload.get("ruling", "ABSTAIN")).strip().upper()
+    context_id = payload.get("context_id")
+    obs_id = payload.get("observation_id") or "TC-Z03-EXT-OPENMETEO-OBS001"
     canonical_id = payload.get("canonical_record_id")
 
+    # -------------------------------------------------------------------------
+    # Server-side validation of observation & calibration against MasterDB
+    # -------------------------------------------------------------------------
+    obs_verified = False
+    calibrated = False
+    conn = None
+    try:
+        conn = auth_service._open_connection()
+        cur = conn.cursor()
+        cur.execute(
+            "SELECT observation_id, canonical_record_id, quality_status FROM observation WHERE observation_id = ? OR canonical_record_id = ?",
+            (obs_id, canonical_id or obs_id),
+        )
+        obs_row = cur.fetchone_dict() if hasattr(cur, "fetchone_dict") else None
+        if not obs_row:
+            row_tuple = cur.fetchone()
+            if row_tuple:
+                obs_row = {"observation_id": row_tuple[0], "canonical_record_id": row_tuple[1], "quality_status": row_tuple[2]}
+        
+        if obs_row:
+            if not canonical_id:
+                canonical_id = obs_row.get("canonical_record_id")
+            obs_verified = obs_row.get("quality_status") == "VALIDATED"
+            
+            cur.execute(
+                "SELECT calibration_status FROM field_observation_meta WHERE observation_id = ?",
+                (obs_row["observation_id"],),
+            )
+            meta_tuple = cur.fetchone()
+            if meta_tuple and meta_tuple[0] == "CALIBRATED":
+                calibrated = True
+    except Exception as err:
+        print(f"[Governance Gate] Observation query note: {err}")
+    finally:
+        if conn is not None:
+            conn.close()
+
+    # -------------------------------------------------------------------------
+    # Fail-closed SANSKAR governance gate:
+    # Overrides caller_ruling to ABSTAIN if context is missing or unverified
+    # -------------------------------------------------------------------------
+    if caller_ruling != "ABSTAIN" and (not context_id or not obs_verified or not calibrated):
+        effective_ruling = "ABSTAIN"
+        decision_reason = "Server-side governance gate: Sensor calibration or context unverified. Strict fail-closed override to ABSTAIN."
+    elif caller_ruling == "ALLOW" and context_id and obs_verified and calibrated:
+        effective_ruling = "ALLOW"
+        decision_reason = "Authoritative context and calibration verified. Governed execution dispatch authorized."
+    else:
+        effective_ruling = "ABSTAIN"
+        decision_reason = "Authoritative evidence threshold not met (Context not verified). Failing closed to ABSTAIN."
+
+    if effective_ruling == "ABSTAIN":
+        status_val = "governed_abstention"
+        action_val = "noop"
+    else:
+        status_val = "action_request_generated"
+        action_val = "dispatch"
+
+    # -------------------------------------------------------------------------
+    # Persist execution/abstention audit receipt into MasterDB
+    # -------------------------------------------------------------------------
+    try:
+        conn = auth_service._open_connection()
+        cur = conn.cursor()
+        audit_id = f"aud_{ts_ms}_{uuid.uuid4().hex[:4]}"
+        cur.execute("""
+            INSERT INTO governance_execution_audit (
+                audit_id, event_id, execution_id, abstention_record_id, observation_id,
+                canonical_record_id, caller_ruling, effective_ruling, action_taken,
+                operator_id, operator_role, decision_reason, payload_json, recorded_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """, (
+            audit_id, event_id,
+            execution_id if effective_ruling != "ABSTAIN" else None,
+            abstention_record_id if effective_ruling == "ABSTAIN" else None,
+            obs_id, canonical_id,
+            caller_ruling, effective_ruling, action_val,
+            user.get("id"), user.get("role"),
+            decision_reason, json.dumps(payload), now_iso
+        ))
+        conn.commit()
+    except Exception as e:
+        print(f"[Governance Audit] Persistence note: {e}")
+    finally:
+        if conn is not None:
+            conn.close()
+
     return {
-        "status": "governed_abstention" if ruling == "ABSTAIN" else "action_request_generated",
-        "ruling": ruling,
+        "status": status_val,
+        "ruling": effective_ruling,
         "event_id": event_id,
-        "execution_id": execution_id,
+        "execution_id": execution_id if effective_ruling != "ABSTAIN" else None,
+        "abstention_record_id": abstention_record_id if effective_ruling == "ABSTAIN" else None,
         "recorded_at": now_iso,
-        "decision_reason": "Authoritative evidence threshold not met (Context not verified). Failing closed to ABSTAIN.",
+        "decision_reason": decision_reason,
         "evidence": {
-            "status": "governed_abstention",
-            "ruling": ruling,
-            "decision_action": "noop" if ruling == "ABSTAIN" else "dispatch",
-            "abstention_record_id": abstention_record_id,
+            "status": status_val,
+            "ruling": effective_ruling,
+            "decision_action": action_val,
+            "abstention_record_id": abstention_record_id if effective_ruling == "ABSTAIN" else None,
             "event_id": event_id,
-            "execution_id": execution_id,
-            "governance_allowed": ruling != "ABSTAIN",
-            "context_id": payload.get("context_id"),
+            "execution_id": execution_id if effective_ruling != "ABSTAIN" else None,
+            "governance_allowed": effective_ruling != "ABSTAIN",
+            "context_id": context_id,
             "observation_id": obs_id,
             "canonical_record_id": canonical_id,
             "recorded_at": now_iso,

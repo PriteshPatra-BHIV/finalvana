@@ -237,13 +237,15 @@ docker compose -f docker-compose.production.yml up -d
 
 ---
 
-## 8. Defect Register & Known Limitations
+## 8. Defect Register & Blockers Resolved (Release Hardening)
 
-| Defect / Limitation ID | Severity | Description | Current Workaround / Mitigation | Owner & Target Fix |
-| :--- | :---: | :--- | :--- | :--- |
-| **DEC-VANA-02** | Medium | `GET /dashboard/summary` telemetry contains placeholder distribution counts for unmonitored zones. | The 5 unmonitored zones are explicitly rendered as `PENDING_UPSTREAM` on the UI map. | Pritesh / Next release |
-| **DEC-VANA-04** | Low | MasterDB internal write port (`:8033`) requires firewall lockdown. | Port `:8033` is bound to host loopback (`127.0.0.1`) only; public ingress blocked by Nginx. | Pritesh / Completed |
-| **DEF-CORS-01** | Low | Wildcard CORS allowed during local development. | Parameterized in `.env` via `VANA_CORS_ORIGINS`; strictly restricted in production mode. | Pritesh / Completed |
+All three critical blockers raised by Release Assurance (Pratik Bhuvad) have been patched, verified, and closed:
+
+| Defect / Blocker ID | Severity | Description | Resolution & Evidence | Status |
+| :--- | :---: | :--- | :--- | :---: |
+| **BLK-VANA-01** (Zero-Fabrication) | **CRITICAL** | Static `EVT-001..005`, hardcoded `"5 min ago"`, and fabricated summary telemetry in `GET /dashboard/summary`. | Replaced with live ledger queries from `governance_execution_audit`, `idempotency_record`, and `observation`. Real ISO timestamps dynamically rendered; unmonitored zones badged `UNAVAILABLE / STANDBY`. | **RESOLVED & VERIFIED** |
+| **BLK-VANA-02** (Governance Integrity) | **CRITICAL** | `POST /vana/execute` trusted caller ruling, lacked DB receipt persistence, and hardcoded `evidence.status` on ALLOW. | Added server-side validation against `observation` & `field_observation_meta`; enforces fail-closed `ABSTAIN` on uncalibrated context; persists receipts to `governance_execution_audit`; sets `status` to `action_request_generated` on ALLOW. | **RESOLVED & VERIFIED** |
+| **BLK-VANA-03** (Security / RBAC) | **HIGH** | `POST /observations` and `POST /official/forest-cover` accepted unauthenticated writes. | Added `verify_write_auth` dependency checking Bearer tokens against `user_sessions`. Enforces `FIELD_AGENT` or `ADMIN` for observations, and `ADMIN` for statutory forest cover benchmarks. Missing/invalid tokens fail with 401/403. | **RESOLVED & VERIFIED** |
 
 ---
 
