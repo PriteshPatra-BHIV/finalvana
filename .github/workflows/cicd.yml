@@ -34,6 +34,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: deployment-artifacts
+          include-hidden-files: true
           path: |
             docker-compose.production.template.yml
             deploy.sh
@@ -99,6 +100,7 @@ jobs:
 
       - name: Tar deployment files
         run: |
+          touch .env.example
           tar -czf deployment.tar.gz docker-compose.production.template.yml deploy.sh .env.example
 
       - name: Install sshpass
