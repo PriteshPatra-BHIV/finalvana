@@ -7,9 +7,9 @@
 #
 # Services:
 #   - vana-db        : PostgreSQL 16 + PostGIS 3.4 (internal network only)
-#   - vana-masterdb  : Group 1 MasterDB API (bound to VM loopback :8013)
-#   - vana-auth      : Unified Auth & Group 4 Runtime (bound to VM loopback :8010)
-#   - vana-frontend  : Static Control Center UI + Nginx /proxy/* gateway (:8080)
+#   - vana-masterdb  : Group 1 MasterDB API (bound to VM port :8033)
+#   - vana-auth      : Unified Auth & Group 4 Runtime (bound to VM port :8034)
+#   - vana-frontend  : Static Control Center UI + Nginx /proxy/* gateway (:8089)
 #
 # DevOps Note: Terminate HTTPS/TLS in front of vana-frontend (e.g. host Nginx,
 # Caddy, or cloud load balancer forwarding to 127.0.0.1:${VANA_FRONTEND_PORT}).
@@ -49,10 +49,10 @@ services:
         condition: service_healthy
     environment:
       VANA_DATABASE_URL: ${VANA_DATABASE_URL:-postgresql://${POSTGRES_USER:-vana}:${POSTGRES_PASSWORD}@vana-db:5432/${POSTGRES_DB:-vana_masterdb}}
-      VANA_CORS_ORIGINS: ${VANA_CORS_ORIGINS:-http://localhost:8080}
+      VANA_CORS_ORIGINS: ${VANA_CORS_ORIGINS:-http://localhost:8089}
       PORT: "8000"
     ports:
-      - "127.0.0.1:${VANA_G1_PORT:-8013}:8000"
+      - "${VANA_G1_PORT:-8033}:8000"
     networks:
       - vana_network
     healthcheck:
@@ -76,12 +76,15 @@ services:
     environment:
       VANA_ENV: ${VANA_ENV:-production}
       VANA_DATABASE_URL: ${VANA_DATABASE_URL:-postgresql://${POSTGRES_USER:-vana}:${POSTGRES_PASSWORD}@vana-db:5432/${POSTGRES_DB:-vana_masterdb}}
-      VANA_CORS_ORIGINS: ${VANA_CORS_ORIGINS:-http://localhost:8080}
+      VANA_CORS_ORIGINS: ${VANA_CORS_ORIGINS:-http://localhost:8089}
       PORT: "8000"
     ports:
-      - "127.0.0.1:${VANA_AUTH_PORT:-8010}:8000"
+      - "${VANA_AUTH_PORT:-8034}:8000"
     networks:
-      - vana_network
+      vana_network:
+        aliases:
+          - vana-auth
+          - vana-auth-runtime
     healthcheck:
       test: ["CMD", "curl", "-fsS", "http://127.0.0.1:8000/health"]
       interval: 15s
@@ -108,7 +111,8 @@ services:
       VANA_G2_URL: ${VANA_G2_URL:-https://niyantran.blackholeinfiverse.com}
       VANA_G4_URL: ${VANA_G4_URL:-http://vana-auth:8000}
     ports:
-      - "${VANA_FRONTEND_PORT:-8080}:80"
+      - "${VANA_FRONTEND_PORT:-8089}:80"
+      - "${VANA_LINEAGE_PORT:-5185}:80"
     networks:
       - vana_network
     healthcheck:
@@ -125,4 +129,4 @@ networks:
 
 volumes:
   vana_pg_data:
-    driver: local
+    name: ${VANA_DB_VOLUME_NAME:-vana-masterdb-foundation_vana_pg_data}

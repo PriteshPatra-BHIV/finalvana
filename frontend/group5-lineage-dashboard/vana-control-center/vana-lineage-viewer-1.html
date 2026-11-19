@@ -1,0 +1,1772 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VANA / Prakriti — Cross-Group Runtime Viewer</title>
+<!-- VANA FRONTEND BUILD: LIVE-G4-DEBUG-001 -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#F5F7F6;
+    --surface:#FFFFFF;
+    --ink:#12181A;
+    --ink-soft:#5B6669;
+    --line:#DBE2E1;
+    --thread:#2B6CB0;
+    --thread-soft:#E8F0FA;
+
+    --controlled:#B7791F; --controlled-bg:#FBF2E1;
+    --local:#4A5568;      --local-bg:#EEF0F2;
+    --shared:#2C7A7B;     --shared-bg:#E4F3F2;
+    --live:#2F855A;       --live-bg:#E7F5ED;
+    --blocked:#C53030;    --blocked-bg:#FBEAEA;
+    --na:#8A94A6;         --na-bg:#F0F1F3;
+
+    --gap:#B45309;        --gap-bg:#FEF3E2;
+    --demo:#C53030;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; background:var(--bg); color:var(--ink);
+    font-family:'Inter',sans-serif; font-size:14px; line-height:1.5;
+    padding-bottom:0;
+  }
+  h1,h2,h3,.disp{font-family:'Space Grotesk',sans-serif;}
+  .mono{font-family:'JetBrains Mono',monospace;}
+
+  a:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visible, .tab:focus-visible, [tabindex]:focus-visible{
+    outline:2px solid var(--thread); outline-offset:2px; border-radius:4px;
+  }
+  @media (prefers-reduced-motion: reduce){
+    *{transition:none !important; animation:none !important;}
+  }
+
+  /* ---- sticky identity header: the observation_id must NEVER be visually replaced ---- */
+  .id-bar{
+    position:sticky; top:0; z-index:50;
+    background:var(--ink); color:#fff;
+    padding:10px 20px; display:flex; align-items:center; justify-content:space-between;
+    flex-wrap:wrap; gap:8px;
+  }
+  .id-bar .left{display:flex; align-items:center; gap:12px;}
+  .thread-mark{flex:none; opacity:.9;}
+  .id-bar .label{font-size:11px; letter-spacing:.08em; text-transform:uppercase; color:#9AA5A8;}
+  .id-bar .oid{font-size:16px; font-weight:600; color:#fff; letter-spacing:.01em;}
+  .id-bar .sys{font-size:12px; color:#9AA5A8;}
+
+  .mode-banner{
+    padding:9px 20px; font-size:13px; font-weight:600; text-align:center;
+    letter-spacing:.02em;
+  }
+  .mode-banner.demo{background:#FBEAEA; color:var(--blocked); border-bottom:1px solid #F3C6C6;}
+  .mode-banner.live{background:var(--live-bg); color:var(--live); border-bottom:1px solid #BFE3CE;}
+  .mode-banner.error{background:#FBEAEA; color:var(--blocked); border-bottom:1px solid #F3C6C6;}
+
+  header.page{max-width:920px; margin:0 auto; padding:28px 20px 8px;}
+  header.page h1{font-size:22px; margin:0 0 4px; font-weight:600;}
+  header.page p{color:var(--ink-soft); margin:0; font-size:13px;}
+
+  .source-panel{
+    max-width:920px; margin:16px auto 0; background:var(--surface);
+    border:1px solid var(--line); border-radius:10px; padding:16px 18px;
+  }
+  .source-panel .row{display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin-bottom:10px;}
+  .source-panel label{font-size:12px; color:var(--ink-soft); min-width:110px;}
+  .source-panel input, .source-panel textarea{
+    font-family:'JetBrains Mono',monospace; font-size:12.5px;
+    border:1px solid var(--line); border-radius:6px; padding:7px 9px;
+    flex:1; min-width:220px; background:#FBFCFC; color:var(--ink);
+  }
+  .source-panel textarea{width:100%; min-height:90px; resize:vertical;}
+  .btn{
+    font-family:'Inter',sans-serif; font-weight:600; font-size:12.5px;
+    border:1px solid var(--ink); background:var(--ink); color:#fff;
+    padding:8px 14px; border-radius:6px; cursor:pointer;
+    transition:transform .12s ease, opacity .12s ease;
+  }
+  .btn.secondary{background:#fff; color:var(--ink);}
+  .btn:hover{opacity:.85; transform:translateY(-1px);}
+  .btn:active{transform:translateY(0); opacity:1;}
+  .tabbar{display:flex; gap:6px; margin-bottom:12px;}
+  .tab{padding:6px 12px; border-radius:6px; font-size:12.5px; font-weight:600; cursor:pointer; border:1px solid var(--line); background:#fff; color:var(--ink-soft); transition:background .12s ease, color .12s ease;}
+  .tab.active{background:var(--ink); color:#fff; border-color:var(--ink);}
+  .tab:hover:not(.active){background:#F0F2F1;}
+
+  /* ---- lineage rail ---- */
+  .rail{max-width:920px; margin:24px auto; padding:0 20px; position:relative;}
+  .rail::before{
+    content:''; position:absolute; left:39px; top:14px; bottom:14px; width:2px;
+    background:linear-gradient(to bottom, var(--thread), var(--thread) 70%, var(--line));
+  }
+  .node{position:relative; padding-left:64px; margin-bottom:20px;}
+  .node .dot{
+    position:absolute; left:30px; top:14px; width:18px; height:18px; border-radius:50%;
+    background:var(--thread); border:3px solid var(--thread-soft);
+  }
+  .node.blocked .dot{background:var(--blocked); border-color:var(--blocked-bg);}
+  .node.pending .dot{background:#fff; border:2px dashed var(--na);}
+  .node.pending .card{border-style:dashed;}
+  .card{
+    background:var(--surface); border:1px solid var(--line); border-radius:10px;
+    padding:16px 18px;
+  }
+  .card-head{display:flex; align-items:flex-start; justify-content:space-between; gap:10px; flex-wrap:wrap;}
+  .group-tag{font-size:11px; text-transform:uppercase; letter-spacing:.07em; color:var(--ink-soft); margin-bottom:2px;}
+  .stage-title{font-size:15px; font-weight:600;}
+  .id-value{font-size:13.5px; margin-top:4px; color:var(--ink);}
+  .badge{
+    display:inline-flex; align-items:center; gap:5px; padding:4px 10px; border-radius:20px;
+    font-size:11.5px; font-weight:700; letter-spacing:.03em; text-transform:uppercase;
+    white-space:nowrap;
+  }
+  .badge .sw{width:7px; height:7px; border-radius:50%;}
+  .badge.CONTROLLED{background:var(--controlled-bg); color:var(--controlled);}
+  .badge.CONTROLLED .sw{background:var(--controlled);}
+  .badge.LOCAL{background:var(--local-bg); color:var(--local);}
+  .badge.LOCAL .sw{background:var(--local);}
+  .badge.SHARED{background:var(--shared-bg); color:var(--shared);}
+  .badge.SHARED .sw{background:var(--shared);}
+  .badge.LIVE{background:var(--live-bg); color:var(--live);}
+  .badge.LIVE .sw{background:var(--live);}
+  .badge.BLOCKED{background:var(--blocked-bg); color:var(--blocked);}
+  .badge.BLOCKED .sw{background:var(--blocked);}
+  .badge.NOT_APPLICABLE{background:var(--na-bg); color:var(--na);}
+  .badge.NOT_APPLICABLE .sw{background:var(--na);}
+  .badge.EXTRACTED{background:rgba(184,222,114,.15); color:#d8ed9b;}
+  .badge.EXTRACTED .sw{background:#b8de72;}
+  .badge.UNVERIFIED{background:rgba(229,207,156,.15); color:#e5cf9c;}
+  .badge.UNVERIFIED .sw{background:#e5cf9c;}
+  .badge.VALIDATED{background:var(--live-bg); color:var(--live);}
+  .badge.VALIDATED .sw{background:var(--live);}
+  .field-note{font-size:10.5px; color:var(--ink-soft); font-style:italic; margin-top:3px;}
+
+  /* decision outcome — kept visually separate from evidence-state badges */
+  .decision-block{margin-top:14px; padding:12px 14px; border-radius:8px; border:1px solid var(--line);}
+  .decision-block.ABSTAIN{background:#FBF2E1; border-color:#EFD9A8;}
+  .decision-block.ALLOW{background:var(--live-bg); border-color:#BFE3CE;}
+  .decision-block.DENY, .decision-block.BLOCK{background:var(--blocked-bg); border-color:#F3C6C6;}
+  .decision-block.UNKNOWN{background:var(--na-bg); border-color:var(--line);}
+  .decision-label{font-size:11px; text-transform:uppercase; letter-spacing:.06em; font-weight:700; margin-bottom:4px;}
+  .decision-block.ABSTAIN .decision-label{color:var(--controlled);}
+  .decision-block.ALLOW .decision-label{color:var(--live);}
+  .decision-block.DENY .decision-label, .decision-block.BLOCK .decision-label{color:var(--blocked);}
+  .decision-block.UNKNOWN .decision-label{color:var(--na);}
+  .decision-outcome{font-size:14px; font-weight:600; margin-bottom:3px;}
+  .decision-reason{font-size:12.5px; color:var(--ink-soft);}
+
+  .field-grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(180px,1fr)); gap:10px 16px; margin-top:12px;}
+  .field{border-top:1px solid var(--line); padding-top:8px;}
+  .field .k{font-size:10.5px; text-transform:uppercase; letter-spacing:.06em; color:var(--ink-soft); margin-bottom:2px;}
+  .field .v{font-size:13px; font-family:'JetBrains Mono',monospace;}
+  .field .v.gap{color:var(--gap); background:var(--gap-bg); padding:1px 6px; border-radius:4px; display:inline-block; font-size:11.5px; font-weight:600; letter-spacing:.03em;}
+  .field .v.na-field{color:var(--na); font-style:italic;}
+  .field .v.declared-gap{color:var(--local); background:var(--local-bg); padding:1px 6px; border-radius:4px; display:inline-block; font-size:11.5px; font-weight:600;}
+  .field .v.pending{color:var(--na); font-style:italic;}
+  .field a{color:var(--thread); text-decoration:none; border-bottom:1px dotted var(--thread);}
+
+  .warning-note{
+    margin-top:10px; padding:9px 11px; background:#FBF2E1; border-left:3px solid var(--controlled);
+    border-radius:6px; font-size:12px; color:#6B4A15;
+  }
+  .license-note{
+    margin-top:8px; font-size:10.5px; color:var(--ink-soft); font-style:italic;
+  }
+  .source-ref{
+    margin-top:8px; font-size:11.5px; padding:7px 9px; background:#F0F1F3; border-radius:6px;
+  }
+  .source-ref .warn-label{display:block; font-size:10px; text-transform:uppercase; letter-spacing:.05em; color:var(--blocked); font-weight:700; margin-bottom:3px;}
+
+  .fail-banner{
+    margin-top:12px; background:var(--blocked-bg); border:1px solid #F3C6C6; color:var(--blocked);
+    border-radius:8px; padding:10px 12px; font-size:12.5px; font-weight:600;
+  }
+
+  .raw-toggle{margin-top:12px; font-size:12px; color:var(--thread); cursor:pointer; font-weight:600; user-select:none;}
+  .raw{display:none; margin-top:8px; background:#101416; color:#CFE7DA; border-radius:8px; padding:12px; font-size:11.5px; overflow-x:auto; white-space:pre;}
+  .raw.open{display:block;}
+
+  .legend{max-width:920px; margin:32px auto; padding:16px 20px; border-top:1px solid var(--line);}
+  .legend h3{font-size:13px; margin:0 0 10px;}
+  .legend .items{display:flex; flex-wrap:wrap; gap:10px;}
+
+  /* system/service health & browser status strips */
+  .health-strip{max-width:920px; margin:14px auto 0; padding:0 20px; display:flex; gap:8px; flex-wrap:wrap;}
+  .health-chip{
+    display:flex; align-items:center; gap:6px; padding:5px 10px; border-radius:4px;
+    font-size:11px; font-family:'JetBrains Mono',monospace; background:#EDEFF0; color:var(--ink-soft);
+    border:1px solid var(--line);
+  }
+  .health-chip .dot{width:6px; height:6px; border-radius:50%; background:var(--na);}
+  .health-chip.ok .dot{background:var(--live);}
+  .health-chip.warn .dot{background:var(--controlled);}
+  .health-chip.down .dot{background:var(--blocked);}
+  .health-chip.unknown .dot{background:var(--na);}
+
+  .origin-note{
+    margin-top:10px; padding:8px 10px; background:#F0F1F3; border-radius:6px;
+    font-size:11.5px; color:var(--ink-soft); border-left:3px solid var(--na);
+  }
+  .subsection{margin-top:14px; padding-top:12px; border-top:1px dashed var(--line);}
+  .subsection:first-of-type{margin-top:12px; padding-top:0; border-top:none;}
+  .subsection-title{font-size:11px; text-transform:uppercase; letter-spacing:.07em; font-weight:700; color:var(--thread); margin-bottom:8px;}
+  .derived-note{font-size:10.5px; color:var(--na); font-style:italic; margin-top:4px;}
+
+  /* Forest Intelligence Command Center layer */
+  :root{--forest-950:#071814;--forest-900:#0b241e;--forest-800:#12372d;--forest-700:#1e5545;--moss:#73a96b;--lime:#b8de72;--mist:#edf3ed;--sand:#e9d7a8;--danger:#de7a64;}
+  body{background:var(--forest-950);color:#eaf1eb;}
+  .command-shell{display:grid;grid-template-columns:252px minmax(0,1fr);min-height:100vh;background:radial-gradient(circle at 80% 0%,#184739 0,transparent 28%),var(--forest-950)}
+  .command-sidebar{position:sticky;top:0;height:100vh;background:linear-gradient(180deg,#0b2821,#081b17);border-right:1px solid rgba(202,230,202,.12);padding:22px 14px;z-index:70;overflow-y:auto}
+  .brand{display:flex;align-items:center;gap:10px;padding:4px 10px 27px}.brand-mark{display:grid;place-items:center;width:34px;height:34px;border:1px solid var(--lime);border-radius:10px;color:var(--lime);font-size:19px}.brand strong{display:block;font-family:'Space Grotesk',sans-serif;letter-spacing:.09em;font-size:13px}.brand span{font-size:10px;color:#91a99d;letter-spacing:.12em}
+  .nav-label{color:#749287;font-size:10px;text-transform:uppercase;letter-spacing:.14em;margin:12px 10px 8px}.side-nav{display:grid;gap:3px}.side-nav button{background:transparent;border:0;border-radius:8px;color:#b7c8bd;text-align:left;padding:10px 11px;font:500 12.5px Inter,sans-serif;cursor:pointer;display:flex;align-items:center;gap:10px}.side-nav button:hover,.side-nav button.active{background:rgba(184,222,114,.12);color:#eaf6d1}.side-nav .ico{width:18px;text-align:center;color:var(--lime)}.side-footer{position:static;margin-top:18px;padding:14px 10px 0;border-top:1px solid rgba(202,230,202,.1);font-size:10px;color:#779085}
+  .command-main{min-width:0;padding:0 28px 40px}.command-top{height:75px;display:flex;align-items:center;justify-content:space-between;gap:16px;border-bottom:1px solid rgba(220,245,222,.1)}.mobile-menu{display:none}.eyebrow{font-size:10px;color:var(--lime);letter-spacing:.16em;text-transform:uppercase}.command-top h1{font-size:19px;margin:2px 0 0;letter-spacing:.02em}.top-status{display:flex;align-items:center;gap:8px;color:#b8cbbd;font-size:11px}.pulse{width:8px;height:8px;background:var(--lime);border-radius:50%;box-shadow:0 0 0 5px rgba(184,222,114,.12)}
+  .command-view{display:none;padding-top:25px}.command-view.active{display:block}.view-title{display:flex;justify-content:space-between;align-items:end;gap:16px;margin-bottom:18px}.view-title h2{margin:0;font-size:22px}.view-title p{margin:4px 0 0;color:#9fb1a4;font-size:12px}.live-chip{background:rgba(184,222,114,.1);color:#d4ef9c;border:1px solid rgba(184,222,114,.2);border-radius:20px;padding:5px 9px;font-size:10px;font-weight:700;letter-spacing:.06em}
+  .kpi-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px}.kpi{background:rgba(15,49,40,.78);border:1px solid rgba(218,241,220,.1);border-radius:12px;padding:15px;min-height:104px}.kpi .k{color:#91aa9d;font-size:10px;text-transform:uppercase;letter-spacing:.09em}.kpi .n{font:600 21px 'Space Grotesk',sans-serif;color:#f1f8eb;margin-top:13px;overflow-wrap:anywhere}.kpi .note{font-size:10px;color:#89a296;margin-top:4px}.not-verified{color:#e5cf9c!important;font-size:12px!important;letter-spacing:.04em}
+  .overview-grid{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(280px,.8fr);gap:14px;margin-top:14px}.panel{background:rgba(12,42,34,.78);border:1px solid rgba(218,241,220,.11);border-radius:13px;padding:17px;min-width:0}.panel-head{display:flex;justify-content:space-between;align-items:start;gap:12px;margin-bottom:14px}.panel h3{margin:0;font-size:14px}.panel-sub{font-size:10px;color:#8da69a;margin-top:3px}.map-surface{height:292px;border-radius:10px;overflow:hidden;position:relative;background:linear-gradient(150deg,#214d3d 0%,#183a31 48%,#305a43 49%,#17372f 100%)}.map-surface:before,.map-surface:after{content:'';position:absolute;inset:-20%;background:repeating-linear-gradient(125deg,transparent 0 30px,rgba(196,223,137,.09) 31px 33px,transparent 34px 70px);transform:rotate(7deg)}.map-surface:after{background:repeating-radial-gradient(ellipse at 50% 50%,transparent 0 25px,rgba(5,25,19,.22) 26px 28px,transparent 29px 55px);opacity:.6}.map-empty{position:absolute;z-index:2;inset:0;display:grid;place-content:center;text-align:center;color:#c9d9cd;font-size:12px}.map-marker{position:absolute;z-index:3;width:15px;height:15px;border-radius:50% 50% 50% 0;background:#d9ec93;transform:rotate(-45deg);box-shadow:0 0 0 6px rgba(217,236,147,.16)}.map-marker:after{content:'';width:5px;height:5px;border-radius:50%;background:#1d4b3c;position:absolute;left:5px;top:5px}.map-coord{position:absolute;z-index:4;bottom:11px;left:11px;background:rgba(4,20,15,.75);padding:5px 8px;border-radius:5px;font:10px 'JetBrains Mono',monospace;color:#d1e4d4}
+  .signal-list{display:grid;gap:9px}.signal{display:flex;gap:10px;align-items:flex-start;border-bottom:1px solid rgba(223,240,223,.08);padding-bottom:9px}.signal:last-child{border:0;padding:0}.signal-dot{width:8px;height:8px;border-radius:50%;margin-top:5px;background:#80958b}.signal-dot.live{background:var(--lime)}.signal b{font-size:11px;display:block}.signal span{color:#8ea499;font-size:10px}.runtime-controls{margin-top:14px}.runtime-controls .source-panel{max-width:none;margin:0;background:transparent;border:0;padding:0}.runtime-controls .source-panel textarea{background:#0a2b22;color:#eaf1eb;border-color:rgba(218,241,220,.2)}
+  .data-table{width:100%;border-collapse:collapse;font-size:11px}.data-table th{text-align:left;color:#8fa79b;font-weight:500;text-transform:uppercase;letter-spacing:.07em;font-size:9px;padding:0 8px 10px}.data-table td{padding:10px 8px;border-top:1px solid rgba(220,245,222,.08);color:#d8e4da;overflow-wrap:anywhere}.state{font-size:9px;letter-spacing:.07em;font-weight:700;color:#d2eb92}.empty-state{padding:38px 18px;text-align:center;color:#a7baad;font-size:12px;border:1px dashed rgba(220,245,222,.18);border-radius:9px}.empty-state b{display:block;color:#e7d49e;font-size:11px;letter-spacing:.08em;margin-bottom:5px}.two-panels{display:grid;grid-template-columns:1fr 1fr;gap:14px}.service-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}.service{border-left:3px solid #71887d;background:rgba(255,255,255,.03);padding:13px}.service.live{border-color:var(--lime)}.service.error{border-color:var(--danger)}.service h3{font-size:13px;margin:0}.service p{margin:7px 0 0;color:#a4b7aa;font-size:11px}.service .status{font-size:10px;letter-spacing:.08em;color:#d8e99e;margin-top:12px;font-weight:700}
+  .lineage-host .rail{max-width:none;padding:0;margin:0}.lineage-host .rail::before{left:19px}.lineage-host .node{padding-left:44px}.lineage-host .node .dot{left:10px}.lineage-host .card{background:#f7faf7;color:#15251d}.lineage-host .field .v{color:#16261e}.lineage-host .field .k,.lineage-host .group-tag{color:#597065}.lineage-host .stage-title{color:#12261d}.lineage-host .raw-toggle{color:#236c59}.lineage-host .card .field-note{color:#61786d}.lineage-host .pending .card{background:#f7faf7}.lineage-host .decision-reason{color:#52665c}.lineage-host .field .v.pending{color:#7b8690}.lineage-host .field .v.na-field{color:#8a94a6}
+  #modeBanner,.id-bar,#healthStrip,header.page,.legend,body>footer{display:none}.command-main .mode-banner{display:block}.command-main .health-strip{display:flex;max-width:none;padding:0;margin:12px 0}.command-main .health-chip{background:rgba(255,255,255,.05);border-color:rgba(220,245,222,.13);color:#c7d7ca}.command-main .source-panel label{color:#aac0b2}.command-main .source-panel input{background:#0a2b22;color:#eaf1eb;border-color:rgba(218,241,220,.2)}.command-main .btn{background:var(--lime);color:#122317;border-color:var(--lime)}.command-main .btn.secondary{background:transparent;color:#dcead7;border-color:#698778}.command-main .tab{background:#0a2b22;color:#b4c7b9;border-color:rgba(218,241,220,.2)}.command-main .tab.active{background:#d8ed9b;color:#162a1f;border-color:#d8ed9b}
+  body>.source-panel,body>.rail{display:none}
+  @media(max-width:1050px){.kpi-grid{grid-template-columns:repeat(3,1fr)}.command-main{padding:0 20px 35px}.overview-grid{grid-template-columns:1fr}.service-grid{grid-template-columns:repeat(2,1fr)}}
+  @media(max-width:720px){.command-shell{display:block}.command-sidebar{position:fixed;left:0;top:0;width:260px;transform:translateX(-102%);transition:transform .2s;box-shadow:16px 0 40px rgba(0,0,0,.32)}.command-sidebar.open{transform:translateX(0)}.side-footer{position:static;margin-top:25px}.command-main{padding:0 14px 30px}.mobile-menu{display:block;border:1px solid rgba(220,245,222,.18);background:transparent;color:#dcebd8;border-radius:7px;padding:7px}.command-top{height:67px}.command-top h1{font-size:15px}.top-status{font-size:0}.top-status .pulse{margin-right:5px}.kpi-grid{grid-template-columns:1fr 1fr;gap:8px}.kpi{min-height:90px;padding:12px}.kpi .n{font-size:15px;margin-top:10px}.view-title{align-items:start}.view-title h2{font-size:18px}.view-title .live-chip{display:none}.two-panels{grid-template-columns:1fr}.service-grid{grid-template-columns:1fr}.map-surface{height:235px}.command-view{padding-top:18px}.lineage-host .rail{padding:0}.lineage-host .node{padding-left:35px}.lineage-host .node .dot{left:3px}.lineage-host .rail::before{left:12px}.lineage-host .field-grid{grid-template-columns:1fr}.data-table{display:block;overflow-x:auto}.source-panel .row{display:block}.source-panel label{display:block;margin-bottom:5px}}
+</style>
+</head>
+<body>
+<div class="command-shell">
+  <aside class="command-sidebar" id="sidebar">
+    <div class="brand"><div class="brand-mark">◒</div><div><strong>VANA</strong><span>FOREST INTELLIGENCE</span></div></div>
+    <div class="nav-label">Command center</div>
+    <nav class="side-nav" aria-label="Primary navigation">
+      <button class="active" data-view="overview"><span class="ico">⌂</span>Executive Overview</button>
+      <button data-view="forest"><span class="ico">◒</span>Forest Cover</button><button data-view="plantation"><span class="ico">♧</span>Plantation</button>
+      <button data-view="wildlife"><span class="ico">♢</span>Wildlife Monitoring</button><button data-view="conflict"><span class="ico">!</span>Human-Wildlife Conflict</button>
+      <button data-view="map"><span class="ico">⌖</span>GIS / Live Map</button><button data-view="analytics"><span class="ico">⌁</span>Analytics &amp; Reports</button>
+      <button data-view="district"><span class="ico">⌘</span>District Detail</button><button data-view="produce"><span class="ico">◈</span>Forest Produce</button>
+      <button data-view="health"><span class="ico">◌</span>System Health</button>
+    </nav>
+    <div class="nav-label">Trust layer</div><nav class="side-nav"><button data-view="lineage"><span class="ico">↳</span>Data Lineage &amp; Governance</button></nav>
+    <div class="side-footer">VANA / Prakriti<br>Trusted runtime workspace</div>
+  </aside>
+  <main class="command-main">
+    <header class="command-top"><button class="mobile-menu" id="menuBtn" aria-label="Open navigation">☰</button><div><div class="eyebrow">Government of India · Forest Intelligence</div><h1>Forest Intelligence Command Center</h1></div><div class="top-status"><span class="pulse"></span><span id="topRuntimeStatus">RUNTIME NOT VERIFIED</span></div></header>
+    <section class="command-view active" id="view-overview"><div class="view-title"><div><h2>Executive Overview</h2><p>Live operational picture generated only from the selected runtime observation.</p></div><span class="live-chip">AWAITING DATA</span></div><div id="commandContent"></div></section>
+    <section class="command-view" id="view-forest"></section><section class="command-view" id="view-plantation"></section><section class="command-view" id="view-wildlife"></section><section class="command-view" id="view-conflict"></section><section class="command-view" id="view-map"></section><section class="command-view" id="view-analytics"></section><section class="command-view" id="view-district"></section><section class="command-view" id="view-produce"></section><section class="command-view" id="view-health"></section>
+    <section class="command-view" id="view-lineage"><div class="view-title"><div><h2>Data Lineage &amp; Governance</h2><p>Auditable G1 → G2 → G4 execution trail for the selected live observation.</p></div><span class="live-chip">TRUST LAYER</span></div><div class="lineage-host"><div class="rail" id="commandRail"></div></div></section>
+  </main>
+</div>
+
+<div class="mode-banner" id="modeBanner">— checking data source —</div>
+
+<div class="id-bar">
+  <div class="left">
+    <svg class="thread-mark" width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+      <circle cx="10" cy="3.5" r="2.4" fill="#fff"/>
+      <line x1="10" y1="5.9" x2="10" y2="14.1" stroke="#fff" stroke-width="1.4"/>
+      <circle cx="10" cy="16.5" r="2.4" fill="none" stroke="#fff" stroke-width="1.4"/>
+    </svg>
+    <div>
+      <div class="label">Canonical Observation — never replaced downstream</div>
+      <div class="oid mono" id="pinnedOid">AWAITING LIVE OBSERVATION</div>
+    </div>
+  </div>
+  <div class="sys">VANA / Prakriti · Cross-Group Runtime Viewer · <span class="mono" style="color:#A0AEC0">LIVE-G4-DEBUG-001</span></div>
+</div>
+
+<div class="health-strip" id="healthStrip">
+  <div class="health-chip unknown" id="g1HealthChip"><span class="dot"></span>Group 1 API: not checked</div>
+  <div class="health-chip unknown" id="g2HealthChip"><span class="dot"></span>Group 2 API: not checked</div>
+  <div class="health-chip unknown" id="g4HealthChip"><span class="dot"></span>Group 4 API: not checked</div>
+</div>
+
+<header class="page">
+  <h1>Observation → Record → Context → Governed Outcome</h1>
+  <p>Read-only lineage viewer. Service uptime, retrieval status, and evidence/origin classification are shown separately and are never merged into one indicator. <span class="mono" style="font-size:11px;color:var(--ink-soft)">Build: LIVE-G4-DEBUG-001</span></p>
+</header>
+
+<div class="source-panel">
+  <div class="tabbar">
+    <div class="tab active" id="tabLive" onclick="setMode('live')" role="button" tabindex="0">Connect live APIs</div>
+    <div class="tab" id="tabDemo" onclick="setMode('demo')" role="button" tabindex="0">Paste sample payload</div>
+  </div>
+
+  <div id="liveInputs">
+    <div class="row"><label>Group 1 base URL</label><input id="g1url" value="http://163.128.209.18:8013" placeholder="Group 1 Observation API"></div>
+    <div class="row"><label>Group 2 endpoint</label><input id="g2url" value="https://niyantran.blackholeinfiverse.com/api/group2/context/resolve" placeholder="Group 2 Context resolve (POST)"></div>
+    <div class="row"><label>Group 3 base URL</label><input id="g3url" placeholder="Group 3 Observation/Provenance API (integrated via Group 1 retrieval)"></div>
+    <div class="row"><label>Group 4 endpoint</label><input id="g4url" value="http://163.128.209.18:8010/vana/execute" placeholder="Group 4 VANA Execute (POST)"></div>
+    <div class="row"><label>Observation ID</label><input id="oidInput" value="" placeholder="Enter a live observation ID"></div>
+    <button class="btn" id="btnFetchLive" onclick="fetchLive()">Fetch from live APIs</button>
+    <span style="font-size:11.5px;color:var(--ink-soft)">Direct HTTP calls to deployed Group 1, Group 2, and Group 4 runtimes.</span>
+  </div>
+
+  <div id="demoInputs" style="display:none">
+    <div class="row" style="align-items:flex-start">
+      <label style="padding-top:7px">Sample JSON</label>
+      <textarea id="pastedJson">{
+  "observation_id": "TC-Z03-EXT-OPENMETEO-OBS001",
+  "canonical_record_id": "CR-b4615a27-7ab1-4bde-a078-a56fa0f2414c",
+  "context_id": null,
+  "action_request_id": null,
+  "abstention_record_id": "abstention-f71045f1c36d34de27f585e9",
+  "event_id": null,
+  "execution_id": null,
+  "trace_id": null,
+  "tenant_id": null,
+  "lineage_hash": null,
+  "group1": {
+    "retrieval_status": "RETRIEVED",
+    "trace_id": null,
+    "idempotency_result": null
+  },
+  "group2": {
+    "http_status": 200,
+    "context_status": null,
+    "decision": "ABSTAIN",
+    "decision_made": false,
+    "decision_reason": "MISSING_SOURCE_TIMESTAMP (Authoritative evidence threshold not met. Failing closed to ABSTAIN)",
+    "trace_id": null,
+    "context_found": false,
+    "scientific_context": {},
+    "gap_fields": [],
+    "action_eligibility": false,
+    "abstention_required": true,
+    "action_request": null
+  },
+  "group3": {
+    "contract_version": "2.2",
+    "source_identity": "Open-Meteo.com",
+    "survey_id": null,
+    "zone_id": null,
+    "flight_id": "EXT",
+    "sensor_id": null,
+    "observation_seq": null,
+    "observation_timestamp": "2026-08-25 11:00:00+00:00",
+    "data_state": "CAPTURED",
+    "synthetic_state": "CONTROLLED",
+    "mission_id": "TC-Z03-EXT",
+    "device_id": "G3-EXT-OPENMETEO-01",
+    "location": { "latitude": 19.1288, "longitude": 72.9421, "altitude_m": 4.0 },
+    "latitude": 19.1288,
+    "longitude": 72.9421,
+    "altitude": 4.0,
+    "gnss_status": "NOT_VERIFIED",
+    "position_accuracy": null,
+    "observation_type": "precipitation",
+    "measurement": 0.1,
+    "unit": "mm",
+    "quality_state": "CAPTURED",
+    "calibration_state": "NOT_VERIFIED",
+    "raw_artifact": "https://api.open-meteo.com/v1/forecast?latitude=19.1288&longitude=72.9421&current=temperature_2m,relative_humidity_2m,precipitation,wind_speed_10m&timezone=UTC",
+    "raw_artifact_integrity": { "checksum_sha256": "8d26e68328ac160f7b69f1a24ccb2de4972ff9fc60af11093c246903a7c52502" },
+    "artifact_type": "sensor_reading",
+    "sha256": "8d26e68328ac160f7b69f1a24ccb2de4972ff9fc60af11093c246903a7c52502",
+    "accuracy": null,
+    "processing_status": "raw",
+    "capture_method": "external_api",
+    "provenance": {
+      "device_id": "G3-EXT-OPENMETEO-01",
+      "mission_id": "TC-Z03-EXT",
+      "captured_at": "2026-08-25 11:00:00+00:00",
+      "raw_artifact": "https://api.open-meteo.com/v1/forecast?latitude=19.1288&longitude=72.9421&current=temperature_2m,relative_humidity_2m,precipitation,wind_speed_10m&timezone=UTC",
+      "provenance_reference": "open-meteo:8d26e68328ac160f"
+    }
+  },
+  "group4": {
+    "status": "governed_abstention",
+    "event_type": "GOVERNED_ABSTENTION",
+    "ruling": "ABSTAIN",
+    "action_eligibility": false,
+    "abstention_required": true,
+    "action_request": null,
+    "decision_action": "noop",
+    "abstention_record_id": "abstention-f71045f1c36d34de27f585e9",
+    "governance_allowed": true
+  }
+}</textarea>
+      <div class="field-note" style="margin-top:6px">Direct payload rendering for offline walkthrough or verification.</div>
+    </div>
+    <button class="btn" onclick="loadDemo()">Render this payload</button>
+  </div>
+
+  <div class="row" style="align-items:flex-start; border-top:1px solid var(--line); margin-top:14px; padding-top:14px">
+    <label style="padding-top:7px">Group 3 evidence pack</label>
+    <textarea id="evidencePackJson" placeholder='Paste Group 3&#39;s field_applicability evidence pack JSON here (e.g. SOURCE_EVIDENCE_PACK_EMITTED_*.json) to correctly distinguish "not applicable" from "genuine gap" for external_api observations.' style="min-height:70px"></textarea>
+  </div>
+  <button class="btn secondary" onclick="loadEvidencePack()">Load evidence pack</button>
+  <span style="font-size:11.5px;color:var(--ink-soft)">Without this, external_api observations use Group 3's documented defaults for gnss_status, position_accuracy, calibration_state, accuracy, and hardware_verified.</span>
+</div>
+
+<div class="rail" id="rail"></div>
+
+<div class="legend">
+  <h3>Evidence state legend — same meaning on every group's screen</h3>
+  <div class="items">
+    <span class="badge CONTROLLED"><span class="sw"></span>Controlled</span>
+    <span class="badge LOCAL"><span class="sw"></span>Local</span>
+    <span class="badge SHARED"><span class="sw"></span>Shared</span>
+    <span class="badge LIVE"><span class="sw"></span>Live</span>
+    <span class="badge BLOCKED"><span class="sw"></span>Blocked</span>
+    <span class="badge NOT_APPLICABLE"><span class="sw"></span>N/A</span>
+  </div>
+  <p style="font-size:11.5px;color:var(--ink-soft);margin-top:10px">
+    Controlled = software-generated / test evidence. It is never shown as Live or implied physical/sensor-verified unless a group explicitly reports that state.
+  </p>
+</div>
+
+<footer style="max-width:920px; margin:0 auto; padding:18px 20px 32px; border-top:1px solid var(--line); display:flex; justify-content:space-between; flex-wrap:wrap; gap:6px; font-size:11px; color:var(--na);">
+  <span>VANA / Prakriti · Cross-group runtime viewer · Production build (LIVE-G4-DEBUG-001)</span>
+  <span>Dashed nodes = stage not yet integrated · Solid nodes = confirmed runtime data</span>
+</footer>
+
+<script>
+let currentMode = 'live';
+
+function setMode(m){
+  currentMode = m;
+  const tabLive = document.getElementById('tabLive');
+  const tabDemo = document.getElementById('tabDemo');
+  const liveInputs = document.getElementById('liveInputs');
+  const demoInputs = document.getElementById('demoInputs');
+
+  if(m === 'live'){
+    tabLive.classList.add('active');
+    tabDemo.classList.remove('active');
+    liveInputs.style.display = 'block';
+    demoInputs.style.display = 'none';
+    banner('live', 'LIVE MODE ACTIVE — Ready to connect. Click "Fetch from live APIs" to query live runtimes.');
+    console.log('[VANA UI] Mode switched to: LIVE APIs');
+  } else {
+    tabDemo.classList.add('active');
+    tabLive.classList.remove('active');
+    liveInputs.style.display = 'none';
+    demoInputs.style.display = 'block';
+    banner('demo', 'DEMO / SAMPLE MODE ACTIVE — Paste payload and click "Render this payload"');
+    console.log('[VANA UI] Mode switched to: DEMO / Sample payload');
+  }
+}
+
+function banner(kind, text){
+  const b = document.getElementById('modeBanner');
+  b.className = 'mode-banner ' + kind;
+  b.textContent = text;
+}
+
+function fieldVal(v, fallback){
+  if(v === undefined || v === '') {
+    return `<span class="v ${fallback==='GAP'?'gap':'pending'}">${fallback || 'NOT VERIFIED'}</span>`;
+  }
+  if(v === null) return `<span class="v mono" style="color:var(--ink-soft)">null</span>`;
+  return `<span class="v">${v}</span>`;
+}
+
+// ---- Field applicability (Group 3 evidence pack) ----
+let evidencePack = null;
+
+const DEFAULT_EXTERNAL_API_APPLICABILITY = {
+  gnss_status: { category: 'not_applicable', note: 'No GNSS receiver in this path' },
+  position_accuracy: { category: 'not_applicable', note: 'No positioning system to report accuracy for' },
+  calibration_state: { category: 'not_applicable', note: 'A numerical weather model is not a calibrated instrument' },
+  accuracy: { category: 'genuine_gap', note: "Not reported by source — Open-Meteo doesn't publish per-value uncertainty here" },
+  hardware_verified: { category: 'true_value' },
+  raw_artifact: { category: 'declared_gap', note: 'Bytes not persisted at capture time — declared gap per contract §26/§49.1' }
+};
+
+function isOpenMeteoSource(g3f){
+  const hay = ((g3f.source_identity || '') + ' ' + (g3f.device_id || '') + ' ' + ((g3f.provenance && g3f.provenance.device_id) || '')).toLowerCase();
+  return hay.includes('openmeteo') || hay.includes('open-meteo');
+}
+
+function getApplicability(fieldKey, g3f){
+  const fromPack = evidencePack && evidencePack.field_applicability && evidencePack.field_applicability[fieldKey];
+  if(fromPack) return fromPack;
+  if((g3f.capture_method || '') === 'external_api' && DEFAULT_EXTERNAL_API_APPLICABILITY[fieldKey]){
+    return DEFAULT_EXTERNAL_API_APPLICABILITY[fieldKey];
+  }
+  return null;
+}
+
+function fieldValClassified(fieldKey, value, g3f, fallback){
+  const app = getApplicability(fieldKey, g3f);
+  const isMissing = (value === undefined || value === null || value === '');
+  if(app){
+    if(app.category === 'not_applicable'){
+      return `<span class="v na-field">Not applicable</span>`;
+    }
+    if(app.category === 'genuine_gap' && isMissing){
+      return `<span class="v pending">Not reported by source</span>`;
+    }
+    if(app.category === 'declared_gap' && isMissing){
+      return `<span class="v declared-gap">DECLARED GAP</span>`;
+    }
+    if(app.category === 'true_value' && !isMissing){
+      return `<span class="v">${value}</span>`;
+    }
+  }
+  return fieldVal(value, fallback);
+}
+
+function badge(state){
+  const s = (state || 'NOT_APPLICABLE').toUpperCase();
+  const known = ['CONTROLLED','LOCAL','SHARED','LIVE','BLOCKED','NOT_APPLICABLE','EXTRACTED','UNVERIFIED','VALIDATED'];
+  const cls = known.includes(s) ? s : 'NOT_APPLICABLE';
+  return `<span class="badge ${cls}"><span class="sw"></span>${cls.replace('_',' ')}</span>`;
+}
+
+function setHealthChip(group, state, detail){
+  const chip = document.getElementById(group === 'g4' ? 'g4HealthChip' : (group === 'g2' ? 'g2HealthChip' : 'g1HealthChip'));
+  if(!chip) return;
+  chip.classList.remove('ok','warn','down','unknown');
+  const label = group === 'g4' ? 'Group 4 API' : (group === 'g2' ? 'Group 2 API' : 'Group 1 API');
+  if(state === 'checking'){
+    chip.classList.add('unknown');
+    chip.innerHTML = `<span class="dot"></span>${label}: checking…`;
+  } else if(state === 'ok'){
+    chip.classList.add('ok');
+    chip.innerHTML = `<span class="dot"></span>${label}: ${detail || 'healthy'}`;
+  } else if(state === 'warn'){
+    chip.classList.add('warn');
+    chip.innerHTML = `<span class="dot"></span>${label}: ${detail || 'warning'}`;
+  } else if(state === 'down'){
+    chip.classList.add('down');
+    chip.innerHTML = `<span class="dot"></span>${label}: ${detail || 'down'}`;
+  } else {
+    chip.classList.add('unknown');
+    chip.innerHTML = `<span class="dot"></span>${label}: not checked`;
+  }
+}
+
+function nodeCard({group, title, idLabel, idValue, evidenceState, evidenceNote, failed, failReason, fieldsHtml, raw, pending}){
+  const rid = 'raw_'+group;
+  const stateClass = failed ? 'blocked' : (pending ? 'pending' : '');
+  let idDisplay = `<span class="v pending">NOT VERIFIED</span>`;
+  if(idValue !== undefined && idValue !== null){
+    idDisplay = `<span class="mono">${idValue}</span>`;
+  } else if(idValue === null){
+    idDisplay = `<span class="mono" style="color:var(--ink-soft)">null</span>`;
+  }
+
+  return `
+  <div class="node ${stateClass}">
+    <div class="dot"></div>
+    <div class="card">
+      <div class="card-head">
+        <div>
+          <div class="group-tag">${group}</div>
+          <div class="stage-title">${title}</div>
+          <div class="id-value"><span style="color:var(--ink-soft)">${idLabel}:</span> ${idDisplay}</div>
+        </div>
+        <div style="text-align:right">
+          ${badge(evidenceState)}
+          ${evidenceNote ? `<div class="field-note">${evidenceNote}</div>` : ''}
+        </div>
+      </div>
+      ${failed ? `<div class="fail-banner">STAGE FAILED / REJECTED — ${escapeHtml(failReason || 'reason not provided')}</div>` : ''}
+      ${fieldsHtml ? `<div class="field-grid">${fieldsHtml}</div>` : ''}
+      ${raw ? `<div class="raw-toggle" onclick="toggleRaw('${rid}')">Show raw response ▾</div><div class="raw" id="${rid}">${escapeHtml(JSON.stringify(raw, null, 2))}</div>` : ''}
+    </div>
+  </div>`;
+}
+
+function toggleRaw(id){
+  document.getElementById(id).classList.toggle('open');
+}
+function escapeHtml(s){
+  if(s === null || s === undefined) return '';
+  return String(s).replace(/[&<>]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+}
+
+function present(v){ return (v === undefined || v === '') ? '<span class="not-verified">NOT VERIFIED</span>' : escapeHtml(v === null ? 'null' : v); }
+function fieldText(v){ return v === undefined ? 'NOT VERIFIED' : (v === null ? 'null' : escapeHtml(v)); }
+function observationField(data, key){ const g3=data.group3||{}; return g3[key] !== undefined ? g3[key] : (g3.provenance||{})[key]; }
+function mapPanel(data, compact){
+  const lat=observationField(data,'latitude'), lon=observationField(data,'longitude');
+  const valid=lat !== undefined && lat !== null && lon !== undefined && lon !== null && lat !== '' && lon !== '';
+  return `<div class="map-surface">${valid?`<div class="map-empty"><b>LIVE OBSERVATION POINT</b><span class="map-coord">${escapeHtml(lat)}, ${escapeHtml(lon)}</span></div>`:`<div class="map-empty"><b>LOCATION NOT VERIFIED</b><span>Coordinates were not returned by the current runtime observation.</span></div>`}</div>`;
+}
+function unavailablePage(title, description, required){ return `<div class="view-title"><div><h2>${title}</h2><p>${description}</p></div><span class="live-chip">BACKEND REQUIRED</span></div><div class="empty-state"><b>DATA NOT AVAILABLE</b>${required}</div>`; }
+
+// =========================================================================
+// Forest Cover Intelligence — Real live API integration (G1 MasterDB)
+// =========================================================================
+const G1_FOREST_COVER_URL = 'http://163.128.209.18:8013/datasets/DS-FSI-ISFR-2023-FOREST-COVER/forest-cover';
+
+const FOREST_COVER_FIELDS = [
+  { key: 'record_id', label: 'Record ID' },
+  { key: 'dataset_id', label: 'Dataset ID' },
+  { key: 'assessment_year', label: 'Assessment Year' },
+  { key: 'geography_level', label: 'Geography Level' },
+  { key: 'state', label: 'State' },
+  { key: 'district', label: 'District' },
+  { key: 'boundary_reference', label: 'Boundary Reference' },
+  { key: 'forest_cover_area', label: 'Forest Cover Area' },
+  { key: 'forest_cover_percentage', label: 'Forest Cover %' },
+  { key: 'very_dense_forest_area', label: 'Very Dense Forest' },
+  { key: 'moderately_dense_forest_area', label: 'Moderately Dense' },
+  { key: 'open_forest_area', label: 'Open Forest' },
+  { key: 'mangrove_area', label: 'Mangrove Area' },
+  { key: 'unit', label: 'Unit' },
+  { key: 'methodology', label: 'Methodology' },
+  { key: 'quality_status', label: 'Quality Status' },
+  { key: 'provenance_reference', label: 'Provenance Reference' },
+  { key: 'created_at', label: 'Created At' }
+];
+
+let forestCoverState = {
+  status: 'idle', // 'idle' | 'loading' | 'success' | 'empty' | 'error'
+  data: null,
+  records: [],
+  dataset_id: 'DS-FSI-ISFR-2023-FOREST-COVER',
+  error: null,
+  httpStatus: null,
+  lastFetched: null,
+  raw: null
+};
+
+function extractForestFieldValue(rec, key) {
+  if (!rec || typeof rec !== 'object') return undefined;
+  if (Object.prototype.hasOwnProperty.call(rec, key)) return rec[key];
+  if (rec.dataset && Object.prototype.hasOwnProperty.call(rec.dataset, key)) return rec.dataset[key];
+  if (rec.source && Object.prototype.hasOwnProperty.call(rec.source, key)) return rec.source[key];
+  if (rec.provenance && Object.prototype.hasOwnProperty.call(rec.provenance, key)) return rec.provenance[key];
+  return undefined;
+}
+
+function formatForestValue(val) {
+  if (val === null) {
+    return '<span class="mono" style="color:var(--ink-soft,#8a94a6);font-style:italic">null</span>';
+  }
+  if (val === undefined) {
+    return '<span class="not-verified">NOT PRESENT</span>';
+  }
+  if (typeof val === 'number') {
+    return `<span class="mono">${escapeHtml(String(val))}</span>`;
+  }
+  if (typeof val === 'boolean') {
+    return `<span class="mono">${val ? 'true' : 'false'}</span>`;
+  }
+  return escapeHtml(String(val));
+}
+
+function renderForestCoverHtml() {
+  const { status, records, dataset_id, error, httpStatus, lastFetched, raw } = forestCoverState;
+
+  if (status === 'idle') {
+    setTimeout(() => fetchForestCover(), 0);
+  }
+
+  // 1. LOADING STATE (or idle transitioning to loading)
+  if (status === 'loading' || status === 'idle') {
+    return `
+      <div class="view-title">
+        <div>
+          <h2>Forest Cover Intelligence</h2>
+          <p>Live official forest cover dataset backed by G1 MasterDB Observation API.</p>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <span class="live-chip" style="border-color:#b8de72;color:#b8de72;">CONNECTING TO G1 API…</span>
+          <button class="btn secondary" style="padding:6px 12px;font-size:11px;" disabled>⟳ Refresh</button>
+        </div>
+      </div>
+      <div class="panel" style="text-align:center;padding:48px 20px;">
+        <div class="pulse" style="display:inline-block;margin-bottom:14px;width:12px;height:12px;"></div>
+        <h3 style="margin-bottom:8px;font-size:16px;">Querying G1 Forest Cover Dataset API…</h3>
+        <div class="mono" style="font-size:12px;color:#8da69a;margin-bottom:10px;word-break:break-all;">
+          GET ${escapeHtml(G1_FOREST_COVER_URL)}
+        </div>
+        <div style="font-size:12px;color:#a4b7aa;">Awaiting live response from G1 backend...</div>
+      </div>`;
+  }
+
+  // 2. ERROR STATE
+  if (status === 'error') {
+    return `
+      <div class="view-title">
+        <div>
+          <h2>Forest Cover Intelligence</h2>
+          <p>Live official forest cover dataset backed by G1 MasterDB Observation API.</p>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <span class="live-chip" style="border-color:var(--danger,#de7a64);color:var(--danger,#de7a64);background:rgba(222,122,100,.1);">
+            API ERROR ${httpStatus ? '(HTTP ' + httpStatus + ')' : ''}
+          </span>
+          <button class="btn secondary" style="padding:6px 12px;font-size:11px;" onclick="fetchForestCover(true)">⟳ Retry</button>
+        </div>
+      </div>
+      <div class="panel" style="border-color:rgba(222,122,100,.3);background:rgba(30,15,15,.7);">
+        <div class="panel-head">
+          <div>
+            <h3 style="color:#f5a090;">G1 Forest Cover API Error</h3>
+            <div class="panel-sub">The live endpoint could not be reached or returned an error response</div>
+          </div>
+          <button class="btn" style="padding:6px 12px;font-size:11px;" onclick="fetchForestCover(true)">Retry Request</button>
+        </div>
+        <div class="fail-banner" style="margin-top:0;margin-bottom:16px;">
+          ${escapeHtml(error || 'Network error / request failed')}
+        </div>
+        <table class="data-table">
+          <tbody>
+            <tr><th>Target Endpoint</th><td class="mono">${escapeHtml(G1_FOREST_COVER_URL)}</td></tr>
+            <tr><th>HTTP Status</th><td class="mono">${httpStatus ? 'HTTP ' + httpStatus : 'N/A (Network failure or CORS blocked)'}</td></tr>
+            <tr><th>Timestamp</th><td class="mono">${escapeHtml(lastFetched || 'Not recorded')}</td></tr>
+            <tr><th>Truthful Policy</th><td>Per VANA telemetry rules, NO fallback, demo, or synthetic FSI data is rendered.</td></tr>
+          </tbody>
+        </table>
+        ${raw ? `
+          <div class="raw-toggle" onclick="toggleRaw('raw_forest_err')">Show error details ▾</div>
+          <div class="raw" id="raw_forest_err">${escapeHtml(JSON.stringify(raw, null, 2))}</div>
+        ` : ''}
+      </div>`;
+  }
+
+  // 3. EMPTY RECORD STATE (HTTP 200 OK, but records: [])
+  if (status === 'empty' || (status === 'success' && records.length === 0)) {
+    return `
+      <div class="view-title">
+        <div>
+          <h2>Forest Cover Intelligence</h2>
+          <p>Live official forest cover dataset backed by G1 MasterDB Observation API.</p>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <span class="live-chip">LIVE API CONNECTED (200 OK)</span>
+          <button class="btn secondary" style="padding:6px 12px;font-size:11px;" onclick="fetchForestCover(true)">⟳ Refresh</button>
+        </div>
+      </div>
+      <div class="kpi-grid">
+        <article class="kpi">
+          <div class="k">Dataset ID</div>
+          <div class="n" style="font-size:14px;">${escapeHtml(dataset_id || 'DS-FSI-ISFR-2023-FOREST-COVER')}</div>
+          <div class="note">FSI ISFR 2023 Official Dataset</div>
+        </article>
+        <article class="kpi">
+          <div class="k">Record count</div>
+          <div class="n">0</div>
+          <div class="note">Empty dataset array returned</div>
+        </article>
+        <article class="kpi">
+          <div class="k">API Status</div>
+          <div class="n" style="color:var(--lime);">200 OK</div>
+          <div class="note">G1 endpoint operational</div>
+        </article>
+        <article class="kpi">
+          <div class="k">Fallback policy</div>
+          <div class="n" style="font-size:14px;color:#e5cf9c;">ZERO MOCK DATA</div>
+          <div class="note">Strict truthful reporting</div>
+        </article>
+        <article class="kpi">
+          <div class="k">Service</div>
+          <div class="n" style="font-size:14px;">G1 MasterDB</div>
+          <div class="note">Port 8013 observation runtime</div>
+        </article>
+      </div>
+
+      <div class="panel" style="margin-top:14px;">
+        <div class="panel-head">
+          <div>
+            <h3>Official Forest Cover Records</h3>
+            <div class="panel-sub">Response payload from live G1 dataset service</div>
+          </div>
+          <span class="live-chip" style="font-size:10px;">0 RECORDS RETURNED</span>
+        </div>
+        <div class="empty-state">
+          <b>EMPTY DATASET RESPONSE (HTTP 200 OK)</b>
+          The G1 endpoint <code class="mono" style="color:#d4ef9c;padding:2px 6px;background:rgba(0,0,0,0.3);border-radius:4px;">${escapeHtml(G1_FOREST_COVER_URL)}</code> responded successfully with HTTP 200 OK, but returned 0 records in <code class="mono">records: []</code>.
+          <div style="margin-top:10px;font-size:11.5px;color:#8da69a;">
+            Per VANA strict truthful telemetry rules, NO fallback, demo, or hardcoded FSI data is injected. The view faithfully reflects the real live API response.
+          </div>
+          <div style="margin-top:16px;">
+            <button class="btn" style="padding:7px 16px;font-size:12px;" onclick="fetchForestCover(true)">⟳ Re-check Live API</button>
+          </div>
+        </div>
+      </div>
+
+      <section class="panel" style="margin-top:14px;">
+        <div class="panel-head">
+          <div>
+            <h3>Source &amp; Provenance Verification</h3>
+            <div class="panel-sub">Live G1 MasterDB API verification metadata</div>
+          </div>
+        </div>
+        <table class="data-table">
+          <tbody>
+            <tr><th>API Endpoint</th><td class="mono">${escapeHtml(G1_FOREST_COVER_URL)}</td></tr>
+            <tr><th>Dataset ID</th><td class="mono">${escapeHtml(dataset_id || 'DS-FSI-ISFR-2023-FOREST-COVER')}</td></tr>
+            <tr><th>HTTP Status</th><td class="mono">200 OK</td></tr>
+            <tr><th>Records Count</th><td class="mono">0</td></tr>
+            <tr><th>Retrieval Timestamp</th><td class="mono">${escapeHtml(lastFetched || 'Just now')}</td></tr>
+            <tr><th>CORS Status</th><td class="mono">Permitted (access-control-allow-origin: *)</td></tr>
+          </tbody>
+        </table>
+        ${raw ? `
+          <div class="raw-toggle" onclick="toggleRaw('raw_forest_cover')">Show raw API response ▾</div>
+          <div class="raw" id="raw_forest_cover">${escapeHtml(JSON.stringify(raw, null, 2))}</div>
+        ` : ''}
+      </section>`;
+  }
+
+  // 4. RECORDS STATE (HTTP 200 OK with records)
+  const totalArea = records.reduce((acc, r) => {
+    const a = extractForestFieldValue(r, 'forest_cover_area');
+    return typeof a === 'number' ? acc + a : acc;
+  }, 0);
+  const distinctStates = [...new Set(records.map(r => extractForestFieldValue(r, 'state')).filter(Boolean))];
+
+  return `
+    <div class="view-title">
+      <div>
+        <h2>Forest Cover Intelligence</h2>
+        <p>Live official forest cover dataset backed by G1 MasterDB Observation API.</p>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;">
+        <span class="live-chip">LIVE RECORDS (${records.length})</span>
+        <button class="btn secondary" style="padding:6px 12px;font-size:11px;" onclick="fetchForestCover(true)">⟳ Refresh</button>
+      </div>
+    </div>
+    <div class="kpi-grid">
+      <article class="kpi">
+        <div class="k">Dataset ID</div>
+        <div class="n" style="font-size:14px;">${escapeHtml(dataset_id || 'DS-FSI-ISFR-2023-FOREST-COVER')}</div>
+        <div class="note">FSI ISFR 2023 Official Dataset</div>
+      </article>
+      <article class="kpi">
+        <div class="k">Total Records</div>
+        <div class="n">${records.length}</div>
+        <div class="note">Live records from G1 API</div>
+      </article>
+      <article class="kpi">
+        <div class="k">Coverage Areas (Sum)</div>
+        <div class="n" style="font-size:18px;">${totalArea > 0 ? escapeHtml(String(totalArea)) : 'SEE RECORDS'}</div>
+        <div class="note">Total forest cover area returned</div>
+      </article>
+      <article class="kpi">
+        <div class="k">Geographies</div>
+        <div class="n" style="font-size:15px;">${distinctStates.length > 0 ? escapeHtml(distinctStates.join(', ')) : 'VERIFIED IN RECORDS'}</div>
+        <div class="note">States / jurisdictions</div>
+      </article>
+      <article class="kpi">
+        <div class="k">API Status</div>
+        <div class="n" style="color:var(--lime);">200 OK</div>
+        <div class="note">Live data streaming</div>
+      </article>
+    </div>
+
+    ${records.length > 1 ? `
+      <section class="panel" style="margin-top:14px;">
+        <div class="panel-head">
+          <div>
+            <h3>Records Overview</h3>
+            <div class="panel-sub">${records.length} records returned by G1 API</div>
+          </div>
+        </div>
+        <div style="overflow-x:auto;">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Record ID</th>
+                <th>Year</th>
+                <th>Geo Level</th>
+                <th>State</th>
+                <th>District</th>
+                <th>Cover Area</th>
+                <th>Cover %</th>
+                <th>Very Dense</th>
+                <th>Mod. Dense</th>
+                <th>Open</th>
+                <th>Mangrove</th>
+                <th>Unit</th>
+                <th>Quality Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${records.map(rec => `
+                <tr>
+                  <td class="mono">${formatForestValue(extractForestFieldValue(rec, 'record_id'))}</td>
+                  <td>${formatForestValue(extractForestFieldValue(rec, 'assessment_year'))}</td>
+                  <td>${formatForestValue(extractForestFieldValue(rec, 'geography_level'))}</td>
+                  <td>${formatForestValue(extractForestFieldValue(rec, 'state'))}</td>
+                  <td>${formatForestValue(extractForestFieldValue(rec, 'district'))}</td>
+                  <td class="mono">${formatForestValue(extractForestFieldValue(rec, 'forest_cover_area'))}</td>
+                  <td class="mono">${formatForestValue(extractForestFieldValue(rec, 'forest_cover_percentage'))}</td>
+                  <td class="mono">${formatForestValue(extractForestFieldValue(rec, 'very_dense_forest_area'))}</td>
+                  <td class="mono">${formatForestValue(extractForestFieldValue(rec, 'moderately_dense_forest_area'))}</td>
+                  <td class="mono">${formatForestValue(extractForestFieldValue(rec, 'open_forest_area'))}</td>
+                  <td class="mono">${formatForestValue(extractForestFieldValue(rec, 'mangrove_area'))}</td>
+                  <td>${formatForestValue(extractForestFieldValue(rec, 'unit'))}</td>
+                  <td><span class="badge ${String(extractForestFieldValue(rec, 'quality_status') || '').toUpperCase()}"><span class="sw"></span>${formatForestValue(extractForestFieldValue(rec, 'quality_status'))}</span></td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>
+      </section>
+    ` : ''}
+
+    <div style="margin-top:14px;display:grid;gap:14px;">
+      ${records.map((rec, idx) => {
+        const recId = extractForestFieldValue(rec, 'record_id');
+        const stateVal = extractForestFieldValue(rec, 'state');
+        const districtVal = extractForestFieldValue(rec, 'district');
+        const qStatus = extractForestFieldValue(rec, 'quality_status');
+
+        return `
+          <section class="panel">
+            <div class="panel-head">
+              <div>
+                <h3>Record #${idx + 1}: ${formatForestValue(recId)}</h3>
+                <div class="panel-sub">
+                  ${stateVal ? escapeHtml(String(stateVal)) : ''}${districtVal ? ' · ' + escapeHtml(String(districtVal)) : ''}
+                </div>
+              </div>
+              <div style="display:flex;align-items:center;gap:8px;">
+                ${qStatus !== undefined ? `<span class="badge ${String(qStatus).toUpperCase()}"><span class="sw"></span>${escapeHtml(String(qStatus))}</span>` : ''}
+                <span class="live-chip" style="font-size:10px;">LIVE RECORD</span>
+              </div>
+            </div>
+
+            <div class="field-grid" style="margin-top:14px;">
+              ${FOREST_COVER_FIELDS.map(f => {
+                const val = extractForestFieldValue(rec, f.key);
+                return `
+                  <div class="field">
+                    <div class="k">${escapeHtml(f.label)}</div>
+                    <div class="v">${formatForestValue(val)}</div>
+                  </div>
+                `;
+              }).join('')}
+            </div>
+          </section>
+        `;
+      }).join('')}
+    </div>
+
+    <section class="panel" style="margin-top:14px;">
+      <div class="panel-head">
+        <div>
+          <h3>Source &amp; Provenance Verification</h3>
+          <div class="panel-sub">Live G1 MasterDB API verification metadata</div>
+        </div>
+      </div>
+      <table class="data-table">
+        <tbody>
+          <tr><th>API Endpoint</th><td class="mono">${escapeHtml(G1_FOREST_COVER_URL)}</td></tr>
+          <tr><th>Dataset ID</th><td class="mono">${escapeHtml(dataset_id || 'DS-FSI-ISFR-2023-FOREST-COVER')}</td></tr>
+          <tr><th>HTTP Status</th><td class="mono">200 OK</td></tr>
+          <tr><th>Records Returned</th><td class="mono">${records.length}</td></tr>
+          <tr><th>Retrieval Timestamp</th><td class="mono">${escapeHtml(lastFetched || 'Just now')}</td></tr>
+        </tbody>
+      </table>
+      ${raw ? `
+        <div class="raw-toggle" onclick="toggleRaw('raw_forest_cover')">Show raw API response ▾</div>
+        <div class="raw" id="raw_forest_cover">${escapeHtml(JSON.stringify(raw, null, 2))}</div>
+      ` : ''}
+    </section>`;
+}
+
+function renderForestCoverView() {
+  const el = document.getElementById('view-forest');
+  if (el) {
+    el.innerHTML = renderForestCoverHtml();
+  }
+}
+
+async function fetchForestCover(force = false) {
+  if (forestCoverState.status === 'loading' && !force) return;
+  forestCoverState.status = 'loading';
+  forestCoverState.error = null;
+  renderForestCoverView();
+
+  const url = G1_FOREST_COVER_URL;
+  console.log('[VANA UI] Forest Cover API request: GET', url);
+
+  try {
+    const res = await fetch(url);
+    forestCoverState.httpStatus = res.status;
+    forestCoverState.lastFetched = new Date().toISOString();
+    console.log('[VANA UI] Forest Cover API response status:', res.status);
+
+    if (!res.ok) {
+      forestCoverState.status = 'error';
+      forestCoverState.error = `HTTP ${res.status} ${res.statusText || 'Error'}`;
+      try {
+        forestCoverState.raw = await res.json();
+      } catch (_) {
+        forestCoverState.raw = { status: res.status, statusText: res.statusText };
+      }
+    } else {
+      const json = await res.json();
+      forestCoverState.raw = json;
+      forestCoverState.data = json;
+      forestCoverState.dataset_id = json.dataset_id || 'DS-FSI-ISFR-2023-FOREST-COVER';
+
+      const recs = Array.isArray(json.records) ? json.records : (Array.isArray(json) ? json : []);
+      forestCoverState.records = recs;
+
+      if (recs.length === 0) {
+        forestCoverState.status = 'empty';
+      } else {
+        forestCoverState.status = 'success';
+      }
+    }
+  } catch (err) {
+    console.error('[VANA UI] Forest Cover API network/CORS error:', err);
+    forestCoverState.status = 'error';
+    forestCoverState.error = err.message || 'Network error or CORS issue connecting to G1 Forest Cover API';
+    forestCoverState.httpStatus = null;
+    forestCoverState.lastFetched = new Date().toISOString();
+    forestCoverState.raw = { error: err.message || String(err) };
+  }
+
+  renderForestCoverView();
+}
+
+function renderCommandCenter(data){
+  // Keep the live controls intact while the overview cards are refreshed.
+  ['.runtime-controls .source-panel','.runtime-controls .mode-banner','.runtime-controls .health-strip'].forEach(selector=>{
+    const retained=document.querySelector(selector); if(retained) document.body.append(retained);
+  });
+  const g1=data.group1||{},g2=data.group2||{},g4=data.group4||{},g3=data.group3||{};
+  const hasObservation=Boolean(data.observation_id && Object.keys(g3).length), hasLive=Boolean(!g1.failed && !g2.failed && !g4.failed && data.canonical_record_id);
+  const status=hasLive?'LIVE RUNTIME CONNECTED':(g1.failed||g2.failed||g4.failed?'RUNTIME ERROR':'RUNTIME NOT VERIFIED');
+  const top=document.getElementById('topRuntimeStatus'); if(top) top.textContent=status;
+  const content=document.getElementById('commandContent');
+  if(content){ content.innerHTML=`
+    <div class="kpi-grid">
+      <article class="kpi"><div class="k">Selected observation</div><div class="n">${present(data.observation_id)}</div><div class="note">Current runtime request</div></article>
+      <article class="kpi"><div class="k">Canonical record</div><div class="n">${present(data.canonical_record_id)}</div><div class="note">Group 1 resolution</div></article>
+      <article class="kpi"><div class="k">Governance ruling</div><div class="n">${present(g4.ruling||g2.ruling||g2.decision)}</div><div class="note">Group 2 / Group 4</div></article>
+      <article class="kpi"><div class="k">Action eligibility</div><div class="n">${present(g4.action_eligibility ?? g2.action_eligibility)}</div><div class="note">Live decision field</div></article>
+      <article class="kpi"><div class="k">Active alerts</div><div class="n not-verified">NOT VERIFIED</div><div class="note">No alert feed connected</div></article>
+    </div>
+    <div class="overview-grid"><section class="panel"><div class="panel-head"><div><h3>Live Observation Geography</h3><div class="panel-sub">Source coordinate display; never inferred or geocoded.</div></div><span class="live-chip">${hasObservation?'OBSERVATION LOADED':'AWAITING DATA'}</span></div>${mapPanel(data)}</section>
+    <aside class="panel"><div class="panel-head"><div><h3>Runtime Signals</h3><div class="panel-sub">Current execution and evidence indicators</div></div></div><div class="signal-list">
+      <div class="signal"><i class="signal-dot ${g1.failed?'':'live'}"></i><div><b>G1 canonical record</b><span>${g1.failed?escapeHtml(g1.fail_reason):present(data.canonical_record_id)}</span></div></div>
+      <div class="signal"><i class="signal-dot ${g2.failed?'':'live'}"></i><div><b>G2 scientific context</b><span>${g2.failed?escapeHtml(g2.fail_reason):present(data.context_id)}</span></div></div>
+      <div class="signal"><i class="signal-dot ${g4.failed?'':'live'}"></i><div><b>G4 governed outcome</b><span>${g4.failed?escapeHtml(g4.fail_reason):present(g4.status)}</span></div></div>
+      <div class="signal"><i class="signal-dot"></i><div><b>Data sources</b><span>${present(g3.source_identity)}</span></div></div>
+    </div></aside></div>
+    <div class="two-panels" style="margin-top:14px"><section class="panel"><div class="panel-head"><div><h3>Recent Observation</h3><div class="panel-sub">Latest selected record from the live retrieval</div></div></div><table class="data-table"><thead><tr><th>Observation</th><th>Type</th><th>Timestamp</th><th>Provenance</th></tr></thead><tbody><tr><td>${present(data.observation_id)}</td><td>${present(g3.observation_type)}</td><td>${present(g3.observation_timestamp)}</td><td>${present(g3.source_identity||((g3.provenance||{}).provenance_reference))}</td></tr></tbody></table></section><section class="panel"><div class="panel-head"><div><h3>Governance Status</h3><div class="panel-sub">Trusted outcome from the current pipeline</div></div></div><table class="data-table"><tbody><tr><th>Ruling</th><td class="state">${present(g4.ruling||g2.ruling||g2.decision)}</td></tr><tr><th>Abstention required</th><td>${present(g4.abstention_required ?? g2.abstention_required)}</td></tr><tr><th>Execution evidence</th><td>${present(g4.execution_id)}</td></tr></tbody></table></section></div>
+    <section class="panel runtime-controls" id="runtimeControls"><div class="panel-head"><div><h3>Live Runtime Connection</h3><div class="panel-sub">Direct G1 → G2 → G4 execution. Failures remain visible and stop downstream calls.</div></div></div></section>`;
+    const host=document.getElementById('runtimeControls'), source=document.querySelector('body > .source-panel'), bannerEl=document.getElementById('modeBanner'), health=document.getElementById('healthStrip');
+    if(host && bannerEl) host.prepend(bannerEl); if(host && health) host.append(health); if(host && source) host.append(source);
+  }
+  const rail=document.getElementById('rail'), commandRail=document.getElementById('commandRail'); if(rail&&commandRail) commandRail.innerHTML=rail.innerHTML;
+  const pages={
+    forest:renderForestCoverHtml(),
+    plantation:unavailablePage('Plantation','No plantation-specific observation classification or progress data was returned.','Requires plantation status, location, and progress fields from the backend.'),
+    wildlife:hasObservation?`<div class="view-title"><div><h2>Wildlife Monitoring</h2><p>Current observation facts; species classification is not inferred.</p></div><span class="live-chip">LIVE OBSERVATION</span></div><div class="two-panels"><section class="panel"><h3>Current Wildlife-Relevant Observation</h3><table class="data-table"><tbody><tr><th>Observation ID</th><td>${present(data.observation_id)}</td></tr><tr><th>Type</th><td>${present(g3.observation_type)}</td></tr><tr><th>Timestamp</th><td>${present(g3.observation_timestamp)}</td></tr><tr><th>Source</th><td>${present(g3.source_identity)}</td></tr><tr><th>Species</th><td class="not-verified">NOT VERIFIED</td></tr></tbody></table></section><section class="panel"><h3>Observation Location</h3>${mapPanel(data,true)}</section></div>`:unavailablePage('Wildlife Monitoring','Awaiting a live observation.','Requires an observation response from Group 1.'),
+    conflict:unavailablePage('Human-Wildlife Conflict','The live response contains no conflict incident or severity fields.','Requires conflict classification, severity, location, and alert data.'),
+    map:`<div class="view-title"><div><h2>GIS / Live Map</h2><p>Location display uses only geographic fields returned by the selected observation.</p></div><span class="live-chip">${hasObservation?'LIVE OBSERVATION':'AWAITING DATA'}</span></div><section class="panel">${mapPanel(data)}<table class="data-table" style="margin-top:15px"><tbody><tr><th>Observation ID</th><td>${present(data.observation_id)}</td><th>Latitude</th><td>${present(observationField(data,'latitude'))}</td><th>Longitude</th><td>${present(observationField(data,'longitude'))}</td></tr><tr><th>CRS</th><td>${present((g3.geo_location||{}).crs)}</td><th>Geo ID</th><td>${present(g3.geo_id)}</td><th>Timestamp</th><td>${present(g3.observation_timestamp)}</td></tr><tr><th>Source</th><td>${present(g3.source_identity)}</td><th>Provenance</th><td colspan="3">${present((g3.provenance||{}).provenance_reference)}</td></tr></tbody></table></section>`,
+    analytics:hasObservation?`<div class="view-title"><div><h2>Analytics &amp; Reports</h2><p>Record-level data quality report from the selected live observation. No aggregate trend is inferred.</p></div><span class="live-chip">LIVE RECORD</span></div><div class="two-panels"><section class="panel"><div class="panel-head"><div><h3>Data Quality &amp; Evidence</h3><div class="panel-sub">Values emitted by the Group 1 observation record</div></div></div><table class="data-table"><tbody><tr><th>Observation timestamp</th><td>${present(g3.observation_timestamp)}</td></tr><tr><th>Source timestamp</th><td>${present(g3.source_timestamp)}</td></tr><tr><th>Quality state</th><td>${present(g3.quality_state)}</td></tr><tr><th>Capture method</th><td>${present(g3.capture_method)}</td></tr><tr><th>Synthetic state</th><td>${present(g3.synthetic_state)}</td></tr><tr><th>Artifact checksum</th><td>${present((g3.raw_artifact_integrity||{}).checksum_sha256)}</td></tr></tbody></table></section><section class="panel"><div class="panel-head"><div><h3>Recorded Measurement</h3><div class="panel-sub">First returned measurement; no derived aggregation</div></div></div>${(g3.measurements&&g3.measurements.length)?`<table class="data-table"><tbody><tr><th>Metric</th><td>${present(g3.measurements[0].metric_name)}</td></tr><tr><th>Value</th><td>${present(g3.measurements[0].value)}</td></tr><tr><th>Unit</th><td>${present(g3.measurements[0].unit)}</td></tr><tr><th>Method</th><td>${present(g3.measurements[0].method)}</td></tr><tr><th>Provenance ID</th><td>${present((g3.measurements[0].provenance||{}).provenance_id)}</td></tr></tbody></table>`:`<div class="empty-state"><b>DATA NOT AVAILABLE</b>No measurement array was returned for this observation.</div>`}</section></div><section class="panel" style="margin-top:14px"><div class="panel-head"><div><h3>Aggregation Availability</h3><div class="panel-sub">Verified API surface</div></div></div><div class="empty-state"><b>DATA NOT AVAILABLE</b>G1 exposes retrieval by observation ID only; no observation-list, time-series, source-distribution, district aggregation, or forest-cover aggregation endpoint is currently exposed.</div></section>`:unavailablePage('Analytics & Reports','Awaiting a live observation record.','Requires an observation retrieval response; trends additionally require an observation collection endpoint with dates, sources, geography, and governance outcomes.'),
+    district:unavailablePage('District Detail','No district identifier or boundary is available for the selected observation.','Requires verified district/location fields and district-level aggregation.'),
+    produce:unavailablePage('Forest Produce','No product category, quantity, or value fields are available in the current contract.','Requires forest-produce observations and verified quantity/value fields.'),
+    health:`<div class="view-title"><div><h2>System Health</h2><p>Service status reflects the latest real runtime checks and request results.</p></div></div><div class="service-grid">${[['G1','Canonical record API',g1],['G2','/api/group2/context/resolve',g2],['G4','/vana/execute',g4],['UI','Frontend runtime',{}]].map(([n,label,obj])=>{const err=obj.failed;const checked=n==='UI'||Object.keys(obj).length;return `<article class="service ${err?'error':checked?'live':''}"><h3>${n}</h3><p>${label}</p><div class="status">${err?'ERROR':checked?'LIVE':'NOT VERIFIED'}</div>${err?`<p>${escapeHtml(obj.fail_reason||'Request failed')}</p>`:''}</article>`}).join('')}</div><section class="panel" style="margin-top:14px"><h3>Latest runtime evidence</h3><table class="data-table"><tbody><tr><th>G1 retrieval status</th><td>${present(g1.retrieval_status)}</td></tr><tr><th>G2 HTTP status</th><td>${present(g2.http_status)}</td></tr><tr><th>G4 HTTP status</th><td>${present(g4.http_status)}</td></tr></tbody></table></section>`
+  };
+  Object.entries(pages).forEach(([id,html])=>{const el=document.getElementById('view-'+id);if(el)el.innerHTML=html;});
+}
+
+function render(data){
+  document.getElementById('pinnedOid').textContent = data.observation_id || 'UNKNOWN — ID MISSING';
+
+  const g1 = data.group1 || {};
+  const g2 = data.group2 || {};
+  const g4 = data.group4 || {};
+
+  let html = '';
+
+  // ---- Lineage & trace identifiers — consolidated audit strip ----
+  const lineageIds = [
+    ['observation_id', data.observation_id],
+    ['canonical_record_id', data.canonical_record_id],
+    ['context_id', data.context_id === null ? 'null' : data.context_id],
+    ['action_request_id', data.action_request_id],
+    ['abstention_record_id', data.abstention_record_id],
+    ['event_id', data.event_id],
+    ['execution_id', data.execution_id],
+    ['trace_id', data.trace_id],
+    ['tenant_id', data.tenant_id],
+    ['lineage_hash', data.lineage_hash],
+  ];
+  const lineageFieldsHtml = lineageIds.map(([k,v]) =>
+    `<div class="field"><div class="k">${k}</div>${fieldVal(v, v === 'null' ? 'null' : 'NOT VERIFIED')}</div>`
+  ).join('');
+  html += `<div class="card" style="margin-bottom:20px;margin-left:64px">
+    <div class="group-tag">Cross-group</div>
+    <div class="stage-title">Lineage &amp; Trace Identifiers</div>
+    <div class="field-grid">${lineageFieldsHtml}</div>
+  </div>`;
+
+  // Group 3 — raw observation & provenance
+  const g3f = data.group3 || {};
+  const hasG3 = g3f && Object.keys(g3f).length > 0;
+  const pick = (k) => g3f[k] !== undefined ? g3f[k] : (g3f.provenance ? g3f.provenance[k] : undefined);
+
+  const g3Fields = hasG3 ? `
+    <div class="subsection">
+      <div class="subsection-title">Observation Identity</div>
+      <div class="field-grid">
+        <div class="field"><div class="k">Mission ID</div>${fieldVal(pick('mission_id'),'NOT VERIFIED')}</div>
+        <div class="field"><div class="k">Survey ID</div>${fieldVal(pick('survey_id'),'NOT VERIFIED')}</div>
+        <div class="field"><div class="k">Zone ID</div>${fieldVal(pick('zone_id'),'NOT VERIFIED')}</div>
+        <div class="field"><div class="k">Flight ID</div>${fieldVal(pick('flight_id'),'NOT VERIFIED')}</div>
+        <div class="field"><div class="k">Sensor ID</div>${fieldVal(pick('sensor_id'),'NOT VERIFIED')}</div>
+        <div class="field"><div class="k">Device ID</div>${fieldVal(pick('device_id'),'NOT VERIFIED')}</div>
+        <div class="field"><div class="k">Source identity</div>${fieldVal(pick('source_identity'),'NOT VERIFIED')}</div>
+        <div class="field"><div class="k">Contract version</div>${fieldVal(pick('contract_version'),'NOT VERIFIED')}</div>
+        <div class="field"><div class="k">Observation seq</div>${fieldVal(pick('observation_seq'),'NOT VERIFIED')}</div>
+        <div class="field"><div class="k">Data state</div>${fieldVal(pick('data_state'),'NOT VERIFIED')}</div>
+      </div>
+    </div>
+    <div class="subsection">
+      <div class="subsection-title">Measurement</div>
+      <div class="field-grid">
+        <div class="field"><div class="k">Observation type</div>${fieldVal(pick('observation_type'),'NOT VERIFIED')}</div>
+        <div class="field"><div class="k">Measurement</div>${fieldVal(pick('measurement'),'NOT VERIFIED')}</div>
+        <div class="field"><div class="k">Unit</div>${fieldVal(pick('unit'),'NOT VERIFIED')}</div>
+        <div class="field"><div class="k">Observation timestamp</div>${fieldVal(pick('observation_timestamp'),'NOT VERIFIED')}</div>
+      </div>
+      ${isOpenMeteoSource(g3f) ? `<div class="license-note">Weather data by Open-Meteo.com (CC-BY 4.0), aggregating national weather services.</div>` : ''}
+    </div>
+    <div class="subsection">
+      <div class="subsection-title">Location</div>
+      <div class="field-grid">
+        <div class="field"><div class="k">Latitude</div>${fieldVal(pick('latitude'),'NOT VERIFIED')}</div>
+        <div class="field"><div class="k">Longitude</div>${fieldVal(pick('longitude'),'NOT VERIFIED')}</div>
+        <div class="field"><div class="k">Altitude</div>${fieldVal(pick('altitude'),'NOT VERIFIED')}</div>
+        <div class="field"><div class="k">Location</div>${fieldVal(pick('location'),'NOT VERIFIED')}</div>
+        <div class="field"><div class="k">GNSS status</div>${fieldValClassified('gnss_status', pick('gnss_status'), g3f, 'NOT VERIFIED')}</div>
+        <div class="field"><div class="k">Position accuracy</div>${fieldValClassified('position_accuracy', pick('position_accuracy'), g3f, 'NOT VERIFIED')}</div>
+      </div>
+    </div>
+    <div class="subsection">
+      <div class="subsection-title">Quality &amp; Calibration</div>
+      <div class="field-grid">
+        <div class="field"><div class="k">Quality state</div>${fieldVal(pick('quality_state'),'NOT VERIFIED')}</div>
+        <div class="field"><div class="k">Calibration state</div>${fieldValClassified('calibration_state', pick('calibration_state'), g3f, 'NOT VERIFIED')}</div>
+        <div class="field"><div class="k">Accuracy</div>${fieldValClassified('accuracy', pick('accuracy'), g3f, 'NOT VERIFIED')}</div>
+        <div class="field"><div class="k">Processing status</div>${fieldVal(pick('processing_status'),'NOT VERIFIED')}</div>
+        <div class="field"><div class="k">Hardware verified</div>${fieldValClassified('hardware_verified', pick('hardware_verified'), g3f, 'NOT VERIFIED')}</div>
+      </div>
+    </div>
+    <div class="subsection">
+      <div class="subsection-title">Provenance</div>
+      <div class="field-grid">
+        <div class="field"><div class="k">Device</div>${fieldVal(pick('device_id'),'NOT VERIFIED')}</div>
+        <div class="field"><div class="k">Mission</div>${fieldVal(pick('mission_id'),'NOT VERIFIED')}</div>
+        <div class="field"><div class="k">Captured at</div>${fieldVal(pick('captured_at'),'NOT VERIFIED')}</div>
+        <div class="field"><div class="k">Raw artifact</div>${fieldValClassified('raw_artifact', pick('raw_artifact'), g3f, 'NOT VERIFIED')}</div>
+        <div class="field"><div class="k">Provenance reference</div>${fieldVal(pick('provenance_reference'),'NOT VERIFIED')}</div>
+      </div>
+      ${getApplicability('raw_artifact', g3f) && getApplicability('raw_artifact', g3f).category === 'declared_gap' ? `
+        <div class="warning-note">No raw artifact file exists for this observation — declared gap per contract §26/§49.1, recorded in the evidence pack under <span class="mono">raw_artifact._gap</span>. This is not a missing-data error; bytes were never persisted at capture time. Observations captured going forward will have a real artifact file.</div>
+      ` : ''}
+      ${pick('source_request_url') ? `
+        <div class="source-ref">
+          <span class="warn-label">Reference only — do not treat as this record's value</span>
+          <a href="${pick('source_request_url')}" target="_blank" rel="noopener">${pick('source_request_url')}</a> — live source; current value will differ from this record.
+        </div>
+      ` : ''}
+    </div>
+    <div class="subsection">
+      <div class="subsection-title">Integrity</div>
+      <div class="field-grid">
+        <div class="field"><div class="k">Artifact type</div>${fieldVal(pick('artifact_type'),'NOT VERIFIED')}</div>
+        <div class="field"><div class="k">SHA-256</div>${fieldVal(pick('sha256'),'NOT VERIFIED')}</div>
+        <div class="field"><div class="k">Raw artifact integrity</div>${fieldValClassified('raw_artifact', pick('raw_artifact_integrity'), g3f, 'NOT VERIFIED')}</div>
+      </div>
+    </div>
+    <div class="subsection">
+      <div class="subsection-title">Source</div>
+      <div class="field-grid">
+        <div class="field"><div class="k">Source identity</div>${fieldVal(pick('source_identity'),'NOT VERIFIED')}</div>
+        <div class="field"><div class="k">Capture method</div>${fieldVal(pick('capture_method'),'NOT VERIFIED')}</div>
+        <div class="field"><div class="k">Synthetic state</div>${fieldVal(pick('synthetic_state'),'NOT VERIFIED')}</div>
+      </div>
+      ${(pick('capture_method') === 'external_api' || pick('synthetic_state') === 'CONTROLLED') ? `
+        <div class="warning-note">This is real third-party live data carried through a controlled path — it is not a field capture and there is no Group 3 hardware behind it. Do not present this as a sensor reading from the field.</div>
+      ` : ''}
+      ${isOpenMeteoSource(g3f) ? `<div class="license-note">Weather data by Open-Meteo.com (CC-BY 4.0), aggregating national weather services.</div>` : ''}
+    </div>
+  ` : `<div class="field"><div class="k">Status</div><span class="v pending">No Group 3 payload loaded — awaiting live observation echoed via Group 1</span></div>`;
+
+  html += nodeCard({
+    group: 'Group 3',
+    title: 'Raw Observation & Provenance',
+    idLabel: 'observation_id',
+    idValue: data.observation_id,
+    evidenceState: hasG3 ? (pick('synthetic_state') || 'NOT_APPLICABLE') : 'NOT_APPLICABLE',
+    evidenceNote: hasG3 ? 'derived from synthetic_state as sent by Group 3 — not a separate mapping' : null,
+    failed: g3f && g3f.failed,
+    failReason: g3f && g3f.fail_reason,
+    fieldsHtml: g3Fields,
+    raw: hasG3 ? g3f : null,
+    pending: !hasG3
+  });
+
+  // Group 1 — canonical record ONLY.
+  const g1Fields = g1.not_found ? '' : `
+      <div class="field"><div class="k">Retrieval status</div>${fieldVal(g1.retrieval_status,'NOT VERIFIED')}</div>
+      <div class="field"><div class="k">Retrieval trace ID</div>${fieldVal(g1.trace_id,'NOT VERIFIED')}</div>
+      <div class="field"><div class="k">Idempotency key (derived)</div>${data.observation_id ? `<span class="v mono">IK-${data.observation_id}</span>` : `<span class="v pending">NOT VERIFIED</span>`}</div>
+      <div class="field"><div class="k">Idempotency result</div>${fieldVal(g1.idempotency_result,'NOT VERIFIED')}</div>
+    `;
+  html += nodeCard({
+    group: 'Group 1',
+    title: 'Canonical Record',
+    idLabel: 'canonical_record_id',
+    idValue: data.canonical_record_id,
+    evidenceState: 'NOT_APPLICABLE',
+    evidenceNote: null,
+    failed: g1.not_found || g1.failed,
+    failReason: g1.not_found ? 'Observation not found (404 NOT_FOUND)' : g1.fail_reason,
+    fieldsHtml: g1Fields ? g1Fields + `<div class="derived-note" style="grid-column:1/-1">Idempotency key shown here is computed client-side per Group 3's documented convention (IK-&lt;observation_id&gt;) — it is not itself returned by the API.</div>` : '',
+    raw: Object.keys(g1).length && !g1.failed ? g1 : null,
+    pending: !data.canonical_record_id && !g1.failed
+  });
+
+  // Group 2 — context + decision
+  const sc = g2.scientific_context || {};
+  const gapFields = g2.gap_fields || [];
+  const hasEvidenceField = Object.prototype.hasOwnProperty.call(g2, 'evidence_state');
+  const contextStatus = g2.context_status;
+  const decision = (g2.decision || g2.ruling || '').toUpperCase();
+  const decisionMade = g2.decision_made;
+
+  let g2Fields = `
+    <div class="field"><div class="k">HTTP status</div>${fieldVal(g2.http_status,'NOT VERIFIED')}</div>
+    <div class="field"><div class="k">Context status</div>${fieldVal(contextStatus,'PENDING')}</div>
+    <div class="field"><div class="k">Context found</div>${fieldVal(g2.context_found !== undefined ? String(g2.context_found) : null,'NOT VERIFIED')}</div>
+    <div class="field"><div class="k">Trace ID</div>${fieldVal(g2.trace_id,'NOT VERIFIED')}</div>
+    <div class="field"><div class="k">Action eligibility</div>${fieldVal(g2.action_eligibility !== undefined && g2.action_eligibility !== null ? String(g2.action_eligibility) : null,'NOT VERIFIED')}</div>
+    <div class="field"><div class="k">Abstention required</div>${fieldVal(g2.abstention_required !== undefined && g2.abstention_required !== null ? String(g2.abstention_required) : null,'NOT VERIFIED')}</div>
+  `;
+
+  if(sc.mean_m || sc.doi || sc.confidence){
+    g2Fields += `
+      <div class="field"><div class="k">Canopy height range</div>${fieldVal(sc.expected_canopy_height_min_m && sc.expected_canopy_height_max_m ? sc.expected_canopy_height_min_m+'–'+sc.expected_canopy_height_max_m+' m' : null,'NOT VERIFIED')}</div>
+      <div class="field"><div class="k">Mean</div>${fieldVal(sc.mean_m ? sc.mean_m+' m' : null,'NOT VERIFIED')}</div>
+      <div class="field"><div class="k">Confidence</div>${fieldVal(sc.confidence,'NOT VERIFIED')}</div>
+      <div class="field"><div class="k">Scientific DOI</div>${sc.doi ? `<a href="https://doi.org/${sc.doi}" target="_blank">${sc.doi}</a>` : `<span class="v pending">NOT VERIFIED</span>`}</div>
+      <div class="field"><div class="k">Spatial reference</div>${sc.spatial_reference ? `<a href="https://doi.org/${sc.spatial_reference}" target="_blank">${sc.spatial_reference}</a>` : `<span class="v pending">NOT VERIFIED</span>`}</div>
+    `;
+  }
+  gapFields.forEach(f => {
+    g2Fields += `<div class="field"><div class="k">${f.replace(/_/g,' ')}</div><span class="v gap">GAP</span></div>`;
+  });
+
+  const decisionClass = ['ALLOW','ABSTAIN','DENY','BLOCK'].includes(decision) ? decision : 'UNKNOWN';
+  const decisionOutcomeText = decision === 'ABSTAIN'
+    ? 'ABSTAINED — no action taken'
+    : (decision || 'DECISION NOT VERIFIED');
+  const decisionHtml = (data.group2 && !data.group2.failed) ? `
+    <div class="decision-block ${decisionClass}">
+      <div class="decision-label">Group 2 decision${decisionMade === false ? ' · decision_made: false' : ''}</div>
+      <div class="decision-outcome">${decisionOutcomeText}</div>
+      <div class="decision-reason">${g2.decision_reason ? g2.decision_reason : 'No reason returned.'}</div>
+    </div>
+  ` : '';
+
+  const hasG2Data = data.group2 && Object.keys(data.group2).length > 0 && !data.group2.failed;
+
+  html += nodeCard({
+    group: 'Group 2',
+    title: 'Context & Decision',
+    idLabel: 'context_id',
+    idValue: hasG2Data ? data.context_id : undefined,
+    evidenceState: (hasG2Data && hasEvidenceField) ? (g2.evidence_state || 'NOT_APPLICABLE') : 'NOT_APPLICABLE',
+    evidenceNote: hasG2Data ? (hasEvidenceField ? null : 'evidence_state not yet returned by runtime — pending clarification, not defaulted') : null,
+    failed: g2.failed,
+    failReason: g2.fail_reason,
+    fieldsHtml: hasG2Data ? (g2Fields + decisionHtml) : null,
+    raw: hasG2Data ? g2 : null,
+    pending: !hasG2Data && !g2.failed
+  });
+
+  // Group 4 — governed outcome: Action Request OR Governed Abstention.
+  const actionEligibility = g4.action_eligibility;
+  const abstentionRequired = g4.abstention_required;
+  const ruling = (g4.ruling || (data.group2 && (data.group2.decision || data.group2.ruling)) || '').toUpperCase();
+  const decisionAction = g4.decision_action;
+  const isAbstention = abstentionRequired === true || ruling === 'ABSTAIN' || g4.status === 'governed_abstention' || (actionEligibility === false && g4.action_request == null && data.action_request_id == null);
+  const isActionPath = actionEligibility === true && ruling === 'ALLOW';
+
+  let outcomeTitle = 'Governed Outcome';
+  let outcomeIdLabel = 'action_request_id / abstention_record_id';
+  let outcomeIdValue = data.action_request_id || data.abstention_record_id || g4.abstention_record_id;
+  let outcomeBlockClass = 'UNKNOWN';
+  let outcomeBlockLabel = 'Outcome not yet determined';
+
+  if(isAbstention){
+    outcomeTitle = 'GOVERNED ABSTENTION';
+    outcomeIdLabel = 'abstention_record_id';
+    outcomeIdValue = data.abstention_record_id || g4.abstention_record_id;
+    outcomeBlockClass = 'ABSTAIN';
+    outcomeBlockLabel = 'GOVERNED ABSTENTION';
+  } else if(isActionPath){
+    outcomeTitle = 'Action Request';
+    outcomeIdLabel = 'action_request_id';
+    outcomeIdValue = data.action_request_id;
+    outcomeBlockClass = 'ALLOW';
+    outcomeBlockLabel = 'ACTION AUTHORIZED';
+  }
+
+  const hasGovernanceData = g4 && Object.keys(g4).length > 0 && !g4.failed;
+
+  let g4Fields = '';
+  if(hasGovernanceData){
+    g4Fields += `
+      <div class="field"><div class="k">Status</div>${fieldVal(g4.status,'NOT VERIFIED')}</div>
+      <div class="field"><div class="k">Event type</div>${fieldVal(g4.event_type,'NOT VERIFIED')}</div>
+      <div class="field"><div class="k">Ruling</div>${fieldVal(g4.ruling,'NOT VERIFIED')}</div>
+      <div class="field"><div class="k">Decision action</div>${fieldVal(g4.decision_action,'NOT VERIFIED')}</div>
+      <div class="field"><div class="k">Abstention record ID</div>${fieldVal(g4.abstention_record_id || data.abstention_record_id,'NOT VERIFIED')}</div>
+      <div class="field"><div class="k">Execution ID</div>${fieldVal(g4.execution_id || data.execution_id,'NOT VERIFIED')}</div>
+      <div class="field"><div class="k">Event ID</div>${fieldVal(g4.event_id || data.event_id,'NOT VERIFIED')}</div>
+      <div class="field"><div class="k">Action eligibility</div>${fieldVal(actionEligibility !== undefined && actionEligibility !== null ? String(actionEligibility) : null,'NOT VERIFIED')}</div>
+      <div class="field"><div class="k">Abstention required</div>${fieldVal(abstentionRequired !== undefined && abstentionRequired !== null ? String(abstentionRequired) : null,'NOT VERIFIED')}</div>
+      <div class="field"><div class="k">Action request</div>${fieldVal(g4.action_request,'NOT VERIFIED')}</div>
+      <div class="field"><div class="k">Governance allowed</div>${fieldVal(g4.governance_allowed !== undefined && g4.governance_allowed !== null ? String(g4.governance_allowed) : null,'NOT VERIFIED')}</div>
+      <div class="field"><div class="k">Recorded at</div>${fieldVal(g4.recorded_at,'NOT VERIFIED')}</div>
+    `;
+    if(g4.authority_result || g4.doctrine_result || g4.semantic_result || g4.drift_result){
+      g4Fields += `
+        <div class="field"><div class="k">Authority result</div>${fieldVal(g4.authority_result,'NOT VERIFIED')}</div>
+        <div class="field"><div class="k">Doctrine result</div>${fieldVal(g4.doctrine_result,'NOT VERIFIED')}</div>
+        <div class="field"><div class="k">Semantic result</div>${fieldVal(g4.semantic_result,'NOT VERIFIED')}</div>
+        <div class="field"><div class="k">Drift result</div>${fieldVal(g4.drift_result,'NOT VERIFIED')}</div>
+      `;
+    }
+    g4Fields += `
+      <div class="decision-block ${outcomeBlockClass}" style="grid-column:1/-1">
+        <div class="decision-label">Governed outcome · Ruling: ${fieldText(g4.ruling || ruling)} · Decision action: ${fieldText(decisionAction)}</div>
+        <div class="decision-outcome">${outcomeBlockLabel}</div>
+        <div class="decision-reason">${fieldText(g4.decision_reason)}</div>
+      </div>
+    `;
+  }
+
+  html += nodeCard({
+    group: 'Group 4',
+    title: outcomeTitle,
+    idLabel: outcomeIdLabel,
+    idValue: hasGovernanceData ? outcomeIdValue : undefined,
+    evidenceState: (hasGovernanceData && g4.evidence_state) || 'NOT_APPLICABLE',
+    failed: g4 && g4.failed,
+    failReason: g4 && g4.fail_reason,
+    fieldsHtml: hasGovernanceData ? g4Fields : (g4 && g4.failed ? '' : `<div class="field"><div class="k">Status</div><span class="v pending">Pending upstream live responses</span></div>`),
+    raw: hasGovernanceData ? g4 : null,
+    pending: !hasGovernanceData && !(g4 && g4.failed)
+  });
+
+  document.getElementById('rail').innerHTML = html;
+  renderCommandCenter(data);
+}
+
+async function fetchLive(){
+  const oid = document.getElementById('oidInput').value.trim();
+  const g1url = document.getElementById('g1url').value.trim();
+  const g2url = document.getElementById('g2url').value.trim();
+  const g4url = document.getElementById('g4url').value.trim();
+  
+  if(!oid){
+    banner('error', 'LIVE FETCH BLOCKED — Enter an observation ID before contacting the runtimes.');
+    return;
+  }
+  console.log('[VANA UI] Live fetch initiated for observation:', oid);
+  banner('demo', 'Contacting live APIs…');
+
+  const data = { observation_id: oid, canonical_record_id: null, context_id: null, group1: {}, group2: {}, group3: null, group4: null };
+  let g1Success = false;
+  let g2Success = false;
+  let g4Success = false;
+
+  let g1Response = null;
+  let g2Response = null;
+  let g4Response = null;
+  let g4HealthStatus;
+
+  // =========================================================================
+  // STEP 1: Group 1 Live Execution (GET /health & GET /observations/{oid})
+  // =========================================================================
+  if(!g1url){
+    data.group1 = { failed: true, fail_reason: 'Group 1 base URL not configured' };
+  } else {
+    setHealthChip('g1', 'checking');
+    console.log('[VANA UI] Group 1 health request: GET', `${g1url}/health`);
+    try{
+      const hres = await fetch(`${g1url}/health`);
+      console.log('[VANA UI] Group 1 health response status:', hres.status);
+      data.group1.health_status = hres.ok ? 'healthy' : 'ERROR';
+      data.group1.health_http_status = hres.status;
+      setHealthChip('g1', hres.ok ? 'ok' : 'down', hres.ok ? 'healthy' : ('HTTP '+hres.status));
+    }catch(e){
+      console.warn('[VANA UI] Group 1 health browser error:', e.message);
+      data.group1.health_status = 'ERROR';
+      setHealthChip('g1', 'down', 'CORS / origin null blocked');
+    }
+
+    try{
+      const g1ObsUrl = `${g1url}/observations/${encodeURIComponent(oid)}`;
+      console.log('[VANA UI] Group 1 request: GET', g1ObsUrl);
+      const res = await fetch(g1ObsUrl);
+      console.log('[VANA UI] Group 1 response status:', res.status);
+      if(res.status === 404){
+        data.group1 = { not_found: true, failed: true, fail_reason: 'Observation not found (HTTP 404 NOT_FOUND)' };
+      } else if(!res.ok){
+        throw new Error('HTTP '+res.status + ' ' + res.statusText);
+      } else {
+        g1Response = await res.json();
+        console.log('[VANA DEBUG] Group 1 raw response:', g1Response);
+        const obs = g1Response.observation || {};
+        const prov = obs.provenance || {};
+
+        data.group1 = {
+          retrieval_status: g1Response.status,
+          trace_id: g1Response.trace_id,
+          idempotency_result: g1Response.idempotency_result,
+          health_status: data.group1 && data.group1.health_status,
+          health_http_status: data.group1 && data.group1.health_http_status
+        };
+
+        data.group3 = {
+          contract_version: obs.contract_version,
+          source_identity: obs.source_identity,
+          dataset_id: obs.dataset_id,
+          geo_id: obs.geo_id,
+          source_timestamp: obs.source_timestamp,
+          species: obs.species,
+          confidence: obs.confidence,
+          is_synthetic: obs.is_synthetic,
+          survey_id: obs.survey_id,
+          zone_id: obs.zone_id,
+          flight_id: obs.flight_id,
+          sensor_id: obs.sensor_id,
+          observation_seq: obs.observation_seq,
+          observation_timestamp: obs.observation_timestamp,
+          data_state: obs.data_state,
+          synthetic_state: obs.synthetic_state,
+          mission_id: obs.mission_id,
+          device_id: obs.device_id,
+          location: obs.location,
+          latitude: obs.latitude,
+          longitude: obs.longitude,
+          altitude: obs.altitude,
+          gnss_status: obs.gnss_status,
+          position_accuracy: obs.position_accuracy,
+          observation_type: obs.observation_type,
+          measurement: obs.measurement,
+          unit: obs.unit,
+          quality_state: obs.quality_state,
+          calibration_state: obs.calibration_state,
+          raw_artifact: obs.raw_artifact,
+          raw_artifact_integrity: obs.raw_artifact_integrity,
+          raw_artifacts: obs.raw_artifacts,
+          measurements: obs.measurements,
+          geo_location: obs.geo_location,
+          artifact_type: obs.artifact_type,
+          sha256: obs.sha256,
+          accuracy: obs.accuracy,
+          processing_status: obs.processing_status,
+          capture_method: obs.capture_method,
+          provenance: {
+            device_id: prov.device_id || obs.device_id,
+            mission_id: prov.mission_id || obs.mission_id,
+            captured_at: prov.captured_at,
+            raw_artifact: prov.raw_artifact || obs.raw_artifact,
+            provenance_reference: prov.provenance_reference || obs.provenance_reference
+          }
+        };
+
+        if(obs.canonical_record_id) data.canonical_record_id = obs.canonical_record_id;
+        if(g1Response.canonical_record_id) data.canonical_record_id = g1Response.canonical_record_id;
+
+        ['context_id','action_request_id','abstention_record_id','event_id',
+         'execution_id','tenant_id','lineage_hash'].forEach(k => {
+          if(g1Response[k] != null) data[k] = g1Response[k];
+          if(obs[k] != null) data[k] = obs[k];
+        });
+        if(g1Response.trace_id && !data.trace_id) data.trace_id = g1Response.trace_id;
+
+        const obsId = obs.observation_id || g1Response.observation_id;
+        if(obsId && data.canonical_record_id){
+          g1Success = true;
+        } else {
+          data.group1 = { failed: true, fail_reason: 'Group 1 response did not contain canonical_record_id' };
+        }
+      }
+    }catch(e){
+      console.error('[VANA UI] Group 1 browser error:', e.message);
+      const diagMsg = 'Could not reach Group 1 API: ' + e.message;
+      data.group1 = { failed: true, fail_reason: diagMsg };
+    }
+  }
+
+  console.log('[VANA DEBUG] g1Success:', g1Success);
+
+  // =========================================================================
+  // FAIL-CLOSED CHECK AFTER GROUP 1:
+  // If Group 1 did not successfully return the authoritative canonical_record_id,
+  // STOP. Do NOT call Group 2 or Group 4.
+  // =========================================================================
+  if(!g1Success){
+    console.warn('[VANA UI] Pipeline halted fail-closed: Group 2 and Group 4 requests skipped because upstream Group 1 data is unavailable.');
+    data.group2 = { failed: true, fail_reason: 'Skipped fail-closed: Upstream Group 1 canonical record unavailable.' };
+    data.group4 = { failed: true, fail_reason: 'Skipped fail-closed: Upstream Group 1 canonical record unavailable.' };
+    render(data);
+    lastRenderedData = data;
+    banner('error', "LIVE FETCH BLOCKED — Browser access to Group 1 blocked or incomplete. Pipeline halted fail-closed.");
+    return;
+  }
+
+  // =========================================================================
+  // STEP 2: Group 2 Live Execution (POST /api/group2/context/resolve)
+  // Only reached if Group 1 succeeded and returned canonical_record_id.
+  // =========================================================================
+  let g2Ruling = 'ABSTAIN';
+  let g2ActionEligibility = false;
+  let g2AbstentionRequired = true;
+  let g2ActionRequest = null;
+
+  if(!g2url){
+    data.group2 = { failed: true, fail_reason: 'Group 2 endpoint not configured' };
+  } else {
+    setHealthChip('g2', 'checking');
+    try{
+      const reqBody = { observation_id: oid };
+      console.log('[VANA UI] Group 2 request: POST', g2url, reqBody);
+      const res = await fetch(g2url, {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify(reqBody)
+      });
+      console.log('[VANA UI] Group 2 response status:', res.status);
+      if(!res.ok){
+        setHealthChip('g2', 'down', 'HTTP '+res.status);
+        throw new Error('HTTP ' + res.status + ' ' + res.statusText);
+      }
+      setHealthChip('g2', 'ok', 'healthy');
+      g2Response = await res.json();
+      console.log('[VANA DEBUG] Group 2 raw response:', g2Response);
+      
+      const hasRuling = Boolean(g2Response.ruling || g2Response.decision);
+      const hasObsId = Boolean(g2Response.observation_id || oid);
+      const hasCanonicalId = Boolean(g2Response.canonical_record_id || data.canonical_record_id);
+      const hasActionEligibility = typeof g2Response.action_eligibility === 'boolean';
+      const hasAbstentionRequired = typeof g2Response.abstention_required === 'boolean';
+      const hasContextIdProp = Object.prototype.hasOwnProperty.call(g2Response, 'context_id') || g2Response.context_id !== undefined;
+      const hasActionReqProp = Object.prototype.hasOwnProperty.call(g2Response, 'action_request') || g2Response.action_request !== undefined;
+
+      g2Ruling = g2Response.ruling || g2Response.decision;
+      g2ActionEligibility = hasActionEligibility ? g2Response.action_eligibility : undefined;
+      g2AbstentionRequired = hasAbstentionRequired ? g2Response.abstention_required : undefined;
+      g2ActionRequest = hasActionReqProp ? g2Response.action_request : undefined;
+
+      data.group2 = {
+        ...g2Response,
+        http_status: res.status,
+        context_status: g2Response.context_status || g2Response.contextStatus,
+        decision: g2Ruling,
+        decision_made: g2Response.decision_made !== undefined ? g2Response.decision_made : g2Response.decisionMade,
+        decision_reason: (g2Response.provenance && (g2Response.provenance.message || g2Response.provenance.reason)) || g2Response.reason || g2Response.decision_reason,
+        trace_id: g2Response.trace_id || g2Response.traceId,
+        context_found: g2Response.context_found !== undefined ? g2Response.context_found : g2Response.contextFound,
+        scientific_context: g2Response.scientific_context || {},
+        gap_fields: g2Response.gap_fields || [],
+        action_eligibility: g2ActionEligibility,
+        abstention_required: g2AbstentionRequired,
+        action_request: g2ActionRequest
+      };
+
+      if(g2Response.canonical_record_id && !data.canonical_record_id) data.canonical_record_id = g2Response.canonical_record_id;
+      if(g2Response.observation_id) data.observation_id = g2Response.observation_id;
+      // Literal null preservation
+      data.context_id = hasContextIdProp ? g2Response.context_id : null;
+
+      if(res.status === 200 && hasObsId && hasCanonicalId && hasRuling && hasActionEligibility && hasAbstentionRequired){
+        g2Success = true;
+      } else {
+        data.group2 = { failed: true, fail_reason: 'Group 2 response validation failed: missing required governance fields' };
+      }
+    }catch(e){
+      console.error('[VANA UI] Group 2 browser error:', e.message);
+      setHealthChip('g2', 'down', 'unreachable');
+      data.group2 = { failed: true, fail_reason: `Could not reach Group 2 API (${e.message})` };
+    }
+  }
+
+  console.log('[VANA DEBUG] g2Success:', g2Success);
+
+  // =========================================================================
+  // FAIL-CLOSED CHECK AFTER GROUP 2:
+  // If Group 2 did not successfully return a live response,
+  // STOP. Do NOT call Group 4.
+  // =========================================================================
+  if(!g2Success){
+    console.warn('[VANA UI] Pipeline halted fail-closed: Group 4 request skipped because Group 2 live response is unavailable.');
+    data.group4 = { failed: true, fail_reason: 'Skipped fail-closed: Upstream Group 2 live decision unavailable.' };
+    render(data);
+    lastRenderedData = data;
+    banner('error', 'LIVE FETCH HALTED — Group 2 context resolution failed. Group 4 execution skipped fail-closed.');
+    return;
+  }
+
+  // =========================================================================
+  // STEP 3: Group 4 Live Execution (POST /vana/execute)
+  // Only called after successful live Group 1 and Group 2 responses.
+  // Must dynamically consume the actual Group 2 runtime response and Group 1 canonical_record_id.
+  // =========================================================================
+  if(!g4url){
+    data.group4 = { failed: true, fail_reason: 'Group 4 endpoint not configured' };
+  } else if(location.origin !== 'http://localhost:8000') {
+    // G4 currently permits this exact browser origin. A file:// page has the
+    // opaque `null` origin, and other localhost ports are rejected by its
+    // CORS middleware before /vana/execute receives the request.
+    const currentOrigin = location.origin || 'null';
+    const reason = `G4 CORS blocked this page origin (${currentOrigin}). Serve this dashboard from http://localhost:8000; G4 does not permit file:// or this port.`;
+    console.error('[VANA UI] ' + reason);
+    setHealthChip('g4', 'down', 'CORS origin blocked');
+    data.group4 = { failed: true, fail_reason: reason };
+  } else {
+    setHealthChip('g4', 'checking');
+    try{
+      const u = new URL(g4url);
+      console.log('[VANA UI] Group 4 health request: GET', `${u.origin}/health`);
+      const hres = await fetch(`${u.origin}/health`);
+      console.log('[VANA UI] Group 4 health response status:', hres.status);
+      g4HealthStatus = hres.ok ? 'healthy' : 'ERROR';
+      setHealthChip('g4', hres.ok ? 'ok' : 'down', hres.ok ? 'healthy' : ('HTTP '+hres.status));
+    }catch(e){
+      console.warn('[VANA UI] Group 4 health browser error:', e.message);
+      g4HealthStatus = 'ERROR';
+      setHealthChip('g4', 'unknown', 'active');
+    }
+
+    const g4Payload = {
+      observation_id: data.observation_id,
+      canonical_record_id: data.canonical_record_id,
+      context_id: g2Response ? g2Response.context_id : data.context_id, // literal null
+      ruling: g2Response ? (g2Response.ruling || g2Response.decision) : g2Ruling,
+      action_eligibility: g2Response ? g2Response.action_eligibility : g2ActionEligibility,
+      abstention_required: g2Response ? g2Response.abstention_required : g2AbstentionRequired,
+      action_request: g2Response ? g2Response.action_request : g2ActionRequest
+    };
+
+    try{
+      console.log('[VANA UI] Group 4 request: POST', g4url, g4Payload);
+      const res = await fetch(g4url, {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify(g4Payload)
+      });
+      console.log('[VANA UI] Group 4 response status:', res.status);
+      if(!res.ok){
+        throw new Error('HTTP ' + res.status + ' ' + res.statusText);
+      }
+      g4Response = await res.json();
+      console.log('[VANA DEBUG] Group 4 raw response:', g4Response);
+      const ev = g4Response.evidence || {};
+
+      data.group4 = {
+        ...g4Response,
+        http_status: res.status,
+        health_status: g4HealthStatus,
+        status: g4Response.status,
+        event_type: ev.event_type !== undefined ? ev.event_type : g4Response.event_type,
+        ruling: ev.ruling !== undefined ? ev.ruling : g4Response.ruling,
+        decision_action: ev.decision_action !== undefined ? ev.decision_action : g4Response.decision_action,
+        abstention_record_id: ev.abstention_record_id || g4Response.abstention_record_id,
+        event_id: ev.event_id || g4Response.event_id,
+        execution_id: ev.execution_id || g4Response.execution_id,
+        observation_id: ev.observation_id || g4Response.observation_id || data.observation_id,
+        canonical_record_id: ev.canonical_record_id || g4Response.canonical_record_id || data.canonical_record_id,
+        context_id: ev.context_id !== undefined ? ev.context_id : g4Response.context_id,
+        governance_allowed: ev.governance_allowed !== undefined ? ev.governance_allowed : g4Response.governance_allowed,
+        recorded_at: ev.recorded_at || g4Response.recorded_at,
+        action_eligibility: g4Payload.action_eligibility,
+        abstention_required: g4Payload.abstention_required,
+        action_request: g4Payload.action_request,
+        decision_reason: g4Response.decision_reason
+      };
+
+      if(ev.abstention_record_id) data.abstention_record_id = ev.abstention_record_id;
+      if(ev.event_id) data.event_id = ev.event_id;
+      if(ev.execution_id) data.execution_id = ev.execution_id;
+      if(ev.canonical_record_id && !data.canonical_record_id) data.canonical_record_id = ev.canonical_record_id;
+
+      const g4StatusValid = g4Response.status === 'governed_abstention' || g4Response.status === 'success';
+      const evValid = Boolean(g4Response.evidence);
+      const evRulingValid = ev.ruling === 'ABSTAIN' || ev.ruling === g4Payload.ruling;
+      const evActionValid = ev.decision_action === 'noop' || Boolean(ev.decision_action);
+      const evObsMatch = !ev.observation_id || ev.observation_id === data.observation_id;
+      const evCridMatch = !ev.canonical_record_id || ev.canonical_record_id === data.canonical_record_id;
+
+      if(res.status === 200 && g4StatusValid && evValid && evRulingValid && evActionValid && evObsMatch && evCridMatch){
+        g4Success = true;
+      } else {
+        data.group4 = { failed: true, fail_reason: 'Group 4 response validation failed' };
+      }
+    }catch(e){
+      console.error('[VANA UI] Group 4 browser error:', e.message);
+      const diagMsg = 'Could not reach Group 4 API: ' + e.message;
+      data.group4 = { failed: true, fail_reason: diagMsg };
+    }
+  }
+
+  console.log('[VANA DEBUG] g4Success:', g4Success);
+
+  render(data);
+  lastRenderedData = data;
+
+  if(g1Success && g2Success && g4Success){
+    banner('live', 'LIVE SUCCESS — Full runtime chain connected directly in browser (Group 1 → Group 2 → Group 4)');
+  } else {
+    banner('error', 'LIVE FETCH HALTED — Upstream runtime data incomplete.');
+  }
+}
+
+function loadDemo(){
+  try{
+    const data = JSON.parse(document.getElementById('pastedJson').value);
+    lastRenderedData = data;
+    render(data);
+    banner('demo', 'DEMO / SAMPLE DATA — not a live API response');
+  }catch(e){
+    banner('error', 'Could not parse pasted JSON: ' + e.message);
+  }
+}
+
+function loadEvidencePack(){
+  const raw = document.getElementById('evidencePackJson').value.trim();
+  if(!raw){
+    evidencePack = null;
+  } else {
+    try{
+      evidencePack = JSON.parse(raw);
+    }catch(e){
+      alert('Could not parse evidence pack JSON: ' + e.message);
+      return;
+    }
+  }
+  if(lastRenderedData) render(lastRenderedData);
+}
+
+// initial state: Live mode active by default
+let lastRenderedData = { observation_id: '', group1:{}, group2:{}, group3:null, group4:null };
+render(lastRenderedData);
+setMode('live');
+fetchForestCover();
+
+document.querySelectorAll('.side-nav button[data-view]').forEach(button => button.addEventListener('click', () => {
+  const view=button.dataset.view;
+  document.querySelectorAll('.side-nav button[data-view]').forEach(b=>b.classList.toggle('active',b===button));
+  document.querySelectorAll('.command-view').forEach(section=>section.classList.toggle('active',section.id==='view-'+view));
+  document.getElementById('sidebar').classList.remove('open');
+  window.scrollTo({top:0,behavior:'smooth'});
+  if(view === 'forest' && forestCoverState.status === 'idle'){
+    fetchForestCover();
+  }
+}));
+document.getElementById('menuBtn').addEventListener('click',()=>document.getElementById('sidebar').classList.toggle('open'));
+</script>
+</body>
+</html>

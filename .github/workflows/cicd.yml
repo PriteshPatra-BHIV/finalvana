@@ -1,0 +1,264 @@
+name: VANA Environmental Governance CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch: {}
+
+jobs:
+  validate:
+    name: Validate production deployment
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set GitHub SHA
+        run: echo "short_sha=${GITHUB_SHA::7}" >> $GITHUB_ENV
+
+      - name: Generate Compose file for validation
+        run: |
+          sed "s|IMG_TAG|$short_sha|g" docker-compose.production.template.yml > docker-compose.production.yml
+
+      - name: Create stub .env for compose validation
+        run: |
+          cp .env.example .env
+          sed -i 's/CHANGE_ME_strong_postgres_password/TestPass321/g' .env
+
+      - name: Validate Docker Compose files
+        run: |
+          docker compose -f docker-compose.production.yml config
+
+      - name: Upload deployment artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: deployment-artifacts
+          path: |
+            docker-compose.production.template.yml
+            deploy.sh
+            .env.example
+
+  build:
+    name: Build production images
+    runs-on: ubuntu-latest
+    needs: validate
+    outputs:
+      sha_short: ${{ steps.vars.outputs.sha_short }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set short git commit SHA
+        id: vars
+        run: echo "sha_short=$(git rev-parse --short=7 HEAD)" >> $GITHUB_OUTPUT
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Build and push Canonical MasterDB image
+        run: |
+          docker buildx build --push \
+            --tag bhiv/vana-masterdb:${{ steps.vars.outputs.sha_short }} \
+            --tag bhiv/vana-masterdb:latest \
+            -f backend/group1-masterdb/Dockerfile backend/group1-masterdb
+
+      - name: Build and push Unified Auth & Group 4 Runtime image
+        run: |
+          docker buildx build --push \
+            --tag bhiv/vana-auth:${{ steps.vars.outputs.sha_short }} \
+            --tag bhiv/vana-auth:latest \
+            --tag bhiv/vana-auth-runtime:${{ steps.vars.outputs.sha_short }} \
+            --tag bhiv/vana-auth-runtime:latest \
+            -f backend/Dockerfile.auth .
+
+      - name: Build and push VANA Frontend & Gateway image
+        run: |
+          docker buildx build --push \
+            --tag bhiv/vana-frontend:${{ steps.vars.outputs.sha_short }} \
+            --tag bhiv/vana-frontend:latest \
+            --tag bhiv/vana-gateway:${{ steps.vars.outputs.sha_short }} \
+            --tag bhiv/vana-gateway:latest \
+            -f frontend/group5-lineage-dashboard/vana-control-center/Dockerfile frontend/group5-lineage-dashboard/vana-control-center
+
+  deploy:
+    name: Deploy unified stack to remote production VM
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download deployment artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: deployment-artifacts
+
+      - name: Tar deployment files
+        run: |
+          tar -czf deployment.tar.gz docker-compose.production.template.yml deploy.sh .env.example
+
+      - name: Install sshpass
+        run: |
+          sudo apt-get update && sudo apt-get install -y sshpass
+
+      - name: Create deployment directory on VM
+        run: |
+          sshpass -p "${{ secrets.VM_PASSWORD }}" ssh -p ${{ secrets.VM_PORT }} -o StrictHostKeyChecking=no ${{ secrets.VM_USERNAME }}@${{ secrets.VM_IP }} "mkdir -p ~/finalvana"
+
+      - name: Copy deployment tarball to VM
+        run: |
+          sshpass -p "${{ secrets.VM_PASSWORD }}" scp -P ${{ secrets.VM_PORT }} -o StrictHostKeyChecking=no deployment.tar.gz ${{ secrets.VM_USERNAME }}@${{ secrets.VM_IP }}:~/finalvana/deployment.tar.gz
+
+      - name: Deploy production stack on VM
+        run: |
+          sshpass -p "${{ secrets.VM_PASSWORD }}" ssh -p ${{ secrets.VM_PORT }} -o StrictHostKeyChecking=no ${{ secrets.VM_USERNAME }}@${{ secrets.VM_IP }} "bash -s" << 'EOF'
+            set -euo pipefail
+            cd ~/finalvana
+
+            # Extract deployment archive and clean up tarball
+            tar -xzf deployment.tar.gz
+            rm -f deployment.tar.gz
+
+            # ------------------------------------------------------------------
+            # 1. DATABASE VOLUME PRESERVATION (ZERO DATA LOSS)
+            # Detect existing PostgreSQL volume from previous deployments
+            # ------------------------------------------------------------------
+            if docker volume inspect vana-masterdb-foundation_vana_pg_data >/dev/null 2>&1; then
+                echo "✅ Found existing database volume: vana-masterdb-foundation_vana_pg_data"
+                TARGET_DB_VOL="vana-masterdb-foundation_vana_pg_data"
+            elif docker volume inspect vana_pg_data >/dev/null 2>&1; then
+                echo "✅ Found existing database volume: vana_pg_data"
+                TARGET_DB_VOL="vana_pg_data"
+            else
+                echo "⚠️ No previous volume found. Creating vana-masterdb-foundation_vana_pg_data for persistence."
+                TARGET_DB_VOL="vana-masterdb-foundation_vana_pg_data"
+            fi
+
+            # ------------------------------------------------------------------
+            # 2. STOP OLD CHUNK DEPLOYMENTS SAFELY (PRESERVING VOLUMES)
+            # Release ports 8013, 8010, 5178, 8080 without touching the data volume.
+            # ------------------------------------------------------------------
+            echo "Stopping old chunk deployments if active..."
+            if [ -d ~/vana-masterdb-foundation ]; then
+                echo "Stopping legacy vana-masterdb-foundation stack..."
+                (cd ~/vana-masterdb-foundation && docker compose -f docker-compose.production.yml down 2>/dev/null || true)
+            fi
+            if [ -d ~/vana_lineage ]; then
+                echo "Stopping legacy vana_lineage stack..."
+                (cd ~/vana_lineage && docker compose -f docker-compose.production.yml down 2>/dev/null || true)
+            fi
+
+            # Stop individual legacy container names if still active
+            docker stop vana_api bhiv_vana_lineage vana_db vana_auth_runtime vana_gateway 2>/dev/null || true
+            docker rm vana_api bhiv_vana_lineage vana_db vana_auth_runtime vana_gateway 2>/dev/null || true
+
+            # ------------------------------------------------------------------
+            # 3. CONFIGURE ENVIRONMENT
+            # ------------------------------------------------------------------
+            if [ -n "${{ secrets.PRODUCTION_ENV }}" ]; then
+                echo "${{ secrets.PRODUCTION_ENV }}" > .env
+            elif [ ! -f .env ]; then
+                cp .env.example .env
+            fi
+
+            # Ensure VANA_DB_VOLUME_NAME is set to the detected existing volume
+            if grep -q "VANA_DB_VOLUME_NAME" .env; then
+                sed -i "s|VANA_DB_VOLUME_NAME=.*|VANA_DB_VOLUME_NAME=$TARGET_DB_VOL|g" .env
+            else
+                echo "VANA_DB_VOLUME_NAME=$TARGET_DB_VOL" >> .env
+            fi
+
+            # ------------------------------------------------------------------
+            # 4. PREPARE COMPOSE AND PULL IMAGES
+            # ------------------------------------------------------------------
+            docker version
+            docker compose version
+
+            # Log in to Docker Hub on the VM
+            echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
+
+            # Replace commit SHA in compose template
+            sed "s|IMG_TAG|${{ needs.build.outputs.sha_short }}|g" docker-compose.production.template.yml > docker-compose.production.yml
+
+            # Validate generated compose file
+            docker compose -f docker-compose.production.yml config
+
+            # Pull latest production images
+            docker compose -f docker-compose.production.yml pull
+
+            # Logout from Docker Hub
+            docker logout
+
+            # ------------------------------------------------------------------
+            # 5. START UNIFIED VANA INFRASTRUCTURE
+            # ------------------------------------------------------------------
+            docker compose -f docker-compose.production.yml up -d --remove-orphans
+
+            docker compose -f docker-compose.production.yml ps
+
+            # ------------------------------------------------------------------
+            # 6. COMPREHENSIVE MULTI-TIER HEALTH CHECK
+            # ------------------------------------------------------------------
+            echo "Waiting for services to become healthy..."
+            set -a
+            [ -f .env ] && source .env
+            set +a
+
+            FE_PORT="${VANA_FRONTEND_PORT:-8089}"
+            G1_PORT="${VANA_G1_PORT:-8033}"
+            AUTH_PORT="${VANA_AUTH_PORT:-8034}"
+            LINEAGE_PORT="${VANA_LINEAGE_PORT:-5185}"
+
+            for i in {1..18}; do
+              MDB_HEALTH=0
+              AUTH_HEALTH=0
+              GATEWAY_HEALTH=0
+              LINEAGE_PORT_HEALTH=0
+
+              curl -sf "http://localhost:${G1_PORT}/health" > /dev/null && MDB_HEALTH=1 || true
+              curl -sf "http://localhost:${AUTH_PORT}/health" > /dev/null && AUTH_HEALTH=1 || true
+              if [ "$AUTH_HEALTH" -eq 0 ]; then
+                curl -sf "http://localhost:8000/health" > /dev/null && AUTH_HEALTH=1 || true
+              fi
+              curl -sf "http://localhost:${FE_PORT}/nginx-health" > /dev/null && GATEWAY_HEALTH=1 || true
+              curl -sf "http://localhost:${LINEAGE_PORT}/nginx-health" > /dev/null && LINEAGE_PORT_HEALTH=1 || true
+
+              if [ "$MDB_HEALTH" -eq 1 ] && [ "$AUTH_HEALTH" -eq 1 ] && [ "$GATEWAY_HEALTH" -eq 1 ] && [ "$LINEAGE_PORT_HEALTH" -eq 1 ]; then
+                echo "✅ ALL VANA SERVICES HEALTHY & VERIFIED!"
+                echo "  [+] MasterDB API (:${G1_PORT})        : HEALTHY"
+                echo "  [+] Auth & Group 4 Runtime (:${AUTH_PORT}) : HEALTHY"
+                echo "  [+] Frontend Control Center (:${FE_PORT})  : HEALTHY"
+                echo "  [+] Preserved Lineage Port (:${LINEAGE_PORT})  : HEALTHY"
+                break
+              fi
+
+              if [ "$i" -eq 18 ]; then
+                echo "❌ Health check timed out after 180s!"
+                echo "Status: MasterDB=$MDB_HEALTH, Auth=$AUTH_HEALTH, Gateway=$GATEWAY_HEALTH, LineagePort=$LINEAGE_PORT_HEALTH"
+                docker compose -f docker-compose.production.yml ps
+                docker compose -f docker-compose.production.yml logs --tail=50
+                exit 1
+              fi
+
+              echo "[$i/18] Waiting for endpoints (MDB=$MDB_HEALTH, Auth=$AUTH_HEALTH, Gateway=$GATEWAY_HEALTH, Lineage=$LINEAGE_PORT_HEALTH)... Retrying in 10s"
+              sleep 10
+            done
+
+            # Prune old images while preserving last 7 days for fast rollback
+            docker image prune -af --filter "until=168h"
+            echo "🚀 VANA Deployment Completed Successfully!"
+          EOF
+
+  rollback:
+    name: Rollback notification on failure
+    needs: [build, deploy]
+    if: always() && needs.deploy.result == 'failure'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Alert on Failure
+        run: |
+          echo "🚨 Deployment failed! Please inspect VM logs or rerun pipeline from the last known good commit."

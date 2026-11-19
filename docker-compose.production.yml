@@ -1,0 +1,115 @@
+# ==============================================================================
+# VANA Environmental Governance System — Production Compose
+# ==============================================================================
+# Generated for production deployment using Docker Hub images (latest).
+# ==============================================================================
+
+services:
+  vana-db:
+    image: postgis/postgis:16-3.4
+    container_name: vana_db
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-vana}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD must be set in .env}
+      POSTGRES_DB: ${POSTGRES_DB:-vana_masterdb}
+    volumes:
+      - vana_pg_data:/var/lib/postgresql/data
+    networks:
+      - vana_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-vana} -d ${POSTGRES_DB:-vana_masterdb}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  vana-masterdb:
+    image: bhiv/vana-masterdb:latest
+    container_name: vana_masterdb
+    restart: unless-stopped
+    env_file:
+      - .env
+    depends_on:
+      vana-db:
+        condition: service_healthy
+    environment:
+      VANA_DATABASE_URL: ${VANA_DATABASE_URL:-postgresql://${POSTGRES_USER:-vana}:${POSTGRES_PASSWORD}@vana-db:5432/${POSTGRES_DB:-vana_masterdb}}
+      VANA_CORS_ORIGINS: ${VANA_CORS_ORIGINS:-http://localhost:8089}
+      PORT: "8000"
+    ports:
+      - "${VANA_G1_PORT:-8033}:8000"
+    networks:
+      - vana_network
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:8000/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  vana-auth:
+    image: bhiv/vana-auth:latest
+    container_name: vana_auth
+    restart: unless-stopped
+    env_file:
+      - .env
+    depends_on:
+      vana-db:
+        condition: service_healthy
+    environment:
+      VANA_ENV: ${VANA_ENV:-production}
+      VANA_DATABASE_URL: ${VANA_DATABASE_URL:-postgresql://${POSTGRES_USER:-vana}:${POSTGRES_PASSWORD}@vana-db:5432/${POSTGRES_DB:-vana_masterdb}}
+      VANA_CORS_ORIGINS: ${VANA_CORS_ORIGINS:-http://localhost:8089}
+      PORT: "8000"
+    ports:
+      - "${VANA_AUTH_PORT:-8034}:8000"
+    networks:
+      vana_network:
+        aliases:
+          - vana-auth
+          - vana-auth-runtime
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:8000/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  vana-frontend:
+    image: bhiv/vana-frontend:latest
+    container_name: vana_frontend
+    restart: unless-stopped
+    env_file:
+      - .env
+    depends_on:
+      vana-masterdb:
+        condition: service_healthy
+      vana-auth:
+        condition: service_healthy
+    environment:
+      VANA_BACKEND_URL: ${VANA_BACKEND_URL:-http://vana-auth:8000}
+      VANA_G1_URL: ${VANA_G1_URL:-http://vana-masterdb:8000}
+      VANA_G2_URL: ${VANA_G2_URL:-https://niyantran.blackholeinfiverse.com}
+      VANA_G4_URL: ${VANA_G4_URL:-http://vana-auth:8000}
+    ports:
+      - "${VANA_FRONTEND_PORT:-8089}:80"
+      - "${VANA_LINEAGE_PORT:-5185}:80"
+    networks:
+      - vana_network
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1/nginx-health"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+networks:
+  vana_network:
+    driver: bridge
+
+volumes:
+  vana_pg_data:
+    name: ${VANA_DB_VOLUME_NAME:-vana-masterdb-foundation_vana_pg_data}
