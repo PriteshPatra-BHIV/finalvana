@@ -2,7 +2,8 @@
 **VANA Environmental Intelligence Command Center**  
 **Role:** Product, UX & Forest Department Workflow Owner (Kaushal Yadav)  
 **Verification Date:** 2026-11-20  
-**Audit Standard:** Zero-Fabrication & Strict Ground Truth
+**Audit Standard:** Zero-Fabrication & Strict Ground Truth  
+**Reference Git Commit:** `cd383f2`
 
 ---
 

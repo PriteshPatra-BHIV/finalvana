@@ -1,7 +1,8 @@
 # Phase 1 & 2 Product Acceptance Checklist
 **VANA Environmental Intelligence Command Center**  
 **Role:** Product, UX & Forest Department Workflow Owner (Kaushal Yadav)  
-**Verification Date:** 2026-11-20
+**Verification Date:** 2026-11-20  
+**Reference Git Commit:** `cd383f2`
 
 ---
 

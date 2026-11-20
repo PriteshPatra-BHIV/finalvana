@@ -1,7 +1,9 @@
 # Phase 1 & 2 Demonstration Walkthrough Script
 **VANA Environmental Intelligence Command Center**  
 **Role:** Product, UX & Forest Department Workflow Owner (Kaushal Yadav)  
-**Audience:** Maharashtra Forest Department, BIQOS Platform Team, Hackathon Judges
+**Audience:** Maharashtra Forest Department, BIQOS Platform Team, Hackathon Judges  
+**Release Classification:** Conditional demonstration  
+**Reference Git Commit:** `cd383f2`
 
 ---
 
@@ -46,7 +48,7 @@
    - Role Badge updates to **Forest Officer (ROLE_FOREST_OFFICER)**.
    - Note the dedicated **Forest Officer Review Queue** banner.
 2. **Review Observation:**
-   - Select observation `TC-Z03-F02-LIDAR-OBS474`.
+   - Select observation `TC-Z03-F02-LIDAR-OBS889`.
    - View telemetry, ground coordinates, and canopy density.
    - Observe SANSKAR governance assessment panel:
      - Policy: Statutory Mangrove Conservation (FSI Baseline).

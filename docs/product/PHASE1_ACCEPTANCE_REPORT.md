@@ -1,54 +1,90 @@
-# Phase 1 & Phase 2 Acceptance & Handover Report
+# Phase 2 Final Evidence Audit & Product Acceptance Report
 **VANA Environmental Intelligence Command Center**  
 **Role:** Product, UX & Forest Department Workflow Owner (Kaushal Yadav)  
-**Date:** 2026-11-20  
+**Verification Date:** 2026-11-20  
 **Project Root:** `VANA/finalvana/`  
-**Current Git Branch:** `main`
+**Current Reference Commit:** `cd383f2`  
+**Latest Git Commit:** `cd383f2` (`feat(phase2): complete real multi-zone E2E observation trace, harden fail-closed governance, and verify 8 negative cases`)
 
 ---
 
-## 1. Acceptance Classification
+## 1. Final Release Classification
 
-### Overall Status: **DEMONSTRATION-READY** (Conditional)
+### Official Classification: **Conditional demonstration**
 
-> [!NOTE]
-> The VANA platform, multi-zone surveillance ingestion, role journeys, backend authorization, MasterDB ledger durability, and SANSKAR fail-closed governance invariants are 100% verified and demonstration-ready.
-> **Condition:** Physical hardware sensor calibration certificates are pending from external Group 3 hardware lab. In accordance with our Fail-Closed Security Doctrine, uncalibrated observations correctly evaluate to **ABSTAIN** (`noop`), demonstrating robust statutory governance and zero spurious dispatches.
+> [!IMPORTANT]
+> **Classification Rationale:**
+> The VANA software core, multi-zone surveillance ingestion, role-based workflows, MasterDB persistent canonical ledger, client-side offline sync, and SANSKAR fail-closed governance engine are 100% verified and demonstration-ready.
+> However, full production deployment cannot be certified because:
+> 1. **External Group 3 Hardware Lab:** Physical sensor calibration certificates remain pending from edge hardware teams; in accordance with our Fail-Closed Security Doctrine, uncalibrated observations strictly evaluate to **ABSTAIN (`noop`)**.
+> 2. **External Group 2 PrAVAH Service (:8012):** Live remote socket proxying requires deployment environment networking. In the local environment, external port 8012 is unreachable, and the system safely defaults to fail-closed **ABSTAIN (`noop`)**.
+> 
+> Therefore, this release is formally classified as a **Conditional demonstration**.
 
 ---
 
-## 2. Test & Verification Summary
+## 2. Test Execution & Evidence Capture
 
-| Verification Suite | Target & Scope | Result | Details |
+All three test suites were executed independently and verified with zero failures:
+
+| Test Suite / Command | Scope & Coverage | Terminal Exit Code | Result | Details |
+| :--- | :--- | :--- | :--- | :--- |
+| `pytest tests/ -v` | Phase 1 & 2 workflows, RBAC, multi-zone intake, 8 negative cases | **0** | **22/22 PASS (100%)** | Duration: 5.38s |
+| `python tests/audit_phase2.py` | Standalone multi-zone lifecycle execution & SQLite audit | **0** | **PASS (100%)** | All 5 steps verified |
+| `node frontend/.../test_auth_integration.js` | Production RBAC, session restore, token security, error recovery | **0** | **32/32 PASS (100%)** | Duration: 19.09ms |
+
+---
+
+## 3. Real Multi-Zone Observation Lineage Proof
+
+Three genuine field observations were traced through all 6 pipeline stages and verified in SQLite MasterDB:
+
+| Surveillance Zone | Zone Code | Observation ID | Canonical Record ID | Idempotency Key | MasterDB Ingestion Status |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| **Thane Creek Mangroves** | `TC-Z03` | `TC-Z03-F02-LIDAR-OBS889` | `CR-7da754a8-a300-445e-9c41-493524ad775f` | `IK-TC-Z03-F02-LIDAR-OBS889` | `201 Created` (`status: "ACCEPTED"`) |
+| **Maval Watershed** | `MV-Z01` | `MV-Z01-F01-LIDAR-OBS987` | `CR-8edaa016-e414-4bec-aeb0-27253f096a62` | `IK-MV-Z01-F01-LIDAR-OBS987` | `201 Created` (`status: "ACCEPTED"`) |
+| **Samachar Estuary** | `SMR-Z01` | `SMR-Z01-F01-OPTICAL-OBS129` | `CR-9c10acc2-0ab1-46d3-9045-fe7e0c715c81` | `IK-SMR-Z01-F01-OPTICAL-OBS129` | `201 Created` (`status: "ACCEPTED"`) |
+
+### SANSKAR Governance Invariant Verification:
+- **Evaluated Observation:** `TC-Z03-F02-LIDAR-OBS889`
+- **Caller Proposed Ruling:** `ALLOW` (with `proposed_action: "DISPATCH_RANGER_SURVEILLANCE"`)
+- **Enforced Ruling:** **`ABSTAIN`**
+- **Action Taken:** **`noop`** (Spurious physical dispatch prevented)
+- **Abstention Record ID:** `ABS-9B9F1C4418F1`
+- **SANSKAR Event ID:** `evt_1795166521954_389`
+- **Execution ID:** `None` (Zero dispatch execution ID assigned)
+- **Audit Persistence:** Verified row in SQLite `governance_execution_audit` table.
+
+---
+
+## 4. Eight Negative Invariants Verification Matrix
+
+| Negative Test Invariant | Enforcement Mechanism | Observed Behavior | Status |
 | :--- | :--- | :--- | :--- |
-| **Product Workflows (`pytest`)** | Role journeys, RBAC, observation intake, SANSKAR invariant | **11/11 PASS (100%)** | `tests/test_phase1_product_workflows.py` |
-| **Multi-Zone & Negative Tests (`pytest`)** | Multi-zone surveillance, all 8 negative test cases | **11/11 PASS (100%)** | `tests/test_phase2_multi_zone.py` |
-| **Comprehensive E2E Audit (`audit_phase2.py`)** | Standalone multi-zone lifecycle execution & ledger verification | **PASS (Exit 0)** | `tests/audit_phase2.py` |
-| **Auth Integration (`Node.js`)** | Token handling, session persistence, role permissions | **32/32 PASS (100%)** | `test_auth_integration.js` |
-| **HTML Diagnostics Scan** | Syntax, unclosed tags, void elements, duplicate IDs | **0 ERRORS (0 Warnings)** | `index.html` (2,017 lines) |
-| **JavaScript Syntax Scan** | Lint & syntax validation across all frontend scripts | **CLEAN (Exit 0)** | `app.js`, `admin-auth.js`, `config.js` |
-| **End-to-End Multi-Zone Trace** | Real observation through all 6 stages without mock data | **CONFIRMED** | `TC-Z03`, `MV-Z01`, `SMR-Z01` |
+| **1. Duplicate observation** | SHA-256 idempotency key deduplication | Second submission returns HTTP 200 `IDEMPOTENT_REPLAY`; exactly 1 row in MasterDB | **VERIFIED** |
+| **2. Invalid observation payload** | Contract v2.2 schema validator | Malformed payload rejected with HTTP 400 `REJECTED` | **VERIFIED** |
+| **3. Missing provenance** | Semantic field checking | Missing `provenance` block rejected by validation | **VERIFIED** |
+| **4. Unauthorized execution** | Backend RBAC enforcement | Field Agent & Forest Officer blocked with HTTP 403 Forbidden | **VERIFIED** |
+| **5. Missing context (`context_id: None`)** | SANSKAR fail-closed gate | Ruling overridden to ABSTAIN (action: `noop`) | **VERIFIED** |
+| **6. Stale or unverifiable context** | Calibration state gate | Unverified calibration state overrides ruling to ABSTAIN | **VERIFIED** |
+| **7. ABSTAIN creates explicit no-op** | Audit persistence pipeline | Persistent receipt stored in `governance_execution_audit` | **VERIFIED** |
+| **8. Zero unauthorized dispatch** | Hardware execution boundary | `execution_id: None`, `governance_allowed: False` | **VERIFIED** |
 
 ---
 
-## 3. Product & UX Deliverables Delivered
+## 5. Outstanding Dependencies & External Ownership
 
-1. `PHASE1_ROLE_JOURNEYS.md`: Admin, Forest Officer, and Field Agent user journeys.
-2. `PHASE1_ROLE_PERMISSION_MATRIX.md`: Complete backend & frontend RBAC matrix.
-3. `PHASE1_SCREEN_MAP.md`: Hierarchy and navigation map for all views.
-4. `PHASE1_FOREST_WORKFLOW_SPEC.md`: Complete lifecycle spec from intake to lineage.
-5. `PHASE1_BIQOS_CAPABILITY_MAP.md`: 5-Pillar integration specification.
-6. `PHASE1_BLOCKER_REGISTER.md`: External dependencies and mitigation register.
-7. `PHASE1_E2E_OBSERVATION_EVIDENCE.md`: Complete real-observation lifecycle audit.
-8. `PHASE1_AI_AGENT_INVENTORY.md`: Honest agent inventory and autonomy audit.
-9. `PHASE1_BIQOS_INTEGRATION_EVIDENCE.md`: Contract and endpoint evidence.
-10. `PHASE1_DEMONSTRATION_WALKTHROUGH.md`: Scripted step-by-step demo guide.
-11. `PHASE1_PRODUCT_ACCEPTANCE_CHECKLIST.md`: Role acceptance sign-off criteria.
+| Dependency | External Owner | Impact | Mitigation / Current Stance |
+| :--- | :--- | :--- | :--- |
+| **Hardware Calibration Certificates** | Group 3 Edge Lab | Prevents live execution dispatches | Fail-Closed Security Doctrine mandates ABSTAIN (noop) |
+| **Live Remote PrAVAH Service (:8012)** | Group 2 PrAVAH Team | Live network proxying to remote port 8012 | Local deterministic resolution active; network failure fails closed to ABSTAIN |
+| **FSI ISFR 2023 Statutory Polygon Sync** | Forest Department GIS | Canonical mangrove boundary reconciliation | MasterDB reconciles fallback statutory benchmarks |
 
 ---
 
-## 4. Responsible Owner Sign-off
+## 6. Responsible Owner Sign-off
 **Signed by:** Kaushal Yadav  
-**Designation:** Product, UX & Forest Department Workflow Owner  
+**Role:** Product, UX & Forest Department Workflow Owner  
 **Repository:** `VANA/finalvana`  
-**Timestamp:** 2026-11-20T14:00:00+05:30
+**Reference Commit:** `cd383f2`  
+**Final Verdict:** **Conditional demonstration**
