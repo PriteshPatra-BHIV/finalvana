@@ -237,16 +237,16 @@ def vana_execute(payload: Dict[str, Any], authorization: Optional[str] = Header(
                 meta_tuple = cur.fetchone()
                 if meta_tuple and meta_tuple[0] == "CALIBRATED":
                     calibrated = True
+                else:
+                    calibrated = False
             except Exception:
-                calibrated = True
+                calibrated = False
         else:
-            if caller_ruling == "ALLOW" and context_id:
-                obs_verified = True
-                calibrated = True
+            obs_verified = False
+            calibrated = False
     except Exception as err:
-        if caller_ruling == "ALLOW" and context_id:
-            obs_verified = True
-            calibrated = True
+        obs_verified = False
+        calibrated = False
     finally:
         if conn is not None:
             conn.close()

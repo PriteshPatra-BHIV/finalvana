@@ -1,4 +1,4 @@
-# Phase 1 Product Acceptance Checklist
+# Phase 1 & 2 Product Acceptance Checklist
 **VANA Environmental Intelligence Command Center**  
 **Role:** Product, UX & Forest Department Workflow Owner (Kaushal Yadav)  
 **Verification Date:** 2026-11-20
@@ -14,7 +14,7 @@
   - [x] Authenticated via Bearer token (`ROLE_ADMIN`).
 - [x] **Forest Officer Journey:**
   - [x] Dedicated Review Queue banner displayed upon login (`ROLE_FOREST_OFFICER`).
-  - [x] Can inspect pending observations, context resolution, and statutory rulings.
+  - [x] Can inspect pending observations, context resolution, and statutory rulings across all 3 zones.
   - [x] Execution attempts fail closed if uncalibrated.
   - [x] Cannot access administrative control plane (Enforced HTTP 403 on backend).
 - [x] **Field Agent Journey:**
@@ -25,9 +25,11 @@
 
 ---
 
-## 2. Observation Lifecycle & Data Integrity
+## 2. Multi-Zone Surveillance & Data Integrity
 
-- [x] **Canonical Observation Schema:** Conforms strictly to Group 3 v2.2 (`^[A-Z0-9]+-Z[0-9]{1,2}-(F[0-9]{1,3}|EXT)-[A-Z0-9]+-OBS[0-9]{3,}$`).
+- [x] **Thane Creek Mangrove Reserve (`TC-Z03`):** Verified intake, LiDAR canopy metrics, and MasterDB persistence.
+- [x] **Maval Western Ghats Catchment (`MV-Z01`):** Verified intake, canopy profiler metrics, and MasterDB persistence.
+- [x] **Samachar Coastal Estuary (`SMR-Z01`):** Verified intake, spectral imager metrics, and MasterDB persistence.
 - [x] **Idempotency Protection:** SHA-256 idempotency key prevents duplicate row creation in MasterDB.
 - [x] **MasterDB Persistence:** Rows written to `observation` table survive server restarts.
 - [x] **Zero Fabrication:** Zero invented telemetry; all IDs are cryptographically generated and database-verified.
@@ -38,11 +40,25 @@
 
 - [x] **Fail-Closed Gate:** Uncalibrated sensors or missing context yield `ABSTAIN` / `noop`.
 - [x] **Genuine Audit Log:** ABSTAIN creates persistent abstention record (`ABS-...`).
+- [x] **Hardened Fail-Closed Check:** Unregistered or missing observations strictly fail closed (`obs_verified = False`, `calibrated = False`).
 - [x] **VANA Guidance Assistant:** Client-side assistant accurately explains why dispatches are held without hallucinating approvals.
 
 ---
 
-## 4. UI/UX Quality & Frontend Diagnostics
+## 4. Eight Negative Test Cases Conformance
+
+- [x] **Case 1: Duplicate observation submission:** Handled via idempotent replay (HTTP 200/201, zero duplicate rows).
+- [x] **Case 2: Invalid observation payload:** Malformed payload rejected with HTTP 400 REJECTED.
+- [x] **Case 3: Missing provenance block:** Semantic validator rejects missing provenance.
+- [x] **Case 4: Unauthorized execution:** Non-admin roles strictly rejected with HTTP 403 Forbidden.
+- [x] **Case 5: Missing context (`context_id: None`):** SANSKAR overrides to ABSTAIN (noop).
+- [x] **Case 6: Stale or unverifiable context:** SANSKAR overrides to ABSTAIN (noop).
+- [x] **Case 7: ABSTAIN creates explicit no-op:** Persistent receipt saved in `governance_execution_audit`.
+- [x] **Case 8: Zero unauthorized physical dispatch:** Execution ID is None, dispatch queue empty.
+
+---
+
+## 5. UI/UX Quality & Frontend Diagnostics
 
 - [x] **HTML Syntax Validity:** 0 syntax errors, 0 duplicate IDs, 0 unclosed tags across 2,017 lines of `index.html`.
 - [x] **JavaScript Conformance:** Node syntax check clean across `app.js`, `admin-auth.js`, and `config.js`.

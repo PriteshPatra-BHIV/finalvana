@@ -1,4 +1,4 @@
-# Phase 1 AI Agent Inventory & Governance Audit
+# Phase 1 & 2 AI Agent Inventory & Governance Audit
 **VANA Environmental Intelligence Command Center**  
 **Role:** Product, UX & Forest Department Workflow Owner (Kaushal Yadav)  
 **Verification Date:** 2026-11-20  
