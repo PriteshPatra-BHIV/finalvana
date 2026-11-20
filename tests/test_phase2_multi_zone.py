@@ -318,3 +318,9 @@ def test_negative_8_no_unauthorized_physical_dispatch():
     assert res["evidence"]["governance_allowed"] is False
     assert res["evidence"]["execution_id"] is None
     assert res["evidence"]["decision_action"] == "noop"
+
+
+if __name__ == "__main__":
+    import pytest
+    sys.exit(pytest.main([__file__, "-v"]))
+

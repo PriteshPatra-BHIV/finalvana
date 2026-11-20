@@ -233,6 +233,11 @@ def run_phase2_audit():
     return True
 
 
+def test_phase2_audit_suite():
+    """Pytest entrypoint for running the authoritative Phase 2 multi-zone audit."""
+    assert run_phase2_audit() is True
+
+
 if __name__ == "__main__":
     success = run_phase2_audit()
     sys.exit(0 if success else 1)

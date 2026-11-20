@@ -264,3 +264,9 @@ def test_audit_records_are_genuine():
     for ev in summary["recent_events"]:
         assert "id" in ev or "event_id" in ev
         assert "severity" in ev or "status" in ev
+
+
+if __name__ == "__main__":
+    import pytest
+    sys.exit(pytest.main([__file__, "-v"]))
+
