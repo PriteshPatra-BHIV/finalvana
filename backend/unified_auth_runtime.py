@@ -30,6 +30,7 @@ import auth_service
 import pravah_service
 from agent_orchestrator import orchestrator as agent_orchestrator
 from dispatch_adapter import dispatch_adapter
+from db_migration_tool import migration_manager
 
 # Initialize users, session, and governance audit tables on service start
 auth_service.init_users_table()
@@ -590,6 +591,28 @@ def get_dispatch_ledger(authorization: Optional[str] = Header(None)):
         }
     except Exception as exc:
         return {"count": 0, "dispatches": [], "note": str(exc)}
+
+
+# -----------------------------------------------------------------------------
+# PHASE 4 CLOUD DATABASE MIGRATION & POSTGIS HARDENING
+# -----------------------------------------------------------------------------
+
+@app.get("/api/database/migration/plan")
+def get_database_migration_plan(
+    target_url: Optional[str] = "postgresql://vana:vana_sec@localhost:5432/vana_prod",
+    authorization: Optional[str] = Header(None)
+):
+    """
+    Returns the cloud database migration plan (SQLite -> PostgreSQL + PostGIS).
+    Restricted to Platform Administrators.
+    """
+    user = get_authenticated_user(authorization)
+    if user.get("role") != "ADMIN":
+        raise HTTPException(
+            status_code=403,
+            detail=f"Only Platform Administrators can view database migration plans. Caller role: {user.get('role')}."
+        )
+    return migration_manager.generate_migration_plan(target_url=target_url)
 
 
 

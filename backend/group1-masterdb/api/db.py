@@ -154,6 +154,8 @@ def initialize_database() -> None:
                 cursor.execute(sql)
                 gov_migration = ROOT / "migrations" / "0009_governance_decision_records.sql"
                 cursor.execute(gov_migration.read_text(encoding="utf-8"))
+                phase4_migration = ROOT / "migrations" / "0010_phase1_3_hardening.sql"
+                cursor.execute(phase4_migration.read_text(encoding="utf-8"))
             conn.commit()
     except Exception:
         conn.rollback()
