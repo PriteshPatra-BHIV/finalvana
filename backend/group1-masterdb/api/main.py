@@ -182,14 +182,21 @@ def get_dashboard_summary():
             
         # 3. Official FSI ISFR statutory forest cover record
         fc_data = None
-        fc_rows = cur.execute("""
-            SELECT record_id, assessment_year, state, boundary_reference,
-                   forest_cover_area, forest_cover_percentage, very_dense_forest_area,
-                   moderately_dense_forest_area, open_forest_area, mangrove_area,
-                   unit, methodology, quality_status, provenance_reference,
-                   request_fingerprint, idempotency_key
-            FROM official_forest_cover_record LIMIT 1
-        """).fetchall()
+        fc_rows = []
+        try:
+            fc_rows = cur.execute("""
+                SELECT record_id, assessment_year, state, boundary_reference,
+                       forest_cover_area, forest_cover_percentage, very_dense_forest_area,
+                       moderately_dense_forest_area, open_forest_area, mangrove_area,
+                       unit, methodology, quality_status, provenance_reference,
+                       request_fingerprint, idempotency_key
+                FROM official_forest_cover_record LIMIT 1
+            """).fetchall()
+        except Exception:
+            if getattr(conn, "is_postgres", False):
+                conn.rollback()
+            fc_rows = []
+
         if fc_rows:
             f = fc_rows[0]
             fc_data = {
@@ -235,6 +242,8 @@ def get_dashboard_summary():
                 ORDER BY recorded_at DESC LIMIT 10
             """).fetchall()
         except Exception:
+            if getattr(conn, "is_postgres", False):
+                conn.rollback()
             gov_rows = []
 
         total_gov = len(gov_rows)
@@ -283,7 +292,8 @@ def get_dashboard_summary():
                     "timestamp": ir[4]
                 })
         except Exception:
-            pass
+            if getattr(conn, "is_postgres", False):
+                conn.rollback()
 
         try:
             obs_audit = cur.execute("""
@@ -302,7 +312,8 @@ def get_dashboard_summary():
                     "timestamp": oa[2]
                 })
         except Exception:
-            pass
+            if getattr(conn, "is_postgres", False):
+                conn.rollback()
 
         if not audit_events:
             now_iso = datetime.now(timezone.utc).isoformat()

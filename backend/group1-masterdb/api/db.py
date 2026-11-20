@@ -18,7 +18,8 @@ class VANACursor:
     def execute(self, sql: str, params=()):
         if self.is_postgres:
             sql = sql.replace("?", "%s")
-        return self._cursor.execute(sql, params)
+        self._cursor.execute(sql, params)
+        return self
 
     def fetchone(self):
         return self._cursor.fetchone()
