@@ -28,6 +28,7 @@ if str(BACKEND_DIR) not in sys.path:
     sys.path.insert(0, str(BACKEND_DIR))
 import auth_service
 import pravah_service
+from agent_orchestrator import orchestrator as agent_orchestrator
 
 # Initialize users, session, and governance audit tables on service start
 auth_service.init_users_table()
@@ -341,6 +342,77 @@ def register_sensor_calibration(req: CalibrationRegisterRequest, authorization: 
         }
     except Exception as exc:
         raise HTTPException(status_code=500, detail=f"Failed to register calibration: {exc}")
+
+
+# -----------------------------------------------------------------------------
+# PHASE 2 GOVERNED AI AGENT ECOSYSTEM (30+ TARGET)
+# -----------------------------------------------------------------------------
+
+class AgentInteractRequest(BaseModel):
+    agent_id: str
+    user_prompt: str = ""
+    context: Optional[Dict[str, Any]] = None
+    session_id: Optional[str] = "default_session"
+
+
+class AgentToggleRequest(BaseModel):
+    agent_id: str
+    enabled: bool
+
+
+@app.get("/api/agents/registry")
+def get_agent_registry():
+    """
+    Returns the comprehensive 32-agent declarative registry with live supervisor telemetry.
+    """
+    return agent_orchestrator.get_registry()
+
+
+@app.get("/api/agents/metrics")
+def get_agent_metrics():
+    """
+    Returns live ecosystem operational metrics, breakdown counts, and supervisor telemetry.
+    """
+    return agent_orchestrator.get_metrics()
+
+
+@app.post("/api/agents/interact")
+def interact_with_agent(
+    req: AgentInteractRequest,
+    authorization: Optional[str] = Header(None)
+):
+    """
+    Controlled interaction with a registered agent.
+    Applies user-pause checks, rate limiting, and fail-closed governance bounds.
+    """
+    user_role = "FIELD_AGENT"
+    if authorization:
+        try:
+            user = get_authenticated_user(authorization)
+            user_role = user.get("role", "FIELD_AGENT")
+        except Exception:
+            pass
+
+    return agent_orchestrator.interact(
+        agent_id=req.agent_id,
+        user_prompt=req.user_prompt,
+        context=req.context,
+        user_role=user_role,
+        session_id=req.session_id or "default_session",
+    )
+
+
+@app.post("/api/agents/toggle")
+def toggle_agent(
+    req: AgentToggleRequest,
+    authorization: Optional[str] = Header(None)
+):
+    """
+    Allows user to pause or resume an agent (User Supervisory Control).
+    Requires authenticated user session.
+    """
+    get_authenticated_user(authorization)
+    return agent_orchestrator.toggle_agent(agent_id=req.agent_id, enabled=req.enabled)
 
 
 
