@@ -131,6 +131,23 @@ def initialize_database() -> None:
                     registered_at TEXT NOT NULL
                 );
             """)
+            conn.execute("""
+                CREATE TABLE IF NOT EXISTS statutory_dispatch_ledger (
+                    dispatch_id TEXT PRIMARY KEY,
+                    observation_id TEXT NOT NULL REFERENCES observation(observation_id),
+                    mission_id TEXT,
+                    target_zone TEXT,
+                    proposed_action TEXT NOT NULL,
+                    officer_id TEXT,
+                    admin_id TEXT,
+                    quorum_met INTEGER NOT NULL DEFAULT 0,
+                    dispatch_mode TEXT NOT NULL,
+                    status TEXT NOT NULL,
+                    flight_plan_json TEXT,
+                    receipt_sha256 TEXT NOT NULL,
+                    dispatched_at TEXT NOT NULL
+                );
+            """)
             conn.commit()
         else:
             with conn.raw_conn.cursor() as cursor:

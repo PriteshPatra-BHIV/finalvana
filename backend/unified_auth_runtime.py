@@ -29,6 +29,7 @@ if str(BACKEND_DIR) not in sys.path:
 import auth_service
 import pravah_service
 from agent_orchestrator import orchestrator as agent_orchestrator
+from dispatch_adapter import dispatch_adapter
 
 # Initialize users, session, and governance audit tables on service start
 auth_service.init_users_table()
@@ -415,6 +416,183 @@ def toggle_agent(
     return agent_orchestrator.toggle_agent(agent_id=req.agent_id, enabled=req.enabled)
 
 
+# -----------------------------------------------------------------------------
+# PHASE 3 HUMAN-IN-THE-LOOP (HITL) STATUTORY ACTUATION & DISPATCH FRAMEWORK
+# -----------------------------------------------------------------------------
+
+class DispatchProposalRequest(BaseModel):
+    observation_id: str
+    proposed_action: str = "DISPATCH_RANGER_SURVEILLANCE"
+    dispatch_mode: str = "DRY_RUN"  # "DRY_RUN" or "PHYSICAL_GATED"
+    target_zone: Optional[str] = "Z03"
+
+
+class DispatchSignRequest(BaseModel):
+    dispatch_id: str
+    signature_note: Optional[str] = "Statutory verification signed."
+
+
+@app.post("/api/dispatch/propose")
+def propose_dispatch(
+    req: DispatchProposalRequest,
+    authorization: Optional[str] = Header(None)
+):
+    """
+    Proposes a field dispatch. Accessible to Forest Officers and Admins.
+    Field Agents are strictly rejected with HTTP 403.
+    """
+    user = get_authenticated_user(authorization)
+    role = user.get("role", "").upper()
+    if role not in ("ADMIN", "FOREST_OFFICER"):
+        raise HTTPException(
+            status_code=403,
+            detail=f"Only Forest Officers and Admins can propose dispatches. Caller role: {role}."
+        )
+
+    ts_ms = int(time.time() * 1000)
+    dispatch_id = f"disp_{ts_ms}_{uuid.uuid4().hex[:4]}"
+    now_iso = datetime.now(timezone.utc).isoformat()
+    officer_id = user.get("id") if role == "FOREST_OFFICER" else None
+    admin_id = user.get("id") if role == "ADMIN" else None
+
+    # Execute pending check
+    res = dispatch_adapter.execute_statutory_dispatch(
+        dispatch_id=dispatch_id,
+        observation_id=req.observation_id,
+        target_zone=req.target_zone or "Z03",
+        latitude=19.1288,
+        longitude=72.9421,
+        proposed_action=req.proposed_action,
+        officer_id=officer_id,
+        admin_id=admin_id,
+        dispatch_mode=req.dispatch_mode,
+    )
+
+    try:
+        conn = auth_service._open_connection()
+        cur = conn.cursor()
+        cur.execute("""
+            INSERT INTO statutory_dispatch_ledger (
+                dispatch_id, observation_id, mission_id, target_zone, proposed_action,
+                officer_id, admin_id, quorum_met, dispatch_mode, status,
+                flight_plan_json, receipt_sha256, dispatched_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """, (
+            dispatch_id, req.observation_id, f"MISS-{dispatch_id}", req.target_zone,
+            req.proposed_action, officer_id, admin_id, 0, req.dispatch_mode,
+            res["status"], None, res["receipt_sha256"], now_iso
+        ))
+        conn.commit()
+        conn.close()
+    except Exception as exc:
+        print(f"[Dispatch Ledger Note]: {exc}")
+
+    return res
+
+
+@app.post("/api/dispatch/sign")
+def sign_dispatch(
+    req: DispatchSignRequest,
+    authorization: Optional[str] = Header(None)
+):
+    """
+    Signs a pending dispatch proposal. Fulfills the Two-Man Rule.
+    Requires the counterpart role (Forest Officer <-> Admin).
+    """
+    user = get_authenticated_user(authorization)
+    role = user.get("role", "").upper()
+    if role not in ("ADMIN", "FOREST_OFFICER"):
+        raise HTTPException(
+            status_code=403,
+            detail=f"Only Forest Officers and Admins can sign statutory dispatches. Caller role: {role}."
+        )
+
+    now_iso = datetime.now(timezone.utc).isoformat()
+    conn = auth_service._open_connection()
+    cur = conn.cursor()
+    cur.execute(
+        "SELECT dispatch_id, observation_id, target_zone, proposed_action, officer_id, admin_id, dispatch_mode FROM statutory_dispatch_ledger WHERE dispatch_id = ?",
+        (req.dispatch_id,)
+    )
+    row = cur.fetchone()
+    if not row:
+        conn.close()
+        raise HTTPException(status_code=404, detail=f"Dispatch '{req.dispatch_id}' not found.")
+
+    disp_id, obs_id, zone, action, off_id, adm_id, mode = row[0], row[1], row[2], row[3], row[4], row[5], row[6]
+
+    if role == "ADMIN":
+        adm_id = user.get("id")
+    elif role == "FOREST_OFFICER":
+        off_id = user.get("id")
+
+    # Evaluate quorum
+    res = dispatch_adapter.execute_statutory_dispatch(
+        dispatch_id=disp_id,
+        observation_id=obs_id,
+        target_zone=zone,
+        latitude=19.1288,
+        longitude=72.9421,
+        proposed_action=action,
+        officer_id=off_id,
+        admin_id=adm_id,
+        dispatch_mode=mode,
+    )
+
+    flight_json = json.dumps(res.get("flight_plan")) if res.get("flight_plan") else None
+    cur.execute("""
+        UPDATE statutory_dispatch_ledger SET
+            officer_id = ?, admin_id = ?, quorum_met = ?, status = ?,
+            flight_plan_json = ?, receipt_sha256 = ?, dispatched_at = ?
+        WHERE dispatch_id = ?
+    """, (
+        off_id, adm_id, 1 if res["quorum_met"] else 0, res["status"],
+        flight_json, res["receipt_sha256"], now_iso, disp_id
+    ))
+    conn.commit()
+    conn.close()
+    return res
+
+
+@app.get("/api/dispatch/ledger")
+def get_dispatch_ledger(authorization: Optional[str] = Header(None)):
+    """
+    Returns the complete statutory dispatch ledger.
+    """
+    get_authenticated_user(authorization)
+    try:
+        conn = auth_service._open_connection()
+        cur = conn.cursor()
+        cur.execute("""
+            SELECT dispatch_id, observation_id, proposed_action, officer_id, admin_id,
+                   quorum_met, dispatch_mode, status, receipt_sha256, dispatched_at
+            FROM statutory_dispatch_ledger ORDER BY dispatched_at DESC
+        """)
+        rows = cur.fetchall()
+        conn.close()
+        return {
+            "count": len(rows),
+            "dispatches": [
+                {
+                    "dispatch_id": r[0],
+                    "observation_id": r[1],
+                    "proposed_action": r[2],
+                    "officer_id": r[3],
+                    "admin_id": r[4],
+                    "quorum_met": bool(r[5]),
+                    "dispatch_mode": r[6],
+                    "status": r[7],
+                    "receipt_sha256": r[8],
+                    "dispatched_at": r[9],
+                }
+                for r in rows
+            ],
+        }
+    except Exception as exc:
+        return {"count": 0, "dispatches": [], "note": str(exc)}
+
+
+
 
 @app.post("/vana/execute")
 def vana_execute(payload: Dict[str, Any], authorization: Optional[str] = Header(None)):
@@ -542,12 +720,30 @@ def vana_execute(payload: Dict[str, Any], authorization: Optional[str] = Header(
         effective_ruling = "ABSTAIN"
         decision_reason = "Authoritative evidence threshold not met (Context not verified). Failing closed to ABSTAIN."
 
+    statutory_flight_plan = None
     if effective_ruling == "ABSTAIN":
         status_val = "governed_abstention"
         action_val = "noop"
     else:
         status_val = "action_request_generated"
         action_val = "dispatch"
+        two_man = payload.get("two_man_signatures") or {}
+        officer_sig = two_man.get("officer_id")
+        admin_sig = two_man.get("admin_id") or user.get("id")
+        dispatch_mode = payload.get("dispatch_mode", "DRY_RUN")
+
+        statutory_res = dispatch_adapter.execute_statutory_dispatch(
+            dispatch_id=execution_id,
+            observation_id=obs_id,
+            target_zone=payload.get("target_zone", "Z03"),
+            latitude=19.1288,
+            longitude=72.9421,
+            proposed_action=payload.get("proposed_action", "DISPATCH_RANGER_SURVEILLANCE"),
+            officer_id=officer_sig,
+            admin_id=admin_sig,
+            dispatch_mode=dispatch_mode,
+        )
+        statutory_flight_plan = statutory_res.get("flight_plan")
 
     # -------------------------------------------------------------------------
     # Persist execution/abstention audit receipt into MasterDB
