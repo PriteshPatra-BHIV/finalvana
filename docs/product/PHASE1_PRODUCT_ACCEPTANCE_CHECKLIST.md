@@ -2,7 +2,8 @@
 **VANA Environmental Intelligence Command Center**  
 **Role:** Product, UX & Forest Department Workflow Owner (Kaushal Yadav)  
 **Verification Date:** 2026-11-20  
-**Reference Git Commit:** `cd383f2`
+**Current Reference Commit:** `d456135` (HEAD of `main`)  
+**Release Classification:** **Conditional demonstration**
 
 ---
 
@@ -27,6 +28,9 @@
 ---
 
 ## 2. Multi-Zone Surveillance & Data Integrity
+
+> [!NOTE]
+> **Data Grounding Note:** Verified observations (`TC-Z03`, `MV-Z01`, `SMR-Z01`) represent historical / test mission packages dated `2026-08-28T14:45:00Z` used for deterministic pipeline validation. They are not represented as live real-time sensor streams.
 
 - [x] **Thane Creek Mangrove Reserve (`TC-Z03`):** Verified intake, LiDAR canopy metrics, and MasterDB persistence.
 - [x] **Maval Western Ghats Catchment (`MV-Z01`):** Verified intake, canopy profiler metrics, and MasterDB persistence.
@@ -65,3 +69,4 @@
 - [x] **JavaScript Conformance:** Node syntax check clean across `app.js`, `admin-auth.js`, and `config.js`.
 - [x] **Responsive Mobile Layout:** Flex/grid layout, off-canvas navigation drawer with backdrop, touch-friendly tap targets.
 - [x] **Official Maharashtra Branding:** Official emblem and department typography rendered with proper entity escaping.
+- [x] **Sanitized Credentials:** Zero secrets, bearer tokens, or sensitive passwords exposed in documents or logs.
