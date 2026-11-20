@@ -182,6 +182,25 @@
            ========================================================================= -->
       <section class="view-section" id="viewOverview">
 
+        <!-- Phase 1 Role-Tailored Operational Workspace Banner -->
+        <div class="role-banner-card" id="roleWelcomeBanner" style="display:none;">
+          <div style="display:flex;align-items:center;gap:12px;">
+            <div class="kpi-icon-box green" id="roleBannerIconBox" style="width:36px;height:36px;border-radius:8px;">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" id="roleBannerSvg"><path d="M12 2L3 7v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V7l-9-5z"/></svg>
+            </div>
+            <div>
+              <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+                <span style="font-size:14px;font-weight:700;color:var(--text-main);" id="roleBannerTitle">Workspace Ready</span>
+                <span class="status-pill active" id="roleBannerPill" style="font-size:10.5px;">Active</span>
+              </div>
+              <div style="font-size:12px;color:var(--text-secondary);margin-top:2px;" id="roleBannerSub">Select an action below or browse the operational command center.</div>
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;" id="roleBannerActions">
+            <!-- Populated dynamically based on role -->
+          </div>
+        </div>
+
         <!-- =====================================================================
              TOP KPI METRICS ROW (5 EQUAL GLASSMORPHIC CARDS)
              ===================================================================== -->
@@ -646,6 +665,10 @@
           </div>
           <!-- Ingestion Action & Architecture Notice -->
           <div style="display:inline-flex;align-items:center;gap:10px;flex-wrap:wrap;">
+            <div id="monOfflineStatusBar" style="display:none;align-items:center;gap:8px;padding:6px 12px;border-radius:6px;background:rgba(234,179,8,0.12);border:1px solid rgba(234,179,8,0.4);font-size:12px;color:#facc15;" title="Local offline storage has queued observations pending sync">
+              <span id="monOfflineStatusText">● 0 Queued Offline</span>
+              <button type="button" class="btn-header" id="btnSyncOfflineMonitoring" onclick="syncOfflineQueue()" style="padding:2px 8px;font-size:11px;background:#facc15;color:#000;font-weight:700;">Sync Now</button>
+            </div>
             <button type="button" class="btn-header primary" id="btnOpenSubmitObsModal" onclick="openObservationSubmitModal()" title="Submit observation conforming to Group 3 v2.2 schema" style="display:inline-flex;align-items:center;gap:6px;padding:6px 14px;font-size:12px;font-weight:600;border-radius:6px;box-shadow:0 0 12px rgba(32,214,107,0.25);">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L3 7v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V7l-9-5z"/><line x1="12" y1="9" x2="12" y2="15"/><line x1="9" y1="12" x2="15" y2="12"/></svg>
               <span>+ Submit Observation</span>
@@ -980,6 +1003,46 @@
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
               <span>Inspect Evidence</span>
             </button>
+          </div>
+        </div>
+
+        <!-- Forest Officer Statutory Review Queue -->
+        <div class="content-panel" id="foReviewQueuePanel" style="margin-bottom:16px;">
+          <div class="panel-header">
+            <div>
+              <div class="panel-title" style="display:flex;align-items:center;gap:8px;">
+                <span>Statutory Review Queue</span>
+                <span class="status-pill active" id="foReviewCountBadge" style="font-size:11px;">1 Record In Ledger</span>
+              </div>
+              <div style="font-size:11.5px;color:var(--text-secondary);margin-top:2px;">
+                Review incoming observations, evaluate sensor calibration, and audit SANSKAR governance rulings. (Statutory Review Only · Execution Dispatch Restricted to Admin).
+              </div>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;">
+              <button type="button" class="btn-header" onclick="fetchLive()" style="padding:4px 10px;font-size:11.5px;" title="Refresh live observation queue">
+                <span>Refresh Queue</span>
+              </button>
+            </div>
+          </div>
+          <div class="panel-body" style="padding:0;">
+            <div style="overflow-x:auto;">
+              <table style="width:100%;border-collapse:collapse;font-size:12px;text-align:left;">
+                <thead>
+                  <tr style="border-bottom:1px solid var(--border-light);background:rgba(0,0,0,0.15);color:var(--text-secondary);font-size:11px;text-transform:uppercase;letter-spacing:0.04em;">
+                    <th style="padding:10px 14px;">Observation ID</th>
+                    <th style="padding:10px 14px;">Zone &amp; Survey</th>
+                    <th style="padding:10px 14px;">Parameter</th>
+                    <th style="padding:10px 14px;">Timestamp</th>
+                    <th style="padding:10px 14px;">Calibration</th>
+                    <th style="padding:10px 14px;">Ruling</th>
+                    <th style="padding:10px 14px;text-align:right;">Action</th>
+                  </tr>
+                </thead>
+                <tbody id="foReviewTableBody">
+                  <!-- Populated dynamically by renderReviewQueue() in app.js -->
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
 
@@ -1664,50 +1727,165 @@
      OBSERVATION INGESTION MODAL (GROUP 3 V2.2 -> MASTERDB)
      ========================================================================= -->
 <div class="modal-backdrop" id="observationSubmitModal" style="display:none;" role="dialog" aria-modal="true" aria-labelledby="obsModalTitle">
-  <div class="modal-card" style="max-width:640px;width:95%;">
+  <div class="modal-card" style="max-width:720px;width:95%;">
     <div class="modal-card-header">
       <div class="modal-card-title" id="obsModalTitle">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--brand)">
           <path d="M12 2L3 7v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V7l-9-5z"/>
         </svg>
-        Submit Observation (Group 3 v2.2)
+        <span>Environmental Observation Intake</span>
       </div>
-      <div class="modal-card-sub">MasterDB Schema Validation &amp; SHA-256 Idempotency Ingestion</div>
+      <div class="modal-card-sub">Group 3 Ingestion Contract v2.2 · MasterDB Canonical Ledger Persistence</div>
     </div>
 
-    <div style="padding:16px 20px 20px;">
-      <!-- Sample Payload Quick Fill -->
-      <div style="margin-bottom:12px;">
-        <div style="font-size:11.5px;font-weight:600;margin-bottom:6px;color:var(--text-secondary);">Load Sample Payload:</div>
-        <div style="display:flex;gap:6px;flex-wrap:wrap;">
-          <button type="button" class="btn-header" style="font-size:11px;padding:3px 8px;" onclick="loadSampleObsPayload('canopy')">
-            Canopy Survey (Valid v2.2)
-          </button>
-          <button type="button" class="btn-header" style="font-size:11px;padding:3px 8px;" onclick="loadSampleObsPayload('precipitation')">
-            Precipitation (Valid v2.2)
-          </button>
-          <button type="button" class="btn-header" style="font-size:11px;padding:3px 8px;" onclick="loadSampleObsPayload('invalid')">
-            Missing Location (Test Rejection)
-          </button>
+    <!-- Mode Selector Tabs -->
+    <div style="display:flex;border-bottom:1px solid var(--border-light);padding:0 20px;background:rgba(0,0,0,0.15);gap:10px;">
+      <button type="button" id="tabModeForm" class="geo-mode-btn active" onclick="switchObsModalMode('form')" style="padding:10px 14px;border-bottom:2px solid var(--brand);background:transparent;color:var(--text-main);font-size:12px;font-weight:600;border-radius:0;">
+        Field Capture Form
+      </button>
+      <button type="button" id="tabModeJson" class="geo-mode-btn" onclick="switchObsModalMode('json')" style="padding:10px 14px;border-bottom:2px solid transparent;background:transparent;color:var(--text-muted);font-size:12px;border-radius:0;">
+        Advanced JSON Payload (v2.2)
+      </button>
+    </div>
+
+    <div style="padding:18px 20px 20px;max-height:calc(85vh - 140px);overflow-y:auto;">
+      <!-- FORM MODE CONTAINER -->
+      <div id="obsFormContainer">
+        <!-- Offline status indicator banner inside modal -->
+        <div id="modalNetworkStatus" style="display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:rgba(34,197,94,0.1);border:1px solid rgba(34,197,94,0.3);border-radius:8px;margin-bottom:14px;font-size:11.5px;color:#86efac;">
+          <span id="modalNetworkStatusText">● Online Mode · Submissions persist directly to MasterDB</span>
+          <span id="modalOfflineCountText" style="color:var(--text-muted);">0 queued offline</span>
         </div>
-        <div style="font-size:11px;color:var(--text-muted);margin-top:6px;line-height:1.4;">
-          <strong>Sample Payload Notice:</strong> Preloaded payloads are example test fixtures for contract verification. They are clearly identified as sample fixtures and cannot be confused with live production records.
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
+          <!-- Monitoring Zone -->
+          <div class="form-field">
+            <label for="formObsZone" style="font-size:11.5px;font-weight:600;color:var(--text-main);margin-bottom:4px;display:block;">Surveillance Zone</label>
+            <select id="formObsZone" class="form-input" style="font-size:12px;" onchange="handleZoneChange(this.value)">
+              <option value="TC-Z03">Thane Creek (TC-Z03) - Mangrove Reserve</option>
+              <option value="SGNP-Z01">Sanjay Gandhi NP (SGNP-Z01) - High Canopy</option>
+              <option value="TAD-Z04">Tadoba-Andhari (TAD-Z04) - Wildlife Buffer</option>
+              <option value="NAV-Z02">Navegaon-Nagzira (NAV-Z02) - Wildlife Corridor</option>
+              <option value="CHAN-Z05">Chandoli (CHAN-Z05) - Western Ghats</option>
+              <option value="KOY-Z06">Koyna (KOY-Z06) - Catchment Zone</option>
+            </select>
+          </div>
+
+          <!-- Parameter Type -->
+          <div class="form-field">
+            <label for="formObsParam" style="font-size:11.5px;font-weight:600;color:var(--text-main);margin-bottom:4px;display:block;">Observation Parameter</label>
+            <select id="formObsParam" class="form-input" style="font-size:12px;" onchange="handleParamChange(this.value)">
+              <option value="canopy_height">Canopy Height (canopy_height)</option>
+              <option value="precipitation">Precipitation (precipitation)</option>
+              <option value="surface_temperature">Surface Temperature (surface_temp)</option>
+              <option value="vegetation_index">Vegetation Index (NDVI)</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Measured Value & Unit -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
+          <div class="form-field">
+            <label for="formObsValue" style="font-size:11.5px;font-weight:600;color:var(--text-main);margin-bottom:4px;display:block;">Measured Value</label>
+            <input type="number" step="0.01" id="formObsValue" class="form-input" value="8.4" style="font-size:12px;" placeholder="e.g. 8.4">
+          </div>
+          <div class="form-field">
+            <label for="formObsUnit" style="font-size:11.5px;font-weight:600;color:var(--text-main);margin-bottom:4px;display:block;">Measurement Unit</label>
+            <input type="text" id="formObsUnit" class="form-input" value="m" style="font-size:12px;" placeholder="m, mm, degC">
+          </div>
+        </div>
+
+        <!-- Coordinates with GPS Capture -->
+        <div style="background:rgba(0,0,0,0.2);padding:12px;border-radius:8px;border:1px solid var(--border-light);margin-bottom:12px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+            <span style="font-size:11.5px;font-weight:600;color:var(--text-main);">Spatial Location &amp; GNSS</span>
+            <button type="button" class="btn-header" style="font-size:11px;padding:3px 8px;gap:4px;" onclick="captureDeviceGps()">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/><line x1="12" y1="2" x2="12" y2="5"/><line x1="12" y1="19" x2="12" y2="22"/><line x1="2" y1="12" x2="5" y2="12"/><line x1="19" y1="12" x2="22" y2="12"/></svg>
+              <span>Use Device GPS</span>
+            </button>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+            <div>
+              <label for="formObsLat" style="font-size:11px;color:var(--text-muted);display:block;margin-bottom:2px;">Latitude (&deg;N)</label>
+              <input type="number" step="0.0001" id="formObsLat" class="form-input" value="19.1288" style="font-size:12px;">
+            </div>
+            <div>
+              <label for="formObsLng" style="font-size:11px;color:var(--text-muted);display:block;margin-bottom:2px;">Longitude (&deg;E)</label>
+              <input type="number" step="0.0001" id="formObsLng" class="form-input" value="72.9421" style="font-size:12px;">
+            </div>
+          </div>
+          <div id="gpsStatusMessage" style="font-size:11px;color:var(--text-muted);margin-top:6px;">Defaulted to Thane Creek zone centroid (19.1288&deg;N, 72.9421&deg;E).</div>
+        </div>
+
+        <!-- Timestamp & Sensor ID -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
+          <div class="form-field">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+              <label for="formObsTimestamp" style="font-size:11.5px;font-weight:600;color:var(--text-main);">Timestamp (UTC)</label>
+              <button type="button" style="background:transparent;border:none;color:var(--brand);font-size:10.5px;cursor:pointer;text-decoration:underline;" onclick="setObsTimeToNow()">Set Now</button>
+            </div>
+            <input type="text" id="formObsTimestamp" class="form-input mono" value="2026-08-25T10:00:00Z" style="font-size:11.5px;">
+          </div>
+          <div class="form-field">
+            <label for="formObsDeviceId" style="font-size:11.5px;font-weight:600;color:var(--text-main);margin-bottom:4px;display:block;">Sensor Device ID</label>
+            <input type="text" id="formObsDeviceId" class="form-input mono" value="FIELD-G3-DEV-001" style="font-size:11.5px;">
+          </div>
+        </div>
+
+        <!-- Field Photo / Evidence Attachment -->
+        <div class="form-field" style="margin-bottom:12px;">
+          <label style="font-size:11.5px;font-weight:600;color:var(--text-main);margin-bottom:4px;display:block;">Field Observation Evidence / Photo</label>
+          <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+            <input type="file" id="formObsPhotoFile" accept="image/*" style="font-size:11px;" onchange="handleObsPhotoFile(event)">
+            <input type="text" id="formObsPhotoUrl" class="form-input" placeholder="Or enter photo / artifact URI (e.g. TC-Z03-F02/sensor/photo_01.jpg)" style="flex:1;min-width:200px;font-size:11.5px;">
+          </div>
+          <div id="formObsPhotoPreview" style="display:none;margin-top:8px;padding:6px;background:rgba(0,0,0,0.2);border-radius:6px;align-items:center;gap:8px;">
+            <img id="formObsPhotoImg" src="" alt="Evidence Preview" style="height:48px;width:48px;object-fit:cover;border-radius:4px;">
+            <div style="font-size:11px;color:var(--text-secondary);overflow:hidden;text-overflow:ellipsis;" id="formObsPhotoName"></div>
+          </div>
+        </div>
+
+        <!-- Calibration & Zero-Fabrication Integrity Notice -->
+        <div style="background:rgba(0,15,11,0.5);border:1px solid rgba(34,197,94,0.15);border-radius:6px;padding:8px 12px;margin-bottom:12px;font-size:11px;color:var(--text-secondary);line-height:1.4;">
+          <strong>Fail-Closed Doctrine:</strong> Observations are ingested into MasterDB with calibration state <code style="color:var(--text-main);">NOT_VERIFIED</code> unless calibrated laboratory certification is attached. The SANSKAR governance gate pauses automated dispatch (<code style="color:var(--status-warn);">ABSTAIN</code>) on unverified calibration.
         </div>
       </div>
 
-      <!-- Idempotency Key -->
+      <!-- JSON MODE CONTAINER -->
+      <div id="obsJsonContainer" style="display:none;">
+        <!-- Sample Payload Quick Fill -->
+        <div style="margin-bottom:12px;">
+          <div style="font-size:11.5px;font-weight:600;margin-bottom:6px;color:var(--text-secondary);">Load Sample Payload:</div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;">
+            <button type="button" class="btn-header" style="font-size:11px;padding:3px 8px;" onclick="loadSampleObsPayload('canopy')">
+              Canopy Survey (Valid v2.2)
+            </button>
+            <button type="button" class="btn-header" style="font-size:11px;padding:3px 8px;" onclick="loadSampleObsPayload('precipitation')">
+              Precipitation (Valid v2.2)
+            </button>
+            <button type="button" class="btn-header" style="font-size:11px;padding:3px 8px;" onclick="loadSampleObsPayload('invalid')">
+              Missing Location (Test Rejection)
+            </button>
+          </div>
+          <div style="font-size:11px;color:var(--text-muted);margin-top:6px;line-height:1.4;">
+            <strong>Sample Payload Notice:</strong> Preloaded payloads are example test fixtures for contract verification. They are clearly identified as sample fixtures and cannot be confused with live production records.
+          </div>
+        </div>
+
+        <!-- JSON Payload Editor -->
+        <div class="form-field" style="margin-bottom:14px;">
+          <label for="obsPayloadTextarea" style="font-size:11.5px;font-weight:600;color:var(--text-main);margin-bottom:4px;display:block;">Observation Payload JSON</label>
+          <textarea id="obsPayloadTextarea" class="form-input mono" rows="10" placeholder="{ ... }" style="font-size:11px;line-height:1.4;resize:vertical;width:100%;font-family:var(--font-mono);"></textarea>
+        </div>
+      </div>
+
+      <!-- Idempotency Key (Universal for both modes) -->
       <div class="form-field" style="margin-bottom:12px;">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
           <label for="obsIdempotencyKey" style="font-size:11.5px;font-weight:600;color:var(--text-main);">Idempotency-Key (Header)</label>
           <button type="button" style="background:transparent;border:none;color:var(--brand);font-size:11px;cursor:pointer;text-decoration:underline;" onclick="generateNewIdempotencyKey()">Generate New Key</button>
         </div>
         <input type="text" id="obsIdempotencyKey" class="form-input mono" placeholder="IK-VANA-..." style="font-size:11.5px;">
-      </div>
-
-      <!-- JSON Payload Editor -->
-      <div class="form-field" style="margin-bottom:14px;">
-        <label for="obsPayloadTextarea" style="font-size:11.5px;font-weight:600;color:var(--text-main);margin-bottom:4px;display:block;">Observation Payload JSON</label>
-        <textarea id="obsPayloadTextarea" class="form-input mono" rows="10" placeholder="{ ... }" style="font-size:11px;line-height:1.4;resize:vertical;width:100%;font-family:var(--font-mono);"></textarea>
       </div>
 
       <!-- Ingestion Feedback Box -->
@@ -1726,6 +1904,7 @@
     </div>
   </div>
 </div>
+
 
 <!-- =========================================================================
      OBSERVATION DETAILS MODAL (NON-TECHNICAL PRIMARY + TECHNICAL COLLAPSIBLE)
@@ -1790,5 +1969,49 @@
 <script src="admin-auth.js?v=25"></script>
 <script src="geospatial.js?v=49"></script>
 <script src="app.js?v=49"></script>
+<!-- =========================================================================
+     VANA GUIDANCE ASSISTANT (CONTEXTUAL CLIENT-SIDE RULE EXPLAINER)
+     ========================================================================= -->
+<div class="assistant-floating-pill" id="assistantFloatingPill" onclick="toggleVanaAssistant()" title="Open VANA Contextual Guidance Assistant">
+  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a7 7 0 0 1 7 7c0 2.38-1.19 4.47-3 5.74V17a2 2 0 0 1-2 2h-4a2 2 0 0 1-2-2v-2.26C6.19 13.47 5 11.38 5 9a7 7 0 0 1 7-7z"/><line x1="9" y1="21" x2="15" y2="21"/></svg>
+  <span>VANA Assistant</span>
+</div>
+
+<div class="assistant-drawer" id="assistantDrawer" style="display:none;" role="complementary" aria-label="VANA Contextual Guidance">
+  <div class="assistant-drawer-header">
+    <div style="display:flex;align-items:center;gap:8px;">
+      <div class="kpi-icon-box green" style="width:24px;height:24px;border-radius:4px;display:flex;align-items:center;justify-content:center;">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a7 7 0 0 1 7 7c0 2.38-1.19 4.47-3 5.74V17a2 2 0 0 1-2 2h-4a2 2 0 0 1-2-2v-2.26C6.19 13.47 5 11.38 5 9a7 7 0 0 1 7-7z"/><line x1="9" y1="21" x2="15" y2="21"/></svg>
+      </div>
+      <div>
+        <div style="font-size:12.5px;font-weight:700;color:var(--text-main);">VANA Guidance Assistant</div>
+        <div style="font-size:10.5px;color:var(--text-muted);">Deterministic rule explainer (Client-side helper)</div>
+      </div>
+    </div>
+    <button type="button" class="btn-header" onclick="toggleVanaAssistant()" style="padding:2px 8px;font-size:11px;" title="Close Assistant">&times;</button>
+  </div>
+  <div class="assistant-drawer-body" id="assistantDrawerBody">
+    <div style="margin-bottom:12px;">
+      <div style="font-weight:700;color:var(--text-main);margin-bottom:4px;font-size:12px;">Current Observation Governance Analysis</div>
+      <div id="astGovExplanation" style="background:rgba(0,0,0,0.25);border:1px solid var(--border-light);border-radius:6px;padding:8px 10px;font-size:11.5px;line-height:1.45;">
+        Evaluating live observation parameters against Maharashtra environmental thresholds and SANSKAR statutory rules.
+      </div>
+    </div>
+    <div style="margin-bottom:12px;">
+      <div style="font-weight:700;color:var(--text-main);margin-bottom:4px;font-size:12px;">Fail-Closed Security Doctrine</div>
+      <div style="font-size:11.5px;color:var(--text-secondary);line-height:1.45;">
+        If sensor calibration is unverified, GNSS accuracy is missing, or upstream context is unreachable, VANA rules mandate <strong style="color:var(--status-warn);">ABSTAIN</strong>. Automated dispatch is paused to prevent spurious side-effects.
+      </div>
+    </div>
+    <div>
+      <div style="font-weight:700;color:var(--text-main);margin-bottom:4px;font-size:12px;">Field Agent Recovery Steps</div>
+      <ol style="margin:0;padding-left:16px;font-size:11.5px;color:var(--text-secondary);line-height:1.45;">
+        <li>Capture ground coordinates via device GPS.</li>
+        <li>Attach photographic or telemetry raw artifact.</li>
+        <li>Ensure observations sync to MasterDB when online.</li>
+      </ol>
+    </div>
+  </div>
+</div>
 </body>
 </html>

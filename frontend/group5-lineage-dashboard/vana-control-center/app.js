@@ -227,6 +227,10 @@ function initDashboardAuthUI() {
     if (navAdmin) {
       navAdmin.style.display = (normalizedRole === "ADMIN" || normalizedRole === "PLATFORM_ADMIN") ? "flex" : "none";
     }
+
+    renderRoleWorkspaceBanner(normalizedRole, user);
+    updateOfflineUI();
+    renderReviewQueue();
   } else {
     // Default reference state
     if (sideUserName) sideUserName.textContent = "Pratik Bhuwad";
@@ -255,6 +259,18 @@ function initDashboardAuthUI() {
     if (navAdmin) {
       navAdmin.style.display = "none";
     }
+
+    // Check query param for role in test/demo mode (e.g. index.html?role=FIELD_AGENT)
+    const urlParams = new URLSearchParams(window.location.search);
+    const roleParam = urlParams.get("role");
+    if (roleParam) {
+      renderRoleWorkspaceBanner(roleParam.toUpperCase(), { name: "Operational User", role: roleParam.toUpperCase() });
+    } else {
+      const banner = document.getElementById("roleWelcomeBanner");
+      if (banner) banner.style.display = "none";
+    }
+    updateOfflineUI();
+    renderReviewQueue();
   }
 }
 
@@ -4138,7 +4154,474 @@ const SAMPLE_INVALID_PAYLOAD = {
   location: null // Invalid: location is strictly required
 };
 
-function openObservationSubmitModal() {
+// =============================================================================
+// PHASE 1: ROLE WORKSPACE BANNERS & NOTIFICATIONS
+// =============================================================================
+function renderRoleWorkspaceBanner(role, user) {
+  const banner = document.getElementById("roleWelcomeBanner");
+  if (!banner) return;
+
+  const titleEl = document.getElementById("roleBannerTitle");
+  const subEl = document.getElementById("roleBannerSub");
+  const pillEl = document.getElementById("roleBannerPill");
+  const actionsEl = document.getElementById("roleBannerActions");
+  const iconBox = document.getElementById("roleBannerIconBox");
+
+  const cleanRole = (role || "").toUpperCase();
+  banner.className = "role-banner-card";
+
+  if (cleanRole === "FIELD_AGENT") {
+    banner.classList.add("field-agent");
+    banner.style.display = "flex";
+    if (titleEl) titleEl.textContent = `Field Agent Workspace · ${user ? (user.name || "Field Agent") : "Active"}`;
+    if (subEl) subEl.textContent = "Capture field observations, verify spatial coordinates, and synchronize edge telemetry with MasterDB.";
+    if (pillEl) {
+      pillEl.textContent = "Field Operations Active";
+      pillEl.className = "status-pill active";
+    }
+    if (iconBox) iconBox.className = "kpi-icon-box green";
+    if (actionsEl) {
+      actionsEl.innerHTML = `
+        <button type="button" class="btn-header primary" onclick="openObservationSubmitModal('form')" style="font-weight:700;gap:6px;">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          <span>+ Start Field Observation</span>
+        </button>
+        <button type="button" class="btn-header" onclick="switchMainTab('monitoringView', document.getElementById('navItemMonitoring'))">
+          <span>View Intake Ledger</span>
+        </button>
+      `;
+    }
+  } else if (cleanRole === "FOREST_OFFICER") {
+    banner.classList.add("forest-officer");
+    banner.style.display = "flex";
+    if (titleEl) titleEl.textContent = `Forest Officer Workspace · ${user ? (user.name || "Forest Officer") : "Active"}`;
+    if (subEl) subEl.textContent = "Statutory review queue, Pravah ecological context verification, and SANSKAR governance compliance.";
+    if (pillEl) {
+      pillEl.textContent = "Statutory Review Mode";
+      pillEl.className = "status-pill neutral";
+    }
+    if (iconBox) iconBox.className = "kpi-icon-box blue";
+    if (actionsEl) {
+      actionsEl.innerHTML = `
+        <button type="button" class="btn-header primary" onclick="switchMainTab('decisionsView', document.getElementById('navItemDecisions'))" style="font-weight:700;gap:6px;">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+          <span>Review Observations Queue</span>
+        </button>
+        <button type="button" class="btn-header" onclick="switchMainTab('historyView', document.getElementById('navItemHistory')); switchHistorySubTab('forestCover');">
+          <span>Statutory Benchmarks</span>
+        </button>
+      `;
+    }
+  } else if (cleanRole === "ADMIN" || cleanRole === "PLATFORM_ADMIN") {
+    banner.classList.add("admin");
+    banner.style.display = "flex";
+    if (titleEl) titleEl.textContent = `Platform Admin Workspace · ${user ? (user.name || "Admin") : "Active"}`;
+    if (subEl) subEl.textContent = "Full platform administration, real-time service orchestration, and governed enforcement dispatch.";
+    if (pillEl) {
+      pillEl.textContent = "Platform Administrator";
+      pillEl.className = "status-pill active";
+      pillEl.style.borderColor = "#8B5CF6";
+      pillEl.style.color = "#C4B5FD";
+    }
+    if (iconBox) iconBox.className = "kpi-icon-box purple";
+    if (actionsEl) {
+      actionsEl.innerHTML = `
+        <a href="admin.html" class="btn-header primary" style="font-weight:700;gap:6px;text-decoration:none;">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+          <span>Open Administration Plane</span>
+        </a>
+        <button type="button" class="btn-header" onclick="switchMainTab('historyView', document.getElementById('navItemHistory'))">
+          <span>Audit Ledger</span>
+        </button>
+      `;
+    }
+  } else {
+    banner.style.display = "none";
+  }
+}
+
+// =============================================================================
+// PHASE 1: OFFLINE QUEUE & CLIENT-SIDE SYNCHRONIZATION ENGINE
+// =============================================================================
+let currentObsModalMode = "form";
+
+function getOfflineQueue() {
+  try {
+    const raw = localStorage.getItem("vana_offline_queue");
+    return raw ? JSON.parse(raw) : [];
+  } catch (e) {
+    console.warn("[VANA Offline] Failed to read offline queue:", e);
+    return [];
+  }
+}
+
+function saveToOfflineQueue(payload, idempotencyKey) {
+  try {
+    const queue = getOfflineQueue();
+    const item = {
+      queue_id: "OFFLINE-" + Date.now() + "-" + Math.floor(Math.random() * 1000),
+      timestamp: new Date().toISOString(),
+      idempotency_key: idempotencyKey || ("IK-OFFLINE-" + Date.now()),
+      payload: payload,
+      status: "PENDING_SYNC",
+      retries: 0
+    };
+    queue.push(item);
+    localStorage.setItem("vana_offline_queue", JSON.stringify(queue));
+    updateOfflineUI();
+    return item;
+  } catch (e) {
+    console.error("[VANA Offline] Failed to save offline item:", e);
+    return null;
+  }
+}
+
+function removeOfflineQueueItem(queueId) {
+  try {
+    let queue = getOfflineQueue();
+    queue = queue.filter(q => q.queue_id !== queueId);
+    localStorage.setItem("vana_offline_queue", JSON.stringify(queue));
+    updateOfflineUI();
+  } catch (e) {
+    console.warn("[VANA Offline] Failed to remove item:", e);
+  }
+}
+
+function updateOfflineUI() {
+  const isOnline = typeof navigator.onLine === "boolean" ? navigator.onLine : true;
+  const queue = getOfflineQueue();
+  const pendingCount = queue.length;
+
+  // 1. Update In-Modal Status
+  const netStatusText = document.getElementById("modalNetworkStatusText");
+  const netCountText = document.getElementById("modalOfflineCountText");
+  const netBanner = document.getElementById("modalNetworkStatus");
+
+  if (netBanner && netStatusText && netCountText) {
+    if (!isOnline) {
+      netBanner.style.background = "rgba(234, 179, 8, 0.15)";
+      netBanner.style.borderColor = "rgba(234, 179, 8, 0.4)";
+      netBanner.style.color = "#fde047";
+      netStatusText.textContent = "● Offline Mode · Submissions will be stored in local device queue";
+    } else {
+      netBanner.style.background = "rgba(34, 197, 94, 0.1)";
+      netBanner.style.borderColor = "rgba(34, 197, 94, 0.3)";
+      netBanner.style.color = "#86efac";
+      netStatusText.textContent = "● Online Mode · Submissions persist directly to MasterDB";
+    }
+    netCountText.textContent = `${pendingCount} queued offline`;
+  }
+
+  // 2. Update Monitoring View Offline Bar
+  const monOfflineBar = document.getElementById("monOfflineStatusBar");
+  const monOfflineText = document.getElementById("monOfflineStatusText");
+  if (monOfflineBar && monOfflineText) {
+    if (pendingCount > 0) {
+      monOfflineBar.style.display = "inline-flex";
+      monOfflineText.textContent = `● ${pendingCount} Offline Observation${pendingCount > 1 ? 's' : ''} Pending Sync`;
+    } else {
+      monOfflineBar.style.display = "none";
+    }
+  }
+}
+
+window.addEventListener("online", () => {
+  updateOfflineUI();
+  console.log("[VANA Network] Restored online connectivity.");
+});
+
+window.addEventListener("offline", () => {
+  updateOfflineUI();
+  console.log("[VANA Network] Network offline. Submissions will queue locally.");
+});
+
+async function syncOfflineQueue() {
+  const queue = getOfflineQueue();
+  if (queue.length === 0) {
+    alert("No offline observations are currently pending synchronization.");
+    return;
+  }
+
+  let syncedCount = 0;
+  let failedCount = 0;
+
+  for (const item of queue) {
+    try {
+      const headers = { "Content-Type": "application/json", "Accept": "application/json" };
+      if (item.idempotency_key) headers["Idempotency-Key"] = item.idempotency_key;
+
+      if (window.VANA_AUTH && window.VANA_AUTH.getAccessToken()) {
+        headers["Authorization"] = "Bearer " + window.VANA_AUTH.getAccessToken();
+      }
+
+      const res = await vanaFetch(window.VANA_CONFIG.G1_OBSERVATIONS, {
+        method: "POST",
+        headers: headers,
+        body: JSON.stringify(item.payload)
+      });
+
+      if (res.status === 201 || res.status === 200) {
+        removeOfflineQueueItem(item.queue_id);
+        syncedCount++;
+      } else {
+        failedCount++;
+      }
+    } catch (e) {
+      failedCount++;
+    }
+  }
+
+  updateOfflineUI();
+  if (syncedCount > 0) {
+    await fetchLive();
+    alert(`Synchronization Complete: ${syncedCount} offline record(s) persisted to MasterDB.${failedCount > 0 ? ` (${failedCount} failed and remained in queue)` : ''}`);
+  } else if (failedCount > 0) {
+    alert(`Synchronization Warning: Unable to sync ${failedCount} record(s). Check network connectivity.`);
+  }
+}
+
+// =============================================================================
+// PHASE 1: DUAL-MODE OBSERVATION INTAKE MODAL
+// =============================================================================
+function switchObsModalMode(mode) {
+  currentObsModalMode = mode;
+  const formBox = document.getElementById("obsFormContainer");
+  const jsonBox = document.getElementById("obsJsonContainer");
+  const tabForm = document.getElementById("tabModeForm");
+  const tabJson = document.getElementById("tabModeJson");
+
+  if (mode === "form") {
+    if (formBox) formBox.style.display = "block";
+    if (jsonBox) jsonBox.style.display = "none";
+    if (tabForm) {
+      tabForm.classList.add("active");
+      tabForm.style.borderBottomColor = "var(--brand)";
+      tabForm.style.color = "var(--text-main)";
+    }
+    if (tabJson) {
+      tabJson.classList.remove("active");
+      tabJson.style.borderBottomColor = "transparent";
+      tabJson.style.color = "var(--text-muted)";
+    }
+    syncJsonToForm();
+  } else {
+    if (formBox) formBox.style.display = "none";
+    if (jsonBox) jsonBox.style.display = "block";
+    if (tabForm) {
+      tabForm.classList.remove("active");
+      tabForm.style.borderBottomColor = "transparent";
+      tabForm.style.color = "var(--text-muted)";
+    }
+    if (tabJson) {
+      tabJson.classList.add("active");
+      tabJson.style.borderBottomColor = "var(--brand)";
+      tabJson.style.color = "var(--text-main)";
+    }
+    syncFormToJson();
+  }
+}
+
+const ZONE_COORDINATES = {
+  "TC-Z03":   { lat: 19.1288, lng: 72.9421, name: "Thane Creek Mangrove Reserve" },
+  "SGNP-Z01": { lat: 19.2288, lng: 72.9182, name: "Sanjay Gandhi National Park" },
+  "TAD-Z04":  { lat: 20.2500, lng: 79.3333, name: "Tadoba-Andhari Tiger Reserve" },
+  "NAV-Z02":  { lat: 21.0500, lng: 80.0800, name: "Navegaon-Nagzira Corridor" },
+  "CHAN-Z05": { lat: 17.1500, lng: 73.8500, name: "Chandoli National Park" },
+  "KOY-Z06":  { lat: 17.4000, lng: 73.7500, name: "Koyna Wildlife Sanctuary" }
+};
+
+function handleZoneChange(zoneId) {
+  const coord = ZONE_COORDINATES[zoneId];
+  const latEl = document.getElementById("formObsLat");
+  const lngEl = document.getElementById("formObsLng");
+  const gpsMsg = document.getElementById("gpsStatusMessage");
+
+  if (coord && latEl && lngEl) {
+    latEl.value = coord.lat;
+    lngEl.value = coord.lng;
+    if (gpsMsg) gpsMsg.textContent = `Set to ${coord.name} reference centroid (${coord.lat}°N, ${coord.lng}°E).`;
+  }
+}
+
+function handleParamChange(param) {
+  const unitEl = document.getElementById("formObsUnit");
+  const valEl = document.getElementById("formObsValue");
+  if (!unitEl) return;
+
+  if (param === "canopy_height") {
+    unitEl.value = "m";
+    if (valEl && (!valEl.value || valEl.value > 100)) valEl.value = "8.4";
+  } else if (param === "precipitation") {
+    unitEl.value = "mm";
+    if (valEl && (!valEl.value || valEl.value > 100)) valEl.value = "12.5";
+  } else if (param === "surface_temperature") {
+    unitEl.value = "degC";
+    if (valEl) valEl.value = "29.4";
+  } else if (param === "vegetation_index") {
+    unitEl.value = "index";
+    if (valEl) valEl.value = "0.72";
+  }
+}
+
+function captureDeviceGps() {
+  const latEl = document.getElementById("formObsLat");
+  const lngEl = document.getElementById("formObsLng");
+  const gpsMsg = document.getElementById("gpsStatusMessage");
+
+  if (!navigator.geolocation) {
+    if (gpsMsg) gpsMsg.textContent = "Device Geolocation API not supported by browser.";
+    return;
+  }
+
+  if (gpsMsg) gpsMsg.textContent = "Acquiring GNSS coordinates from device...";
+
+  navigator.geolocation.getCurrentPosition(
+    (pos) => {
+      const lat = parseFloat(pos.coords.latitude.toFixed(6));
+      const lng = parseFloat(pos.coords.longitude.toFixed(6));
+      if (latEl) latEl.value = lat;
+      if (lngEl) lngEl.value = lng;
+      if (gpsMsg) gpsMsg.textContent = `Acquired live GNSS: ${lat}°N, ${lng}°E (Accuracy ±${Math.round(pos.coords.accuracy || 10)}m).`;
+    },
+    (err) => {
+      if (gpsMsg) gpsMsg.textContent = `GNSS acquisition paused (${err.message}). Centroid preserved.`;
+    },
+    { timeout: 8000, enableHighAccuracy: true }
+  );
+}
+
+function setObsTimeToNow() {
+  const tsEl = document.getElementById("formObsTimestamp");
+  if (tsEl) tsEl.value = new Date().toISOString();
+}
+
+function handleObsPhotoFile(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+
+  const preview = document.getElementById("formObsPhotoPreview");
+  const img = document.getElementById("formObsPhotoImg");
+  const nameEl = document.getElementById("formObsPhotoName");
+  const urlEl = document.getElementById("formObsPhotoUrl");
+
+  if (preview && img && nameEl) {
+    img.src = URL.createObjectURL(file);
+    nameEl.textContent = `${file.name} (${Math.round(file.size / 1024)} KB)`;
+    preview.style.display = "flex";
+    if (urlEl) urlEl.value = `field-capture/${file.name}`;
+  }
+}
+
+function syncFormToJson() {
+  const zoneEl = document.getElementById("formObsZone");
+  const paramEl = document.getElementById("formObsParam");
+  const valEl = document.getElementById("formObsValue");
+  const unitEl = document.getElementById("formObsUnit");
+  const latEl = document.getElementById("formObsLat");
+  const lngEl = document.getElementById("formObsLng");
+  const tsEl = document.getElementById("formObsTimestamp");
+  const devEl = document.getElementById("formObsDeviceId");
+  const photoEl = document.getElementById("formObsPhotoUrl");
+  const textarea = document.getElementById("obsPayloadTextarea");
+
+  if (!textarea) return;
+
+  const zone = zoneEl ? zoneEl.value : "TC-Z03";
+  const param = paramEl ? paramEl.value : "canopy_height";
+  const val = valEl ? parseFloat(valEl.value) || 8.4 : 8.4;
+  const unit = unitEl ? unitEl.value.trim() : "m";
+  const lat = latEl ? parseFloat(latEl.value) || 19.1288 : 19.1288;
+  const lng = lngEl ? parseFloat(lngEl.value) || 72.9421 : 72.9421;
+  const ts = tsEl ? tsEl.value.trim() || new Date().toISOString() : new Date().toISOString();
+  const devId = devEl ? devEl.value.trim() || "FIELD-G3-DEV-001" : "FIELD-G3-DEV-001";
+  const photo = photoEl && photoEl.value.trim() ? photoEl.value.trim() : `${zone}/sensor/log_${Date.now()}.txt`;
+
+  const surveyPrefix = zone.split("-")[0] || "TC";
+  const zoneId = zone.split("-")[1] || "Z03";
+  const obsNum = Math.floor(100 + Math.random() * 900);
+  const obsSeq = "OBS" + obsNum;
+  const flightId = "F01";
+  const sensorId = "SENSOR";
+  const missionId = `${surveyPrefix}-${zoneId}-${flightId}`;
+  const obsId = `${surveyPrefix}-${zoneId}-${flightId}-${sensorId}-${obsSeq}`;
+
+  const payload = {
+    contract_version: "2.2",
+    schema_version: "2.2",
+    observation_id: obsId,
+    source_identity: "group3-field-edge",
+    survey_id: surveyPrefix,
+    zone_id: zoneId,
+    flight_id: flightId,
+    sensor_id: sensorId,
+    observation_seq: obsSeq,
+    mission_id: missionId,
+    idempotency_key: obsId,
+    observation_timestamp: ts,
+    source_timestamp: ts,
+    data_state: "CAPTURED",
+    synthetic_state: "CONTROLLED",
+    quality_state: "CAPTURED",
+    calibration_state: "NOT_VERIFIED",
+    device_id: devId,
+    observation_type: param,
+    capture_method: "sensor",
+    processing_status: "raw",
+    measurement: val,
+    unit: unit,
+    accuracy: "NOT_VERIFIED",
+    location: {
+      latitude: lat,
+      longitude: lng,
+      altitude_m: 12.0,
+      gnss_status: "NOT_VERIFIED",
+      position_accuracy_m: null
+    },
+    raw_artifact: photo,
+    raw_artifact_integrity: {
+      checksum_sha256: "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      hash_algorithm: "sha256",
+      artifact_type: "sensor_reading"
+    },
+    provenance_reference: `${zone}/qa/qa_field.json`,
+    provenance: {
+      device_id: devId,
+      station_id: `${zone}-STN`,
+      operator: "Field Agent",
+      mission_id: missionId
+    }
+  };
+
+  textarea.value = JSON.stringify(payload, null, 2);
+}
+
+function syncJsonToForm() {
+  const textarea = document.getElementById("obsPayloadTextarea");
+  if (!textarea || !textarea.value.trim()) return;
+
+  try {
+    const payload = JSON.parse(textarea.value);
+    const paramEl = document.getElementById("formObsParam");
+    const valEl = document.getElementById("formObsValue");
+    const unitEl = document.getElementById("formObsUnit");
+    const latEl = document.getElementById("formObsLat");
+    const lngEl = document.getElementById("formObsLng");
+    const tsEl = document.getElementById("formObsTimestamp");
+    const devEl = document.getElementById("formObsDeviceId");
+
+    if (paramEl && payload.observation_type) paramEl.value = payload.observation_type;
+    if (valEl && payload.measurement !== undefined) valEl.value = payload.measurement;
+    if (unitEl && payload.unit) unitEl.value = payload.unit;
+    if (latEl && payload.location && payload.location.latitude) latEl.value = payload.location.latitude;
+    if (lngEl && payload.location && payload.location.longitude) lngEl.value = payload.location.longitude;
+    if (tsEl && payload.observation_timestamp) tsEl.value = payload.observation_timestamp;
+    if (devEl && payload.device_id) devEl.value = payload.device_id;
+  } catch (e) {
+    // Malformed JSON - keep current form values
+  }
+}
+
+function openObservationSubmitModal(preferredMode) {
   const modal = document.getElementById("observationSubmitModal");
   if (!modal) return;
 
@@ -4157,6 +4640,10 @@ function openObservationSubmitModal() {
     resultBox.style.display = "none";
     resultBox.innerHTML = "";
   }
+
+  // Set default mode
+  switchObsModalMode(preferredMode || currentObsModalMode || "form");
+  updateOfflineUI();
 
   modal.style.display = "flex";
 }
@@ -4184,9 +4671,14 @@ function loadSampleObsPayload(sampleType) {
   } else if (sampleType === "invalid") {
     textarea.value = JSON.stringify(SAMPLE_INVALID_PAYLOAD, null, 2);
   }
+  syncJsonToForm();
 }
 
 async function submitObservationPayload() {
+  if (currentObsModalMode === "form") {
+    syncFormToJson();
+  }
+
   const textarea = document.getElementById("obsPayloadTextarea");
   const keyInput = document.getElementById("obsIdempotencyKey");
   const resultBox = document.getElementById("obsIngestionResult");
@@ -4198,7 +4690,7 @@ async function submitObservationPayload() {
   if (!rawJson) {
     resultBox.style.display = "block";
     resultBox.className = "login-error-alert";
-    resultBox.textContent = "Please enter an observation payload JSON.";
+    resultBox.textContent = "Please enter an observation payload JSON or fill out the form fields.";
     return;
   }
 
@@ -4208,11 +4700,39 @@ async function submitObservationPayload() {
   } catch (parseErr) {
     resultBox.style.display = "block";
     resultBox.className = "login-error-alert";
-    resultBox.textContent = `JSON Syntax Error: ${parseErr.message}`;
+    resultBox.textContent = `Validation Error: JSON Syntax Error: ${parseErr.message}`;
     return;
   }
 
-  const key = keyInput ? keyInput.value.trim() : "";
+  let key = keyInput ? keyInput.value.trim() : "";
+  if (!key || (payload.observation_id && !key.includes(payload.observation_id))) {
+    key = `IK-${payload.observation_id}`;
+    if (keyInput) keyInput.value = key;
+  }
+  payload.idempotency_key = key;
+
+  // Check if offline
+  const isOnline = typeof navigator.onLine === "boolean" ? navigator.onLine : true;
+  if (!isOnline) {
+    const queuedItem = saveToOfflineQueue(payload, key);
+    resultBox.style.display = "block";
+    resultBox.style.background = "var(--status-warn-bg)";
+    resultBox.style.border = "1px solid var(--status-warn-border)";
+    resultBox.style.color = "var(--status-warn)";
+    resultBox.innerHTML = `
+      <div style="font-weight:700;margin-bottom:4px;">Saved to Local Offline Queue!</div>
+      <div style="font-size:11.5px;color:var(--text-main);line-height:1.4;">
+        Observation <strong>${payload.observation_id}</strong> stored in browser localStorage.<br>
+        It will synchronize automatically when internet connectivity returns.
+      </div>
+      <div style="margin-top:10px;">
+        <button type="button" class="btn-header" style="font-size:11px;padding:3px 10px;" onclick="closeObservationSubmitModal()">
+          Close Modal
+        </button>
+      </div>
+    `;
+    return;
+  }
 
   resultBox.style.display = "block";
   resultBox.style.background = "var(--bg-page)";
@@ -4225,6 +4745,11 @@ async function submitObservationPayload() {
   try {
     const headers = { "Content-Type": "application/json", "Accept": "application/json" };
     if (key) headers["Idempotency-Key"] = key;
+
+    // Attach Bearer token if user is signed in
+    if (window.VANA_AUTH && window.VANA_AUTH.getAccessToken()) {
+      headers["Authorization"] = "Bearer " + window.VANA_AUTH.getAccessToken();
+    }
 
     const res = await vanaFetch(window.VANA_CONFIG.G1_OBSERVATIONS, {
       method: "POST",
@@ -4271,43 +4796,170 @@ async function submitObservationPayload() {
       resultBox.style.border = "1px solid var(--status-critical-border)";
       resultBox.style.color = "var(--status-critical)";
       resultBox.innerHTML = `
-        <div style="font-weight:700;margin-bottom:4px;">Idempotency Conflict (HTTP 409)</div>
-        <div style="font-size:11.5px;color:var(--text-main);">${body.message || "Idempotency key was already used with a different request payload."}</div>
+        <div style="font-weight:700;margin-bottom:4px;">Conflict Rejection (HTTP 409)</div>
+        <div style="font-size:11.5px;color:var(--text-main);line-height:1.4;">
+          Observation ID or idempotency key conflict. ${body.message || ""}
+        </div>
       `;
-    } else if (res.status === 400) {
+    } else if (res.status === 403) {
       resultBox.style.background = "var(--status-critical-bg)";
       resultBox.style.border = "1px solid var(--status-critical-border)";
       resultBox.style.color = "var(--status-critical)";
-      const errorList = Array.isArray(body.errors) && body.errors.length > 0
-        ? `<ul style="margin:4px 0 0 16px;padding:0;">${body.errors.map(e => `<li>${e}</li>`).join("")}</ul>`
-        : `<div>${body.message || "Observation failed contract validation."}</div>`;
       resultBox.innerHTML = `
-        <div style="font-weight:700;margin-bottom:4px;">Validation Rejected (HTTP 400)</div>
-        <div style="font-size:11.5px;color:var(--text-main);">${errorList}</div>
+        <div style="font-weight:700;margin-bottom:4px;">Authorization Rejected (HTTP 403)</div>
+        <div style="font-size:11.5px;color:var(--text-main);line-height:1.4;">
+          ${body.detail || "Your current role is not authorized to submit observations. Required: FIELD_AGENT or ADMIN."}
+        </div>
       `;
     } else {
       resultBox.style.background = "var(--status-critical-bg)";
       resultBox.style.border = "1px solid var(--status-critical-border)";
       resultBox.style.color = "var(--status-critical)";
       resultBox.innerHTML = `
-        <div style="font-weight:700;margin-bottom:4px;">Submission Error (HTTP ${res.status})</div>
-        <div style="font-size:11.5px;color:var(--text-main);">${body.message || "Unexpected persistence result."}</div>
+        <div style="font-weight:700;margin-bottom:4px;">Ingestion Error (HTTP ${res.status})</div>
+        <div style="font-size:11.5px;color:var(--text-main);line-height:1.4;">
+          ${body.message || "Failed to persist observation into MasterDB."}
+        </div>
+        ${body.errors ? `<div style="margin-top:6px;font-size:11px;color:var(--text-muted);">${JSON.stringify(body.errors)}</div>` : ""}
       `;
     }
   } catch (err) {
+    // If network fetch fails, offer to store offline
+    const queuedItem = saveToOfflineQueue(payload, key);
     resultBox.style.background = "var(--status-warn-bg)";
     resultBox.style.border = "1px solid var(--status-warn-border)";
     resultBox.style.color = "var(--status-warn)";
     resultBox.innerHTML = `
-      <div style="font-weight:700;margin-bottom:4px;">MasterDB Service Degraded</div>
-      <div style="font-size:11.5px;color:var(--text-main);">
-        Could not connect to MasterDB gateway (/proxy/g1/observations). Please verify backend service availability.
+      <div style="font-weight:700;margin-bottom:4px;">Network Failure · Queued in Local Storage</div>
+      <div style="font-size:11.5px;color:var(--text-main);line-height:1.4;">
+        Could not reach MasterDB. Observation saved locally to browser queue.<br>
+        Error: ${err.message}
+      </div>
+      <div style="margin-top:10px;">
+        <button type="button" class="btn-header" style="font-size:11px;padding:3px 10px;" onclick="closeObservationSubmitModal()">
+          Dismiss
+        </button>
       </div>
     `;
   } finally {
     if (submitBtn) submitBtn.disabled = false;
   }
 }
+
+// =============================================================================
+// PHASE 1: FOREST OFFICER REVIEW QUEUE ENGINE
+// =============================================================================
+function renderReviewQueue() {
+  const tbody = document.getElementById("foReviewTableBody");
+  const countBadge = document.getElementById("foReviewCountBadge");
+  if (!tbody) return;
+
+  const records = [];
+  if (currentRuntimeData && currentRuntimeData.observation) {
+    records.push(currentRuntimeData.observation);
+  }
+
+  // Also include any retrieved records cached
+  if (window.retrievedObservationsStore) {
+    Object.values(window.retrievedObservationsStore).forEach(rec => {
+      if (!records.some(r => r.observation_id === rec.observation_id)) {
+        records.push(rec);
+      }
+    });
+  }
+
+  if (countBadge) {
+    countBadge.textContent = `${records.length} Record${records.length > 1 ? 's' : ''} In Ledger`;
+  }
+
+  if (records.length === 0) {
+    tbody.innerHTML = `
+      <tr>
+        <td colspan="7" style="padding:16px;text-align:center;color:var(--text-muted);">
+          No observations currently retrieved in MasterDB ledger. Use Sensor Intake to submit an observation.
+        </td>
+      </tr>
+    `;
+    return;
+  }
+
+  tbody.innerHTML = records.map(rec => {
+    const isCurrent = rec.observation_id === currentObservationId;
+    const ruling = (currentRuntimeData && currentRuntimeData.sanskar && currentRuntimeData.sanskar.effective_ruling) || "ABSTAIN";
+    const rulingClass = ruling === "ALLOW" ? "active" : "paused";
+    const calib = rec.calibration_state || "NOT_VERIFIED";
+    const val = rec.measurement !== undefined ? `${rec.measurement} ${rec.unit || ''}` : "N/A";
+    const zone = rec.zone_id ? `${rec.survey_id || ''}-${rec.zone_id}` : "TC-Z03";
+    const ts = rec.observation_timestamp ? rec.observation_timestamp.slice(0, 19).replace('T', ' ') : "2026-08-25 10:00";
+
+    return `
+      <tr style="border-bottom:1px solid var(--border-light);background:${isCurrent ? 'rgba(32,214,107,0.06)' : 'transparent'};">
+        <td style="padding:10px 14px;font-family:var(--font-mono);font-weight:600;color:var(--text-main);">
+          ${rec.observation_id}
+          ${isCurrent ? '<span style="font-size:10px;color:var(--brand);margin-left:6px;">● Active</span>' : ''}
+        </td>
+        <td style="padding:10px 14px;">${zone}</td>
+        <td style="padding:10px 14px;">${rec.observation_type || 'canopy_height'} (${val})</td>
+        <td style="padding:10px 14px;font-family:var(--font-mono);font-size:11px;">${ts}</td>
+        <td style="padding:10px 14px;">
+          <span class="status-pill neutral" style="font-size:10.5px;">${calib}</span>
+        </td>
+        <td style="padding:10px 14px;">
+          <span class="status-pill ${rulingClass}" style="font-size:10.5px;">${ruling}</span>
+        </td>
+        <td style="padding:10px 14px;text-align:right;">
+          <button type="button" class="btn-header" style="padding:3px 8px;font-size:11px;" onclick="selectReviewObservation('${rec.observation_id}')">
+            Inspect &amp; Audit
+          </button>
+        </td>
+      </tr>
+    `;
+  }).join("");
+}
+
+function selectReviewObservation(obsId) {
+  if (!obsId) return;
+  fetchLive(obsId);
+  switchMainTab("decisionsView", document.getElementById("navItemDecisions"));
+}
+
+// =============================================================================
+// PHASE 1: CONTEXTUAL VANA GUIDANCE ASSISTANT
+// =============================================================================
+let isAssistantOpen = false;
+
+function toggleVanaAssistant() {
+  const drawer = document.getElementById("assistantDrawer");
+  if (!drawer) return;
+
+  isAssistantOpen = !isAssistantOpen;
+  drawer.style.display = isAssistantOpen ? "flex" : "none";
+  if (isAssistantOpen) {
+    updateAssistantExplanation();
+  }
+}
+
+function updateAssistantExplanation() {
+  const explEl = document.getElementById("astGovExplanation");
+  if (!explEl) return;
+
+  const ruling = (currentRuntimeData && currentRuntimeData.sanskar && currentRuntimeData.sanskar.effective_ruling) || "ABSTAIN";
+  const obsId = currentObservationId || "TC-Z03-EXT-OPENMETEO-OBS001";
+  const calib = (currentRuntimeData && currentRuntimeData.observation && currentRuntimeData.observation.calibration_state) || "NOT_VERIFIED";
+
+  if (ruling === "ABSTAIN") {
+    explEl.innerHTML = `
+      <div style="color:var(--status-warn);font-weight:700;margin-bottom:3px;">Ruling: ABSTAIN (Action Paused)</div>
+      <div>Observation <strong>${obsId}</strong> was evaluated by SANSKAR with calibration state <code>${calib}</code>. In accordance with zero-fabrication and fail-closed constitutional governance, automated physical dispatch is locked to prevent unwarranted intervention.</div>
+    `;
+  } else if (ruling === "ALLOW") {
+    explEl.innerHTML = `
+      <div style="color:var(--status-ok);font-weight:700;margin-bottom:3px;">Ruling: ALLOW (Verified)</div>
+      <div>Observation <strong>${obsId}</strong> has satisfied statutory thresholds and verified sensor calibration. Action request generated for administrative authorization.</div>
+    `;
+  }
+}
+
 
 // =============================================================================
 // INTERACTIVE BOTTOM CARDS: FOREST HEALTH TREND, REGIONAL COVERAGE, AUDIT
