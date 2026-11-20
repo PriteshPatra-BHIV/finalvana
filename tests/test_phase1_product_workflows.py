@@ -55,7 +55,7 @@ def get_canonical_payload(new_obs_id=None):
         parts = obs_id.split("-")
         survey_id, zone_id, flight_id, sensor_id, obs_seq = parts[0], parts[1], parts[2], parts[3], parts[4]
     else:
-        num = random.randint(100, 999)
+        num = random.randint(100000, 999999)
         survey_id, zone_id, flight_id, sensor_id, obs_seq = "TC", "Z03", "F02", "LIDAR", f"OBS{num}"
         obs_id = f"{survey_id}-{zone_id}-{flight_id}-{sensor_id}-{obs_seq}"
 
@@ -153,7 +153,7 @@ def test_field_agent_valid_observation_submission():
     ok, _, _, field_session = auth_service.authenticate_user("feild@gmail.com", "vana", "FIELD_AGENT")
     token = field_session["access_token"]
 
-    num = random.randint(100, 999)
+    num = random.randint(100000, 999999)
     test_obs_id = f"TC-Z03-F02-LIDAR-OBS{num}"
     test_ik = f"IK-{test_obs_id}"
     payload = get_canonical_payload(test_obs_id)
@@ -177,7 +177,7 @@ def test_idempotent_replay():
     ok, _, _, field_session = auth_service.authenticate_user("feild@gmail.com", "vana", "FIELD_AGENT")
     token = field_session["access_token"]
 
-    num = random.randint(100, 999)
+    num = random.randint(100000, 999999)
     test_obs_id = f"TC-Z03-F02-LIDAR-OBS{num}"
     test_ik = f"IK-{test_obs_id}"
     payload = get_canonical_payload(test_obs_id)

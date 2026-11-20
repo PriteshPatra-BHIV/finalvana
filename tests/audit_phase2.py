@@ -88,7 +88,7 @@ def run_phase2_audit():
     persisted_records = []
     for s_id, z_id, f_id, sens, lat, lon, val, unit, zone_name in zones_to_test:
         obs = copy.deepcopy(canonical_sample)
-        num = random.randint(100, 999)
+        num = random.randint(100000, 999999)
         obs_seq = f"OBS{num}"
         obs_id = f"{s_id}-{z_id}-{f_id}-{sens}-{obs_seq}"
         mission_id = f"{s_id}-{z_id}-{f_id}"

@@ -54,7 +54,7 @@ def build_zone_observation(survey_id: str, zone_id: str, flight_id: str, sensor_
         base_sample = json.load(f)["observations"][0]
 
     obs = copy.deepcopy(base_sample)
-    num = random.randint(100, 999)
+    num = random.randint(100000, 999999)
     obs_seq = f"OBS{num}"
     obs_id = f"{survey_id}-{zone_id}-{flight_id}-{sensor_id}-{obs_seq}"
     mission_id = f"{survey_id}-{zone_id}-{flight_id}"
