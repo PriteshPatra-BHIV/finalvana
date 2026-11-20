@@ -63,130 +63,166 @@ def get_dashboard_summary():
     try:
         cur = conn.cursor()
         
-        # 1. Real database counts
-        total_obs = cur.execute("SELECT count(*) FROM observation").fetchone()[0]
-        validated_obs = cur.execute("SELECT count(*) FROM observation WHERE quality_status = 'VALIDATED'").fetchone()[0]
-        total_meas = cur.execute("SELECT count(*) FROM measurement").fetchone()[0]
-        geo_count = cur.execute("SELECT count(*) FROM geo_location").fetchone()[0]
-        
-        # 2. Latest active observation record
+        # 1. Real database counts & table check
+        obs_table_exists = cur.execute(
+            "SELECT count(*) FROM sqlite_master WHERE type='table' AND name='observation'"
+            if not conn.is_postgres else
+            "SELECT count(*) FROM information_schema.tables WHERE table_name = 'observation'"
+        ).fetchone()[0] > 0
+
+        total_obs = 0
+        validated_obs = 0
+        total_meas = 0
+        geo_count = 0
         latest_obs = None
-        obs_rows = cur.execute("""
-            SELECT o.observation_id, o.canonical_record_id, o.quality_status, o.observed_at,
-                   o.observation_type, o.species, o.provenance_reference,
-                   g.place_name, g.lat, g.lon
-            FROM observation o
-            LEFT JOIN geo_location g ON o.geo_id = g.geo_id
-            ORDER BY o.observed_at DESC LIMIT 1
-        """).fetchall()
-        if obs_rows:
-            r = obs_rows[0]
-            latest_obs = {
-                "observation_id": r[0],
-                "canonical_record_id": r[1],
-                "quality_status": r[2],
-                "observed_at": r[3],
-                "observation_type": r[4],
-                "species": r[5],
-                "provenance_reference": r[6],
-                "location_name": r[7] or "Thane Creek",
-                "lat": r[8],
-                "lon": r[9],
-            }
-            
-        # 3. Official FSI ISFR statutory forest cover record
         fc_data = None
-        fc_rows = cur.execute("""
-            SELECT record_id, assessment_year, state, boundary_reference,
-                   forest_cover_area, forest_cover_percentage, very_dense_forest_area,
-                   moderately_dense_forest_area, open_forest_area, mangrove_area,
-                   unit, methodology, quality_status, provenance_reference,
-                   request_fingerprint, idempotency_key
-            FROM official_forest_cover_record LIMIT 1
-        """).fetchall()
-        if fc_rows:
-            f = fc_rows[0]
-            fc_data = {
-                "record_id": f[0],
-                "assessment_year": f[1],
-                "state": f[2],
-                "boundary_reference": f[3],
-                "forest_cover_area_km2": f[4],
-                "forest_cover_percentage": f[5],
-                "very_dense_km2": f[6],
-                "moderately_dense_km2": f[7],
-                "open_forest_km2": f[8],
-                "mangrove_area_km2": f[9],
-                "unit": f[10],
-                "methodology": f[11],
-                "quality_status": f[12],
-                "citation": f[13],
-                "sha256": f[14],
-                "idempotency_key": f[15],
-            }
-        else:
-            fc_data = {
-                "assessment_year": 2023,
-                "state": "Maharashtra",
-                "forest_cover_area_km2": 50858.53,
-                "forest_cover_percentage": 16.53,
-                "mangrove_area_km2": 315.09,
-                "unit": "km2",
-                "quality_status": "EXTRACTED",
-                "citation": "FSI ISFR 2023, Vol I, Table 2.4 (pp.40-41)",
-                "sha256": "9068c282368cb8836063ed9eace0c926281e908653ab054e4ed72ffadafc1142",
-            }
+        audit_events = []
+
+        if obs_table_exists:
+            total_obs = cur.execute("SELECT count(*) FROM observation").fetchone()[0]
+            validated_obs = cur.execute("SELECT count(*) FROM observation WHERE quality_status = 'VALIDATED'").fetchone()[0]
+            total_meas = cur.execute("SELECT count(*) FROM measurement").fetchone()[0]
+            geo_count = cur.execute("SELECT count(*) FROM geo_location").fetchone()[0]
             
-        validation_rate = 100.0 if total_obs > 0 and validated_obs == total_obs else (round(validated_obs / total_obs * 100, 1) if total_obs > 0 else 100.0)
-        
-        # 4. Genuine system audit events (real events from DB & pipeline)
-        audit_events = [
-            {
-                "id": "EVT-001",
-                "type": "AUDIT_SEAL",
-                "title": "MasterDB Ledger Connected",
-                "description": f"MasterDB schema v2.2 validated with {total_obs} canonical observation record(s).",
-                "status": "VALIDATED",
-                "severity": "INFO",
-                "timestamp": "5 min ago"
-            },
-            {
-                "id": "EVT-002",
-                "type": "BENCHMARK_SYNC",
-                "title": "Statutory FSI ISFR Baseline Active",
-                "description": f"Official {fc_data['forest_cover_percentage']}% statewide forest cover benchmark verified from statutory ledger.",
-                "status": "STATUTORY",
-                "severity": "INFO",
-                "timestamp": "12 min ago"
-            },
-            {
-                "id": "EVT-003",
-                "type": "INTEGRITY_CHECK",
-                "title": "Cryptographic State Validated",
-                "description": f"SHA-256 seal integrity confirmed across active lineage ledger ({fc_data['sha256'][:16]}...).",
-                "status": "SECURE",
-                "severity": "INFO",
-                "timestamp": "18 min ago"
-            },
-            {
-                "id": "EVT-004",
-                "type": "GOVERNANCE_INVARIANT",
-                "title": "Fail-Closed Governance Invariant",
-                "description": "Zero unverified field actions allowed. SANSKAR execution runtime enforcing strict ABSTAIN ruling.",
-                "status": "FAIL_CLOSED",
-                "severity": "MEDIUM",
-                "timestamp": "22 min ago"
-            },
-            {
-                "id": "EVT-005",
-                "type": "SURVEILLANCE_STANDBY",
-                "title": "5 Regional Sensor Stations in Standby",
-                "description": "Mumbai, Navi Mumbai, Vasai, Thane, Maval configured in GIS registry awaiting field hardware intake.",
-                "status": "STANDBY",
-                "severity": "MEDIUM",
-                "timestamp": "30 min ago"
-            }
-        ]
+            # 2. Latest active observation record
+            obs_rows = cur.execute("""
+                SELECT o.observation_id, o.canonical_record_id, o.quality_status, o.observed_at,
+                       o.observation_type, o.species, o.provenance_reference,
+                       g.place_name, g.lat, g.lon
+                FROM observation o
+                LEFT JOIN geo_location g ON o.geo_id = g.geo_id
+                ORDER BY o.observed_at DESC LIMIT 1
+            """).fetchall()
+            if obs_rows:
+                r = obs_rows[0]
+                latest_obs = {
+                    "observation_id": r[0],
+                    "canonical_record_id": r[1],
+                    "quality_status": r[2],
+                    "observed_at": r[3],
+                    "observation_type": r[4],
+                    "species": r[5],
+                    "provenance_reference": r[6],
+                    "location_name": r[7] or "Thane Creek",
+                    "lat": r[8],
+                    "lon": r[9],
+                }
+
+            # 3. Official FSI ISFR statutory forest cover record
+            fc_table_exists = cur.execute(
+                "SELECT count(*) FROM sqlite_master WHERE type='table' AND name='official_forest_cover_record'"
+                if not conn.is_postgres else
+                "SELECT count(*) FROM information_schema.tables WHERE table_name = 'official_forest_cover_record'"
+            ).fetchone()[0] > 0
+
+            if fc_table_exists:
+                fc_rows = cur.execute("""
+                    SELECT record_id, assessment_year, state, boundary_reference,
+                           forest_cover_area, forest_cover_percentage, very_dense_forest_area,
+                           moderately_dense_forest_area, open_forest_area, mangrove_area,
+                           unit, methodology, quality_status, provenance_reference,
+                           request_fingerprint, idempotency_key
+                    FROM official_forest_cover_record LIMIT 1
+                """).fetchall()
+                if fc_rows:
+                    f = fc_rows[0]
+                    fc_data = {
+                        "record_id": f[0],
+                        "assessment_year": f[1],
+                        "state": f[2],
+                        "boundary_reference": f[3],
+                        "forest_cover_area_km2": f[4],
+                        "forest_cover_percentage": f[5],
+                        "very_dense_km2": f[6],
+                        "moderately_dense_km2": f[7],
+                        "open_forest_km2": f[8],
+                        "mangrove_area_km2": f[9],
+                        "unit": f[10],
+                        "methodology": f[11],
+                        "quality_status": f[12],
+                        "citation": f[13],
+                        "sha256": f[14],
+                        "idempotency_key": f[15],
+                    }
+
+            # 4. Genuine system audit events from DB ledger
+            try:
+                obs_event_rows = cur.execute("""
+                    SELECT observation_id, canonical_record_id, quality_status, observed_at, observation_type
+                    FROM observation
+                    ORDER BY observed_at DESC
+                    LIMIT 5
+                """).fetchall()
+                for o_row in obs_event_rows:
+                    o_id = o_row[0]
+                    can_id = o_row[1] or "Pending"
+                    q_stat = o_row[2] or "VALIDATED"
+                    o_time = o_row[3] or "Recorded"
+                    o_type = o_row[4] or "Observation"
+                    audit_events.append({
+                        "id": f"OBS-{o_id}",
+                        "type": "OBSERVATION_INGEST",
+                        "title": f"Canonical Record: {can_id}",
+                        "description": f"Observation {o_id} ({o_type}) ingested into MasterDB ledger.",
+                        "status": q_stat,
+                        "severity": "INFO",
+                        "timestamp": o_time
+                    })
+            except Exception:
+                pass
+
+            try:
+                proc_table_exists = cur.execute(
+                    "SELECT count(*) FROM sqlite_master WHERE type='table' AND name='processing_run'"
+                    if not conn.is_postgres else
+                    "SELECT count(*) FROM information_schema.tables WHERE table_name = 'processing_run'"
+                ).fetchone()[0] > 0
+                if proc_table_exists:
+                    run_rows = cur.execute("""
+                        SELECT run_id, pipeline_stage, status, actor, started_at
+                        FROM processing_run
+                        ORDER BY started_at DESC
+                        LIMIT 3
+                    """).fetchall()
+                    for r_row in run_rows:
+                        audit_events.append({
+                            "id": f"RUN-{r_row[0]}",
+                            "type": "PIPELINE_RUN",
+                            "title": f"Pipeline Run: {r_row[1]}",
+                            "description": f"Status: {r_row[2]} by actor {r_row[3] or 'system'}.",
+                            "status": r_row[2],
+                            "severity": "INFO" if r_row[2] == "COMPLETED" else "MEDIUM",
+                            "timestamp": r_row[4] or "Recorded"
+                        })
+            except Exception:
+                pass
+
+            if fc_data:
+                audit_events.append({
+                    "id": f"FC-{fc_data.get('record_id', 'STATUTORY')}",
+                    "type": "BENCHMARK_SYNC",
+                    "title": f"Statutory Benchmark ({fc_data.get('state', 'State')} {fc_data.get('assessment_year', '')})",
+                    "description": f"Official {fc_data.get('forest_cover_percentage')}% forest cover statutory benchmark verified.",
+                    "status": fc_data.get("quality_status", "STATUTORY"),
+                    "severity": "INFO",
+                    "timestamp": fc_data.get("citation") or "Statutory Benchmark"
+                })
+
+        if not audit_events:
+            audit_events = [
+                {
+                    "id": "EVT-UNAVAILABLE",
+                    "type": "SYSTEM_STATUS",
+                    "title": "No Recent Audit Records",
+                    "description": "MasterDB ledger contains zero observations or pipeline events.",
+                    "status": "UNAVAILABLE",
+                    "severity": "INFO",
+                    "timestamp": "UNAVAILABLE"
+                }
+            ]
+
+        validation_rate = round(validated_obs / total_obs * 100, 1) if total_obs > 0 else 0.0
+        fc_sha = fc_data["sha256"] if fc_data and "sha256" in fc_data else "UNAVAILABLE"
         
         return {
             "status": "healthy",
@@ -195,14 +231,14 @@ def get_dashboard_summary():
                 "sensor_events": {
                     "count": total_obs,
                     "display": f"{total_obs} Ingested",
-                    "badge": "Controlled Synthetic Batch",
-                    "status": "CONFIRMED_LIVE"
+                    "badge": "Controlled Synthetic Batch" if total_obs > 0 else "No Ingested Data",
+                    "status": "CONFIRMED_LIVE" if total_obs > 0 else "UNAVAILABLE"
                 },
                 "records_validated": {
                     "count": validated_obs,
                     "total": total_obs,
                     "percentage": validation_rate,
-                    "display": f"{validation_rate:.0f}% Validated",
+                    "display": f"{validation_rate:.0f}% Validated" if total_obs > 0 else "0% Validated",
                     "subtext": "MasterDB Canonical Ledger"
                 },
                 "governance_decisions": {
@@ -220,30 +256,30 @@ def get_dashboard_summary():
                     "noop_enforced": 1
                 },
                 "data_integrity": {
-                    "display": "100% Sealed",
-                    "subtext": "SHA-256 Provenance Intact",
-                    "sha256": fc_data["sha256"]
+                    "display": "100% Sealed" if fc_data else "UNAVAILABLE",
+                    "subtext": "SHA-256 Provenance Intact" if fc_data else "Statutory Benchmark Unseeded",
+                    "sha256": fc_sha
                 }
             },
             "metrics": {
                 "sensor_events_display": f"{total_obs} Ingested",
-                "sensor_events_detail": "Controlled Synthetic Batch",
-                "records_validated_display": f"{validation_rate:.0f}% Validated",
+                "sensor_events_detail": "Controlled Synthetic Batch" if total_obs > 0 else "Awaiting Sensor Intake",
+                "records_validated_display": f"{validation_rate:.0f}% Validated" if total_obs > 0 else "0% Validated",
                 "records_validated_detail": "MasterDB Canonical Ledger",
                 "governance_ruling": "ABSTAIN 100%",
                 "governance_ruling_detail": "Fail-Closed Invariant Active",
                 "execution_outcome": "100% Governed",
                 "execution_outcome_detail": "1 Abstention · noop Enforced",
-                "data_integrity": "100% Sealed",
-                "data_integrity_detail": "SHA-256 Provenance Intact"
+                "data_integrity": "100% Sealed" if fc_data else "UNAVAILABLE",
+                "data_integrity_detail": "SHA-256 Provenance Intact" if fc_data else "Statutory Benchmark Unseeded"
             },
             "forest_cover": fc_data,
             "latest_record": latest_obs,
             "recent_events": audit_events,
             "regional_coverage": {
-                "overall_percentage": 16.53,
+                "overall_percentage": fc_data["forest_cover_percentage"] if fc_data else None,
                 "regions": [
-                    {"name": "Thane Creek", "status": "CONFIRMED_LIVE", "percentage": 100, "note": "Controlled Synthetic Intake"},
+                    {"name": "Thane Creek", "status": "CONFIRMED_LIVE" if total_obs > 0 else "STANDBY", "percentage": 100 if total_obs > 0 else 0, "note": "Controlled Synthetic Intake" if total_obs > 0 else "Awaiting Intake"},
                     {"name": "Konkan", "status": "STANDBY", "percentage": 0, "note": "Phase 2 Deployment"},
                     {"name": "Western Ghats", "status": "STANDBY", "percentage": 0, "note": "Phase 2 Deployment"},
                     {"name": "Marathwada", "status": "STANDBY", "percentage": 0, "note": "Phase 2 Deployment"},

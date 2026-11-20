@@ -8,9 +8,9 @@
   <meta name="description" content="Autonomous environmental surveillance, statutory governance assessments, and multi-agency compliance verification across Maharashtra monitoring zones.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;family=JetBrains+Mono:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
   <!-- Leaflet CSS for accurate geographic tile mapping -->
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
   <link rel="stylesheet" href="styles.css?v=49">
   <link rel="stylesheet" href="geospatial.css?v=49">
   <!-- Official VANA Brand Favicons -->
@@ -30,10 +30,10 @@
     <div class="header-left">
       <!-- VANA Official Brand Mark + Wordmark + Subtitle (Links to Dashboard) -->
       <a href="index.html" class="header-brand-wrap" title="VANA: Forest Intelligence Command Center">
-        <div class="header-brand-titles">
+        <span class="header-brand-titles">
           <img src="assets/vana-logo.svg" alt="VANA Logo" class="header-brand-logo-img" style="height:27px;width:101px;display:block;object-fit:contain;">
           <span class="header-brand-subtitle">Environmental Intelligence Command Center</span>
-        </div>
+        </span>
       </a>
 
       <!-- Vertical Divider Line -->
@@ -42,10 +42,10 @@
       <!-- Verified Maharashtra Government Identification (Links to Dashboard) -->
       <a href="index.html" class="gov-id-badge" title="Government of Maharashtra · Department of Environment &amp; Climate Change">
         <img src="assets/maharashtra-emblem-clean.png?v=5" alt="Government of Maharashtra" class="gov-emblem-img" style="height:34px;width:auto;object-fit:contain;display:block;">
-        <div class="gov-text-block">
+        <span class="gov-text-block">
           <span class="gov-title">Government of Maharashtra</span>
           <span class="gov-subtitle">Department of Environment &amp; Climate Change</span>
-        </div>
+        </span>
       </a>
     </div>
 
@@ -72,7 +72,7 @@
       </button>
 
       <!-- Theme / Sun Icon Button -->
-      <button class="header-icon-btn" title="Display Theme" onclick="toggleTheme && toggleTheme()">
+      <button class="header-icon-btn" title="Display Theme" onclick="if(window.toggleTheme)window.toggleTheme()">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
       </button>
 
@@ -334,8 +334,8 @@
 
               <!-- Floating Map Controls on the Left matching reference -->
               <div class="map-floating-controls">
-                <button class="floating-btn" onclick="if(window.VanaGeoEngine&amp;&amp;window.VanaGeoEngine.map)window.VanaGeoEngine.map.zoomIn()" title="Zoom In">+</button>
-                <button class="floating-btn" onclick="if(window.VanaGeoEngine&amp;&amp;window.VanaGeoEngine.map)window.VanaGeoEngine.map.zoomOut()" title="Zoom Out">−</button>
+                <button class="floating-btn" onclick="if(window.VanaGeoEngine?.map)window.VanaGeoEngine.map.zoomIn()" title="Zoom In">+</button>
+                <button class="floating-btn" onclick="if(window.VanaGeoEngine?.map)window.VanaGeoEngine.map.zoomOut()" title="Zoom Out">−</button>
                 <button class="floating-btn" onclick="if(window.resetMapExtent)window.resetMapExtent()" title="Recenter Maharashtra">
                   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="8"/><line x1="12" y1="2" x2="12" y2="6"/><line x1="12" y1="18" x2="12" y2="22"/><line x1="2" y1="12" x2="6" y2="12"/><line x1="18" y1="12" x2="22" y2="12"/></svg>
                 </button>
@@ -584,7 +584,7 @@
                 <span class="panel-title-text">Evidence &amp; Audit</span>
               </div>
               <div class="panel-header-right">
-                <a class="panel-link-action" onclick="switchMainTab('historyView', document.getElementById('navItemMasterDB'))" title="Open MasterDB Audit & Lineage Logs">View All &rarr;</a>
+                <a class="panel-link-action" onclick="switchMainTab('historyView', document.getElementById('navItemMasterDB'))" title="Open MasterDB Audit &amp; Lineage Logs">View All &rarr;</a>
               </div>
             </div>
 
@@ -644,10 +644,16 @@
               View and manage environmental observations from monitored locations.
             </p>
           </div>
-          <!-- Read-Only Architecture Notice: Direct write not supported per backend inventory -->
-          <div class="header-info-pill" id="ingestionInfoPill" style="display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:6px;background:var(--color-surface-subtle);border:1px solid var(--color-border);font-size:12px;color:var(--color-text-secondary);flex-shrink:0;" title="Observation ingestion is managed exclusively via authenticated edge sensors and automated pipelines. Direct browser observation submission is not exposed in accordance with the backend inventory.">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
-            <span>Ingestion: Pipeline &amp; Edge Sensors Only</span>
+          <!-- Ingestion Action & Architecture Notice -->
+          <div style="display:inline-flex;align-items:center;gap:10px;flex-wrap:wrap;">
+            <button type="button" class="btn-header primary" id="btnOpenSubmitObsModal" onclick="openObservationSubmitModal()" title="Submit observation conforming to Group 3 v2.2 schema" style="display:inline-flex;align-items:center;gap:6px;padding:6px 14px;font-size:12px;font-weight:600;border-radius:6px;box-shadow:0 0 12px rgba(32,214,107,0.25);">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L3 7v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V7l-9-5z"/><line x1="12" y1="9" x2="12" y2="15"/><line x1="9" y1="12" x2="15" y2="12"/></svg>
+              <span>+ Submit Observation</span>
+            </button>
+            <div class="header-info-pill" id="ingestionInfoPill" style="display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:6px;background:var(--color-surface-subtle);border:1px solid var(--color-border);font-size:12px;color:var(--color-text-secondary);flex-shrink:0;" title="Observation ingestion is validated against Group 3 v2.2 schema and persisted into MasterDB canonical ledger with SHA-256 idempotency protection.">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+              <span>Group 3 v2.2 Schema Intake Active</span>
+            </div>
           </div>
         </div>
 
@@ -1353,6 +1359,9 @@
           <button class="geo-mode-btn" id="btnHistEvidence" onclick="switchHistorySubTab('evidence')">
             <span>Emitted Evidence Pack (v2.2)</span>
           </button>
+          <button class="geo-mode-btn" id="btnHistForestCover" onclick="switchHistorySubTab('forestCover')">
+            <span>Statutory Benchmarks (FSI ISFR 2023)</span>
+          </button>
         </div>
 
         <!-- SUBTAB 1: PIPELINE TRACE & LINEAGE -->
@@ -1551,6 +1560,30 @@
               <div class="raw-json-box" id="rawEvidencePackBox">
                 Loading evidence pack JSON...
               </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- SUBTAB 4: STATUTORY FOREST COVER & MANGROVE BENCHMARKS (FSI ISFR 2023) -->
+        <div id="subtabForestCover" style="display:none;flex-direction:column;gap:16px;">
+          <div class="content-panel">
+            <div class="panel-header">
+              <div>
+                <div class="panel-title">Statutory Forest Cover Benchmarks (FSI ISFR 2023)</div>
+                <div style="font-size:12px;color:#8da49c;margin-top:3px;">
+                  Authoritative state-level forest cover and canopy density baseline reconciled from MasterDB statutory ledger.
+                </div>
+              </div>
+              <div style="display:flex;align-items:center;gap:10px;">
+                <button type="button" class="btn-header" onclick="loadOfficialForestCover()" style="padding:5px 12px;font-size:11.5px;gap:6px;" title="Refresh statutory benchmark data from MasterDB">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
+                  <span>Query MasterDB</span>
+                </button>
+                <span class="status-pill neutral" id="fsiStatusBadge">Querying...</span>
+              </div>
+            </div>
+            <div class="panel-body" id="officialForestCoverContainer">
+              <!-- Populated dynamically by loadOfficialForestCover() in app.js -->
             </div>
           </div>
         </div>

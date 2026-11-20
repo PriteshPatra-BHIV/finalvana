@@ -105,6 +105,8 @@ def initialize_database() -> None:
             conn.raw_conn.executescript(sql)
             official_migration = ROOT / "migrations" / "0008_official_forest_cover_sqlite.sql"
             conn.raw_conn.executescript(official_migration.read_text(encoding="utf-8"))
+            gov_migration = ROOT / "migrations" / "0009_governance_decision_records_sqlite.sql"
+            conn.raw_conn.executescript(gov_migration.read_text(encoding="utf-8"))
             try:
                 conn.execute("ALTER TABLE observation ADD COLUMN provenance_reference TEXT;")
             except Exception:
@@ -121,6 +123,8 @@ def initialize_database() -> None:
         else:
             with conn.raw_conn.cursor() as cursor:
                 cursor.execute(sql)
+                gov_migration = ROOT / "migrations" / "0009_governance_decision_records.sql"
+                cursor.execute(gov_migration.read_text(encoding="utf-8"))
             conn.commit()
     except Exception:
         conn.rollback()

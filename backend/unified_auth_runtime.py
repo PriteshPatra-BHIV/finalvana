@@ -164,21 +164,30 @@ def vana_execute(payload: Dict[str, Any], authorization: Optional[str] = Header(
     obs_id = payload.get("observation_id", "TC-Z03-EXT-OPENMETEO-OBS001")
     canonical_id = payload.get("canonical_record_id")
 
+    is_abstain = ruling == "ABSTAIN"
+    outcome_status = "governed_abstention" if is_abstain else "action_request_generated"
+    decision_action = "noop" if is_abstain else "dispatch"
+    decision_reason = (
+        "Authoritative evidence threshold not met (Context not verified). Failing closed to ABSTAIN."
+        if is_abstain
+        else "Authoritative context verified. Governance dispatch authorized."
+    )
+
     return {
-        "status": "governed_abstention" if ruling == "ABSTAIN" else "action_request_generated",
+        "status": outcome_status,
         "ruling": ruling,
         "event_id": event_id,
         "execution_id": execution_id,
         "recorded_at": now_iso,
-        "decision_reason": "Authoritative evidence threshold not met (Context not verified). Failing closed to ABSTAIN.",
+        "decision_reason": decision_reason,
         "evidence": {
-            "status": "governed_abstention",
+            "status": outcome_status,
             "ruling": ruling,
-            "decision_action": "noop" if ruling == "ABSTAIN" else "dispatch",
-            "abstention_record_id": abstention_record_id,
+            "decision_action": decision_action,
+            "abstention_record_id": abstention_record_id if is_abstain else None,
             "event_id": event_id,
             "execution_id": execution_id,
-            "governance_allowed": ruling != "ABSTAIN",
+            "governance_allowed": not is_abstain,
             "context_id": payload.get("context_id"),
             "observation_id": obs_id,
             "canonical_record_id": canonical_id,
