@@ -55,6 +55,8 @@ def verify_write_auth(
     authorization: Optional[str] = Header(None),
     allowed_roles: Tuple[str, ...] = ("ADMIN",),
 ) -> Optional[dict]:
+    if authorization is not None and not isinstance(authorization, (str, bytes)):
+        authorization = None
     """
     Verifies Bearer token against user_sessions in MasterDB.
     Enforces RBAC role checks:
@@ -149,39 +151,69 @@ def get_dashboard_summary():
     try:
         cur = conn.cursor()
         
-        # 1. Real database counts
-        total_obs = cur.execute("SELECT count(*) FROM observation").fetchone()[0]
-        validated_obs = cur.execute("SELECT count(*) FROM observation WHERE quality_status = 'VALIDATED'").fetchone()[0]
-        total_meas = cur.execute("SELECT count(*) FROM measurement").fetchone()[0]
-        geo_count = cur.execute("SELECT count(*) FROM geo_location").fetchone()[0]
-        
-        # 2. Latest active observation record
+        # 1. Real database counts & table check
+        obs_table_exists = cur.execute(
+            "SELECT count(*) FROM sqlite_master WHERE type='table' AND name='observation'"
+            if not conn.is_postgres else
+            "SELECT count(*) FROM information_schema.tables WHERE table_name = 'observation'"
+        ).fetchone()[0] > 0
+
+        total_obs = 0
+        validated_obs = 0
+        total_meas = 0
+        geo_count = 0
         latest_obs = None
-        obs_rows = cur.execute("""
-            SELECT o.observation_id, o.canonical_record_id, o.quality_status, o.observed_at,
-                   o.observation_type, o.species, o.provenance_reference,
-                   g.place_name, g.lat, g.lon
-            FROM observation o
-            LEFT JOIN geo_location g ON o.geo_id = g.geo_id
-            ORDER BY o.observed_at DESC LIMIT 1
-        """).fetchall()
-        if obs_rows:
-            r = obs_rows[0]
-            latest_obs = {
-                "observation_id": r[0],
-                "canonical_record_id": r[1],
-                "quality_status": r[2],
-                "observed_at": r[3],
-                "observation_type": r[4],
-                "species": r[5],
-                "provenance_reference": r[6],
-                "location_name": r[7] or "Thane Creek",
-                "lat": r[8],
-                "lon": r[9],
-            }
-            
-        # 3. Official FSI ISFR statutory forest cover record
         fc_data = None
+        audit_events = []
+
+        if obs_table_exists:
+            total_obs = cur.execute("SELECT count(*) FROM observation").fetchone()[0]
+            validated_obs = cur.execute("SELECT count(*) FROM observation WHERE quality_status = 'VALIDATED'").fetchone()[0]
+            
+            try:
+                total_meas = cur.execute("SELECT count(*) FROM measurement").fetchone()[0]
+            except Exception:
+                if getattr(conn, "is_postgres", False):
+                    conn.rollback()
+                total_meas = 0
+
+            try:
+                geo_count = cur.execute("SELECT count(*) FROM geo_location").fetchone()[0]
+            except Exception:
+                if getattr(conn, "is_postgres", False):
+                    conn.rollback()
+                geo_count = 0
+            
+            # 2. Latest active observation record
+            try:
+                obs_rows = cur.execute("""
+                    SELECT o.observation_id, o.canonical_record_id, o.quality_status, o.observed_at,
+                           o.observation_type, o.species, o.provenance_reference,
+                           g.place_name, g.lat, g.lon
+                    FROM observation o
+                    LEFT JOIN geo_location g ON o.geo_id = g.geo_id
+                    ORDER BY o.observed_at DESC LIMIT 1
+                """).fetchall()
+                if obs_rows:
+                    r = obs_rows[0]
+                    latest_obs = {
+                        "observation_id": r[0],
+                        "canonical_record_id": r[1],
+                        "quality_status": r[2],
+                        "observed_at": r[3],
+                        "observation_type": r[4],
+                        "species": r[5],
+                        "provenance_reference": r[6],
+                        "location_name": r[7] or "Thane Creek",
+                        "lat": r[8],
+                        "lon": r[9],
+                    }
+            except Exception:
+                if getattr(conn, "is_postgres", False):
+                    conn.rollback()
+                latest_obs = None
+
+        # 3. Official FSI ISFR statutory forest cover record
         fc_rows = []
         try:
             fc_rows = cur.execute("""
@@ -218,20 +250,10 @@ def get_dashboard_summary():
                 "idempotency_key": f[15],
             }
         else:
-            fc_data = {
-                "assessment_year": 2023,
-                "state": "Maharashtra",
-                "forest_cover_area_km2": 50858.53,
-                "forest_cover_percentage": 16.53,
-                "mangrove_area_km2": 315.09,
-                "unit": "km2",
-                "quality_status": "EXTRACTED",
-                "citation": "FSI ISFR 2023, Vol I, Table 2.4 (pp.40-41)",
-                "sha256": "9068c282368cb8836063ed9eace0c926281e908653ab054e4ed72ffadafc1142",
-            }
-            
-        validation_rate = 100.0 if total_obs > 0 and validated_obs == total_obs else (round(validated_obs / total_obs * 100, 1) if total_obs > 0 else 100.0)
-        
+            fc_data = None
+
+        validation_rate = round(validated_obs / total_obs * 100, 1) if total_obs > 0 else 0.0
+
         # 4. Live governance execution audit records (from SANSKAR runtime)
         gov_rows = []
         try:
@@ -262,8 +284,17 @@ def get_dashboard_summary():
             exec_subtext = "Standby (No Field Dispatches Authorized)"
 
         # 5. Live audit events assembled from real ledger tables (Zero-Fabrication doctrine)
-        audit_events = []
-        
+        if fc_rows:
+            f = fc_rows[0]
+            audit_events.append({
+                "id": f"FC-{f[0]}",
+                "type": "STATUTORY_BENCHMARK",
+                "title": f"FSI ISFR {f[1]} Forest Cover Baseline",
+                "description": f"State: {f[2]}, Area: {f[4]} km2 ({f[5]}%), Quality: {f[12]}.",
+                "status": f[12],
+                "severity": "INFO",
+                "timestamp": datetime.now(timezone.utc).isoformat()
+            })
         for gr in gov_rows[:3]:
             audit_events.append({
                 "id": gr[1] or gr[0],
@@ -295,38 +326,42 @@ def get_dashboard_summary():
             if getattr(conn, "is_postgres", False):
                 conn.rollback()
 
-        try:
-            obs_audit = cur.execute("""
-                SELECT observation_id, quality_status, observed_at, observation_type, canonical_record_id
-                FROM observation
-                ORDER BY observed_at DESC LIMIT 3
-            """).fetchall()
-            for oa in obs_audit:
-                audit_events.append({
-                    "id": f"OBS-{oa[0]}",
-                    "type": "OBSERVATION_INGESTED",
-                    "title": f"Observation {oa[0]} Recorded",
-                    "description": f"Type: {oa[3]}, Canonical ID: {oa[4]}, Quality: {oa[1]}.",
-                    "status": oa[1],
-                    "severity": "INFO",
-                    "timestamp": oa[2]
-                })
-        except Exception:
-            if getattr(conn, "is_postgres", False):
-                conn.rollback()
+        if obs_table_exists:
+            try:
+                obs_audit = cur.execute("""
+                    SELECT observation_id, quality_status, observed_at, observation_type, canonical_record_id
+                    FROM observation
+                    ORDER BY observed_at DESC LIMIT 3
+                """).fetchall()
+                for oa in obs_audit:
+                    audit_events.append({
+                        "id": f"OBS-{oa[0]}",
+                        "type": "OBSERVATION_INGESTED",
+                        "title": f"Observation {oa[0]} Recorded",
+                        "description": f"Type: {oa[3]}, Canonical ID: {oa[4]}, Quality: {oa[1]}.",
+                        "status": oa[1],
+                        "severity": "INFO",
+                        "timestamp": oa[2]
+                    })
+            except Exception:
+                if getattr(conn, "is_postgres", False):
+                    conn.rollback()
 
         if not audit_events:
-            now_iso = datetime.now(timezone.utc).isoformat()
-            audit_events.append({
-                "id": "EVT-SYSTEM-ACTIVE",
-                "type": "SYSTEM_STATUS",
-                "title": "MasterDB Ledger Active",
-                "description": f"MasterDB schema active with {total_obs} observation(s). Ready for field intake.",
-                "status": "ONLINE",
-                "severity": "INFO",
-                "timestamp": now_iso
-            })
-        
+            audit_events = [
+                {
+                    "id": "EVT-UNAVAILABLE",
+                    "type": "AUDIT_LEDGER_EMPTY",
+                    "title": "No Genuine Audit Records",
+                    "description": "Zero-Fabrication doctrine active. No synthetic events are generated when the database has zero ingested observations or governance evaluations.",
+                    "status": "UNAVAILABLE",
+                    "severity": "INFO",
+                    "timestamp": "UNAVAILABLE"
+                }
+            ]
+
+        fc_sha = fc_data["sha256"] if fc_data and "sha256" in fc_data else "UNAVAILABLE"
+
         return {
             "status": "healthy",
             "service": "VANA MasterDB Dashboard Aggregator",
@@ -335,13 +370,13 @@ def get_dashboard_summary():
                     "count": total_obs,
                     "display": f"{total_obs} Ingested",
                     "badge": "Controlled Synthetic Batch" if total_obs > 0 else "Awaiting Field Sensors",
-                    "status": "CONFIRMED_LIVE" if total_obs > 0 else "STANDBY"
+                    "status": "CONFIRMED_LIVE" if total_obs > 0 else "UNAVAILABLE"
                 },
                 "records_validated": {
                     "count": validated_obs,
                     "total": total_obs,
                     "percentage": validation_rate,
-                    "display": f"{validation_rate:.0f}% Validated",
+                    "display": f"{validation_rate:.0f}% Validated" if total_obs > 0 else "0% Validated",
                     "subtext": "MasterDB Canonical Ledger"
                 },
                 "governance_decisions": {
@@ -359,28 +394,28 @@ def get_dashboard_summary():
                     "noop_enforced": abstain_count
                 },
                 "data_integrity": {
-                    "display": "100% Sealed" if fc_data.get("sha256") else "STANDBY",
-                    "subtext": "SHA-256 Provenance Intact",
-                    "sha256": fc_data["sha256"]
+                    "display": "100% Sealed" if fc_data and fc_data.get("sha256") else "UNAVAILABLE",
+                    "subtext": "SHA-256 Provenance Intact" if fc_data and fc_data.get("sha256") else "Statutory Benchmark Unseeded",
+                    "sha256": fc_sha
                 }
             },
             "metrics": {
                 "sensor_events_display": f"{total_obs} Ingested",
                 "sensor_events_detail": "Controlled Synthetic Batch" if total_obs > 0 else "Awaiting Intake",
-                "records_validated_display": f"{validation_rate:.0f}% Validated",
+                "records_validated_display": f"{validation_rate:.0f}% Validated" if total_obs > 0 else "0% Validated",
                 "records_validated_detail": "MasterDB Canonical Ledger",
                 "governance_ruling": gov_display,
                 "governance_ruling_detail": gov_subtext,
                 "execution_outcome": exec_display,
                 "execution_outcome_detail": exec_subtext,
-                "data_integrity": "100% Sealed" if fc_data.get("sha256") else "STANDBY",
-                "data_integrity_detail": "SHA-256 Provenance Intact"
+                "data_integrity": "100% Sealed" if fc_data and fc_data.get("sha256") else "UNAVAILABLE",
+                "data_integrity_detail": "SHA-256 Provenance Intact" if fc_data and fc_data.get("sha256") else "Statutory Benchmark Unseeded"
             },
             "forest_cover": fc_data,
             "latest_record": latest_obs,
             "recent_events": audit_events,
             "regional_coverage": {
-                "overall_percentage": 16.53,
+                "overall_percentage": fc_data["forest_cover_percentage"] if fc_data else None,
                 "regions": [
                     {"name": "Thane Creek", "status": "CONFIRMED_LIVE" if total_obs > 0 else "STANDBY", "percentage": 100 if total_obs > 0 else 0, "note": "Controlled Synthetic Intake" if total_obs > 0 else "Awaiting Sensors"},
                     {"name": "Konkan", "status": "UNAVAILABLE / STANDBY", "percentage": 0, "note": "Awaiting field edge deployment (Zero-Fabrication doctrine)"},
@@ -393,7 +428,6 @@ def get_dashboard_summary():
         }
     finally:
         conn.close()
-
 
 @app.post("/official/forest-cover", status_code=201)
 def ingest_official_forest_cover(

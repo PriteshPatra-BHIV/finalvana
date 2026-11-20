@@ -979,10 +979,61 @@ function renderOverview(data) {
     replayEl.textContent = benchmark.citation ? `${benchmark.citation} (${Math.round(benchmark.forest_cover_area_sq_km || 50858)} km²)` : "FSI ISFR 2023 (50,858 km²)";
   }
 
+  // 4c. Dynamically update Recent Alerts / Audit feed from MasterDB summary
+  renderOverviewAlerts(data);
+
   // 5. Ensure Leaflet Map container is in overview and sized
   if (activeMainView === "viewOverview") {
     reparentMap("overviewMapContainer");
   }
+}
+
+function renderOverviewAlerts(data) {
+  const container = document.getElementById("recentAlertsList");
+  if (!container) return;
+
+  const events = (data.summary && Array.isArray(data.summary.recent_events)) ? data.summary.recent_events : [];
+  
+  if (events.length === 0 || (events.length === 1 && events[0].status === "UNAVAILABLE")) {
+    container.innerHTML = `
+      <div class="alert-feed-row" style="opacity:0.85;">
+        <span class="alert-pill-badge" style="background:var(--color-surface, #222);color:var(--text-muted, #888);border:1px solid var(--border-subtle, #333);">UNAVAILABLE</span>
+        <div class="alert-content">
+          <div class="alert-title" style="color:var(--text-muted, #aaa);">No Audit Records Available</div>
+          <div class="alert-sub" style="color:var(--text-muted, #777);">MasterDB ledger contains zero observations or pipeline events.</div>
+        </div>
+        <div class="alert-time">
+          <span style="color:var(--text-muted, #666);">UNAVAILABLE</span>
+          <span class="alert-dot" style="background:var(--text-muted, #555);"></span>
+        </div>
+      </div>
+    `;
+    return;
+  }
+
+  container.innerHTML = events.map(evt => {
+    const sev = (evt.severity || "INFO").toLowerCase();
+    const badgeClass = (sev === "error" || sev === "critical") ? "error" : (sev === "medium" || sev === "warn" ? "warn" : "info");
+    const dotClass = badgeClass === "error" ? "red" : (badgeClass === "warn" ? "amber" : "blue");
+    const statusLabel = evt.status || "VALIDATED";
+    const title = evt.title || "Audit Event";
+    const desc = evt.description || "";
+    const timeDisplay = evt.timestamp || "Recorded";
+
+    return `
+      <div class="alert-feed-row">
+        <span class="alert-pill-badge ${badgeClass}">${statusLabel}</span>
+        <div class="alert-content">
+          <div class="alert-title">${title}</div>
+          <div class="alert-sub">${desc}</div>
+        </div>
+        <div class="alert-time">
+          <span>${timeDisplay}</span>
+          <span class="alert-dot ${dotClass}"></span>
+        </div>
+      </div>
+    `;
+  }).join("");
 }
 
 function renderOverviewLocations(data) {
@@ -3168,7 +3219,7 @@ function renderLineageRail(data) {
 
 function switchHistorySubTab(subTabName) {
   activeHistorySubTab = subTabName;
-  const subtabs = ["provenance", "replay", "evidence"];
+  const subtabs = ["provenance", "replay", "evidence", "forestCover"];
   subtabs.forEach(t => {
     const el = document.getElementById(`subtab${t.charAt(0).toUpperCase() + t.slice(1)}`);
     const btn = document.getElementById(`btnHist${t.charAt(0).toUpperCase() + t.slice(1)}`);
@@ -3178,6 +3229,10 @@ function switchHistorySubTab(subTabName) {
       else btn.classList.remove("active");
     }
   });
+
+  if (subTabName === "forestCover" && typeof loadOfficialForestCover === "function") {
+    loadOfficialForestCover();
+  }
 }
 
 // =============================================================================
@@ -3629,8 +3684,9 @@ function switchMainTab(viewKey, navItem) {
 
   // If specific history alias was clicked, auto-switch subtab
   if (viewKey === "replayView" || viewKey === "replay") switchHistorySubTab("replay");
-  if (viewKey === "evidencePackView" || viewKey === "analytics" || viewKey === "analyticsView" || viewKey === "reports" || viewKey === "reportsView") {
-    switchHistorySubTab("evidence");
+  if (viewKey === "evidencePackView") switchHistorySubTab("evidence");
+  if (viewKey === "analytics" || viewKey === "analyticsView" || viewKey === "reports" || viewKey === "reportsView") {
+    switchHistorySubTab("forestCover");
   }
   if (viewKey === "scientificView" || viewKey === "scientific") switchHistorySubTab("scientific");
   if (viewKey === "lineageView" || viewKey === "masterdb" || viewKey === "masterDB" || viewKey === "historyView") {
