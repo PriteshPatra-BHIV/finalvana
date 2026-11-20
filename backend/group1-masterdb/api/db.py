@@ -120,6 +120,17 @@ def initialize_database() -> None:
                 conn.execute("ALTER TABLE observation ADD COLUMN source_timestamp TEXT;")
             except Exception:
                 pass
+            conn.execute("""
+                CREATE TABLE IF NOT EXISTS sensor_calibration_registry (
+                    device_id TEXT PRIMARY KEY,
+                    sensor_type TEXT NOT NULL,
+                    calibration_cert_sha256 TEXT NOT NULL,
+                    calibrated_at TEXT NOT NULL,
+                    expires_at TEXT NOT NULL,
+                    status TEXT NOT NULL,
+                    registered_at TEXT NOT NULL
+                );
+            """)
             conn.commit()
         else:
             with conn.raw_conn.cursor() as cursor:
