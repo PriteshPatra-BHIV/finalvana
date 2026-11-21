@@ -344,6 +344,16 @@ def run_nagarpranali_lifecycle(req: NagarpranaliLifecycleRequest):
     )
 
 
+@app.get("/api/nagarpranali/components/status")
+def get_nagarpranali_component_status():
+    """
+    Returns the mandatory sprint status matrix disclosing WORKING, PARTIAL,
+    BLOCKED, DESIGN-ONLY, and NOT STARTED components across the ecosystem.
+    """
+    return nagarpranali_adapter.get_component_status()
+
+
+
 
 
 class CalibrationRegisterRequest(BaseModel):

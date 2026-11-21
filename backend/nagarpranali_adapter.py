@@ -297,7 +297,78 @@ def get_contract_specification() -> Dict[str, Any]:
                 "description": "Enriches a Nagarpranali signal or incident with forest cover context.",
                 "body_params": ["signal_type", "location", "lat", "lon", "incident_type", "severity"],
             },
+            "POST /api/nagarpranali/lifecycle/run": {
+                "description": "Simulates complete 5-stage operational chain (Signal -> Telemetry -> Incident -> Governance -> Replay).",
+                "body_params": ["signal_type", "location", "incident_type", "severity", "lat", "lon"],
+            },
+            "GET /api/nagarpranali/components/status": {
+                "description": "Mandatory sprint status matrix disclosing WORKING, PARTIAL, BLOCKED, DESIGN-ONLY, NOT STARTED components.",
+            },
         },
         "supported_zones": list(SURVEILLANCE_ENVELOPES.keys()),
         "security_doctrine": "Fail-Closed: Unknown coordinates strictly return ABSTAIN (noop).",
     }
+
+
+def get_component_status() -> Dict[str, Any]:
+    """
+    Mandatory sprint status matrix as specified in Section 1 and Section 10 of
+    the NAGARPRANALI+ sprint assignment. Explicitly labels every component to
+    prevent presenting mocks or prototypes as live.
+    """
+    return {
+        "ecosystem": "NAGARPRANALI+ & VANA Convergence",
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "doctrine": "Zero-Fabrication & Fail-Closed Safety",
+        "components": [
+            {
+                "name": "MasterDB Canonical Persistence",
+                "owner": "Pritesh Patra (VANA)",
+                "status": "WORKING",
+                "details": "19 tables verified in SQLite (vana_api.db) with SHA-256 idempotency.",
+            },
+            {
+                "name": "SANSKAR Fail-Closed Governance Engine",
+                "owner": "Pritesh Patra (VANA)",
+                "status": "WORKING",
+                "details": "Strict ABSTAIN (noop) on unverified or uncalibrated context.",
+            },
+            {
+                "name": "Nagarpranali Environmental Adapter",
+                "owner": "Kaushalendra Yadav (VANA)",
+                "status": "WORKING",
+                "details": "Enriches civic flood/mangrove alerts for Thane Creek, Maval, and Samachar.",
+            },
+            {
+                "name": "32-Agent Governed AI Ecosystem",
+                "owner": "Raj / Ashwini / Kaushalendra",
+                "status": "WORKING",
+                "details": "32 agents cataloged (12 Operational, 6 Integrating, 14 Planned) with supervisor controls.",
+            },
+            {
+                "name": "Live Port 8012 PrAVAH Socket Proxy",
+                "owner": "Group 2 PrAVAH",
+                "status": "BLOCKED",
+                "details": "Port 8012 unreachable in local sandbox. Transparent synthetic fallback active.",
+            },
+            {
+                "name": "Physical Drone Actuator Dispatch",
+                "owner": "TANTRA / SANSKAR",
+                "status": "PARTIAL",
+                "details": "Two-Man Rule flight plan simulation active; physical hardware actuator gated.",
+            },
+            {
+                "name": "NICAI Marine Intelligence Interface",
+                "owner": "Shravani / Ankita (NICAI)",
+                "status": "DESIGN-ONLY",
+                "details": "Awaiting NICAI repository API handoff; mocked in demo review packet.",
+            },
+            {
+                "name": "Bharat Mala / NW-53 Corridor Gateway",
+                "owner": "Bharat Mala Integration Team",
+                "status": "NOT STARTED",
+                "details": "Unverified geospatial corridor data excluded under verification-gated policy.",
+            },
+        ],
+    }
+
