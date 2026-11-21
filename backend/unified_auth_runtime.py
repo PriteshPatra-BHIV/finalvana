@@ -28,6 +28,7 @@ if str(BACKEND_DIR) not in sys.path:
     sys.path.insert(0, str(BACKEND_DIR))
 import auth_service
 import pravah_service
+import nagarpranali_adapter
 from agent_orchestrator import orchestrator as agent_orchestrator
 from dispatch_adapter import dispatch_adapter
 from db_migration_tool import migration_manager
@@ -245,19 +246,76 @@ def ecosystem_health():
 
 @app.get("/api/context/resolve")
 def resolve_context(
-    observation_id: str,
+    observation_id: Optional[str] = None,
     zone_id: Optional[str] = None,
+    lat: Optional[float] = None,
+    lon: Optional[float] = None,
+    location: Optional[str] = None,
     allow_standin: bool = True,
 ):
     """
-    Context resolution endpoint delegating to Pravah with deterministic fallback.
+    Context resolution endpoint supporting observation-ID lookup (Pravah)
+    and geospatial/location enrichment for Nagarpranali (UCCIS).
     """
-    result = pravah_service.resolve_pravah_context(
-        observation_id=observation_id,
-        zone_id=zone_id,
-        allow_standin=allow_standin,
+    # 1. Nagarpranali geospatial / location alias query
+    if lat is not None or lon is not None or location is not None:
+        return nagarpranali_adapter.resolve_environmental_context(
+            lat=lat,
+            lon=lon,
+            location_name=location,
+            zone_id=zone_id,
+            observation_id=observation_id,
+        )
+
+    # 2. Zone ID alone
+    if zone_id and not observation_id:
+        return nagarpranali_adapter.resolve_environmental_context(
+            zone_id=zone_id,
+            observation_id=observation_id,
+        )
+
+    # 3. Observation ID lookup delegating to Pravah
+    if observation_id:
+        return pravah_service.resolve_pravah_context(
+            observation_id=observation_id,
+            zone_id=zone_id,
+            allow_standin=allow_standin,
+        )
+
+    raise HTTPException(
+        status_code=400,
+        detail="Missing query parameters: specify either observation_id, lat/lon, location, or zone_id.",
     )
-    return result
+
+
+class NagarpranaliEnrichRequest(BaseModel):
+    signal_type: Optional[str] = None
+    signalType: Optional[str] = None
+    location: Optional[str] = None
+    location_name: Optional[str] = None
+    lat: Optional[float] = None
+    lon: Optional[float] = None
+    incident_type: Optional[str] = None
+    incidentType: Optional[str] = None
+    severity: Optional[str] = "MEDIUM"
+
+
+@app.post("/api/nagarpranali/enrich")
+def enrich_nagarpranali(req: NagarpranaliEnrichRequest):
+    """
+    Enriches a Nagarpranali civic incident payload with authoritative VANA
+    environmental context, canopy density, and governance status.
+    """
+    return nagarpranali_adapter.enrich_nagarpranali_incident(req.model_dump())
+
+
+@app.get("/api/nagarpranali/contract")
+def get_nagarpranali_contract():
+    """
+    Returns the interface contract specification for Nagarpranali integration.
+    """
+    return nagarpranali_adapter.get_contract_specification()
+
 
 
 class CalibrationRegisterRequest(BaseModel):
