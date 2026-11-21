@@ -317,6 +317,34 @@ def get_nagarpranali_contract():
     return nagarpranali_adapter.get_contract_specification()
 
 
+class NagarpranaliLifecycleRequest(BaseModel):
+    signal_type: Optional[str] = "Flood Alert"
+    signalType: Optional[str] = None
+    location: Optional[str] = "Thane Creek Zone A"
+    location_name: Optional[str] = None
+    incident_type: Optional[str] = "Mangrove Encroachment & Flood Threat"
+    incidentType: Optional[str] = None
+    severity: Optional[str] = "HIGH"
+    lat: Optional[float] = None
+    lon: Optional[float] = None
+
+
+@app.post("/api/nagarpranali/lifecycle/run")
+def run_nagarpranali_lifecycle(req: NagarpranaliLifecycleRequest):
+    """
+    Executes the 5-stage Nagarpranali + VANA operational lifecycle simulation.
+    """
+    return nagarpranali_adapter.simulate_nagarpranali_lifecycle(
+        signal_type=req.signal_type or req.signalType or "Flood Alert",
+        location=req.location or req.location_name or "Thane Creek Zone A",
+        incident_type=req.incident_type or req.incidentType or "Mangrove Encroachment & Flood Threat",
+        severity=req.severity or "HIGH",
+        lat=req.lat,
+        lon=req.lon,
+    )
+
+
+
 
 class CalibrationRegisterRequest(BaseModel):
     device_id: str

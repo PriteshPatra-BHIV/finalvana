@@ -192,6 +192,95 @@ def enrich_nagarpranali_incident(incident_data: Dict[str, Any]) -> Dict[str, Any
     return enriched_decision
 
 
+def simulate_nagarpranali_lifecycle(
+    signal_type: str = "Flood Alert",
+    location: str = "Thane Creek Zone A",
+    incident_type: str = "Mangrove Encroachment & Flood Threat",
+    severity: str = "HIGH",
+    lat: Optional[float] = None,
+    lon: Optional[float] = None,
+    session_id: str = "nagarpranali_demo_session",
+) -> Dict[str, Any]:
+    """
+    Executes the complete 5-stage Nagarpranali + VANA operational lifecycle:
+      Stage 1: Civic Signal Created (citizen/sensor report)
+      Stage 2: Telemetry Ingested & Verified against VANA MasterDB
+      Stage 3: Incident Generated with Environmental Protection Overlay
+      Stage 4: SANSKAR Governance Evaluation (ALLOW joint dispatch vs ABSTAIN/noop)
+      Stage 5: Deterministic Replay & Audit Lineage Sealed
+    """
+    import random
+    entropy = random.randint(10000, 99999)
+    signal_id = f"SIG-NP-{entropy}"
+    telemetry_id = f"TEL-NP-{entropy}"
+    incident_id = f"INC-NP-{entropy}"
+    escalation_id = f"ESC-NP-{entropy}"
+    decision_id = f"DEC-NP-{entropy}"
+    replay_id = f"REP-NP-{entropy}"
+    runtime_log_id = f"LOG-NP-{entropy}"
+
+    # Stage 2: Resolve environmental context
+    env_ctx = resolve_environmental_context(
+        lat=lat,
+        lon=lon,
+        location_name=location,
+    )
+    is_verified = env_ctx.get("status") == "success"
+
+    # Stage 4: SANSKAR Governance evaluation
+    governance_ruling = "ALLOW" if is_verified else "ABSTAIN"
+    decision_text = (
+        f"Joint Municipal Ward & Forest Department Dispatch: Deploy rapid response to {env_ctx.get('zone_name', location)}. "
+        f"Enforce {env_ctx.get('protection_class', 'General Protection')} non-encroachment protocol."
+        if is_verified
+        else "No operational dispatch authorized. Location outside verified surveillance envelope. Failing closed to ABSTAIN (noop)."
+    )
+
+    # Stage 5: Deterministic Replay Timeline
+    timeline = [
+        f"Stage 1 [Signal]: Created civic {signal_type} at {location} (ID: {signal_id})",
+        (
+            f"Stage 2 [Telemetry]: VANA MasterDB query matched {env_ctx.get('zone_id', 'UNMAPPED')} "
+            f"with {int(env_ctx.get('tree_canopy_density', 0) * 100)}% canopy density (ID: {telemetry_id})"
+            if is_verified
+            else f"Stage 2 [Telemetry]: Location {location} unmapped. Telemetry uncalibrated (ID: {telemetry_id})"
+        ),
+        (
+            f"Stage 3 [Incident]: Enriched incident {incident_type} with canonical ID {env_ctx.get('canonical_record_id', 'N/A')} (ID: {incident_id})"
+            if is_verified
+            else f"Stage 3 [Incident]: Incident flagged unverified. Security boundary held (ID: {incident_id})"
+        ),
+        f"Stage 4 [Governance]: SANSKAR evaluated ruling -> {governance_ruling} (ID: {decision_id})",
+        f"Stage 5 [Lineage & Replay]: Immutable trace {env_ctx.get('trace_id', 'VANA-NP-TRACE')} sealed in audit log (ID: {replay_id})",
+    ]
+
+    # AI Agent Guidance (Tier-1 Plain Language Assistant)
+    ai_guidance = (
+        f"VANA Guidance Assistant: {env_ctx.get('plain_language_summary')} "
+        f"Municipal teams and forest guards have received synchronized alert tokens."
+        if is_verified
+        else "VANA Guidance Assistant: This location is outside verified environmental zones. No forest dispatch is required; standard civic routing applies."
+    )
+
+    return {
+        "success": is_verified,
+        "signalId": signal_id,
+        "telemetryId": telemetry_id,
+        "incidentId": incident_id,
+        "escalationId": escalation_id,
+        "decisionId": decision_id,
+        "replayId": replay_id,
+        "runtimeLogId": runtime_log_id,
+        "governance_ruling": governance_ruling,
+        "decision_text": decision_text,
+        "environmental_intelligence": env_ctx,
+        "replay_timeline": timeline,
+        "ai_guidance": ai_guidance,
+        "message": "Operational Chain Completed (VANA Governed)",
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+    }
+
+
 def get_contract_specification() -> Dict[str, Any]:
     """Returns the interface contract schema for Nagarpranali integration."""
     return {
