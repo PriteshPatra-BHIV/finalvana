@@ -25,8 +25,7 @@ RUN apt-get update && apt-get install -y \
 
 COPY --from=builder /install /usr/local
 
-COPY backend/auth_service.py /app/backend/auth_service.py
-COPY backend/unified_auth_runtime.py /app/backend/unified_auth_runtime.py
+COPY backend /app/backend
 
 ENV PYTHONPATH=/app
 EXPOSE 8000
