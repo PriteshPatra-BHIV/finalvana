@@ -353,6 +353,26 @@ def get_nagarpranali_component_status():
     return nagarpranali_adapter.get_component_status()
 
 
+@app.get("/api/nagarpranali/citizen-view")
+def get_nagarpranali_citizen_view(
+    lat: Optional[float] = None,
+    lon: Optional[float] = None,
+    location: Optional[str] = None,
+    signal_type: Optional[str] = "Civic / Environmental Report",
+):
+    """
+    Returns a plain-language, first-time-user UX view card formatted
+    strictly per Section 5 UX requirements (one primary action, no dark patterns).
+    """
+    return nagarpranali_adapter.format_citizen_ux_card(
+        lat=lat,
+        lon=lon,
+        location_name=location,
+        signal_type=signal_type,
+    )
+
+
+
 
 
 

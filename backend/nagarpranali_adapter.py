@@ -372,3 +372,89 @@ def get_component_status() -> Dict[str, Any]:
         ],
     }
 
+
+def format_citizen_ux_card(
+    lat: Optional[float] = None,
+    lon: Optional[float] = None,
+    location_name: Optional[str] = None,
+    signal_type: Optional[str] = "Civic / Environmental Report",
+) -> Dict[str, Any]:
+    """
+    Formats an ultra-simple, plain-language UX response card tailored for
+    first-time digital citizens, adhering strictly to Section 5 UX requirements:
+      - One primary action per screen.
+      - Large touch targets & plain-language labels.
+      - Zero cryptic database internals or dark patterns.
+      - Clear explanation of: What happened, What was found, What happens next.
+    """
+    env_ctx = resolve_environmental_context(
+        lat=lat,
+        lon=lon,
+        location_name=location_name,
+    )
+
+    if env_ctx.get("status") == "success":
+        canopy_pct = int(env_ctx.get("tree_canopy_density", 0) * 100)
+        return {
+            "screen_title": "Area Environmental Check",
+            "primary_action": "View Full Details",
+            "badge": {
+                "text": "Protected Green Zone",
+                "type": "ecological_protected",
+                "color": "green",
+            },
+            "headline": f"Your area is inside {env_ctx.get('zone_name')}",
+            "plain_explanation": (
+                f"This zone is officially recognized as an {env_ctx.get('protection_class')}. "
+                f"It has {canopy_pct}% dense tree/mangrove cover which naturally protects neighboring "
+                f"homes against coastal flooding and monsoon waterlogging."
+            ),
+            "what_system_understood": {
+                "location_recognized": env_ctx.get("zone_name"),
+                "district": env_ctx.get("district"),
+                "report_category": signal_type,
+            },
+            "what_happens_next": (
+                "Your report has been shared directly with the local Forest Officer and Municipal Ward Cell. "
+                "A verification team will inspect this location."
+            ),
+            "receipt_id": env_ctx.get("canonical_record_id"),
+            "assistance_note": "No technical knowledge required. We have recorded your submission safely.",
+            "language_options": [
+                {"code": "en", "label": "English"},
+                {"code": "hi", "label": "हिन्दी (Hindi)"},
+                {"code": "mr", "label": "मराठी (Marathi)"},
+            ],
+        }
+
+    return {
+        "screen_title": "Area Environmental Check",
+        "primary_action": "Report Civic Issue",
+        "badge": {
+            "text": "Urban Civic Zone",
+            "type": "standard_civic",
+            "color": "blue",
+        },
+        "headline": "No protected forest or mangrove zone found here",
+        "plain_explanation": (
+            "This location is handled under standard municipal jurisdiction. "
+            "There are no critical forest or mangrove reservations at these coordinates."
+        ),
+        "what_system_understood": {
+            "location_recognized": location_name or "General Urban Area",
+            "status": "Standard Municipal Area",
+            "report_category": signal_type,
+        },
+        "what_happens_next": (
+            "Your issue has been routed to the Municipal Ward Disaster Management Desk for normal handling."
+        ),
+        "receipt_id": env_ctx.get("abstention_id"),
+        "assistance_note": "Standard civic routing active. Forest guard intervention not required.",
+        "language_options": [
+            {"code": "en", "label": "English"},
+            {"code": "hi", "label": "हिन्दी (Hindi)"},
+            {"code": "mr", "label": "मराठी (Marathi)"},
+        ],
+    }
+
+
