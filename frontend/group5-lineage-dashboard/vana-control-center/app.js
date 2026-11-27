@@ -138,8 +138,27 @@ document.addEventListener("DOMContentLoaded", async () => {
     } catch (e) {
       console.warn("[VANA Platform] Auth session restore failed:", e);
     }
+
+    // STRICT AUTHENTICATION GATE: Guest mode removed from Command Center panel.
+    // Unauthenticated visitors are redirected to the dedicated login portal.
+    const urlParams = new URLSearchParams(window.location.search);
+    const roleParam = urlParams.get("role");
+
+    if (!window.VANA_AUTH.isAuthenticated()) {
+      if (roleParam) {
+        window.location.replace(`login.html?role=${encodeURIComponent(roleParam)}`);
+      } else {
+        window.location.replace("login.html");
+      }
+      return;
+    }
+
     initDashboardAuthUI();
     window.VANA_AUTH.onAuthChange(() => {
+      if (!window.VANA_AUTH.isAuthenticated()) {
+        window.location.replace("login.html");
+        return;
+      }
       initDashboardAuthUI();
       renderDecisions(currentRuntimeData);
     });
@@ -242,50 +261,40 @@ function initDashboardAuthUI() {
       navAdmin.style.display = "none";
     }
 
+    // Toggle Forest Dweller Dedicated Portal vs Standard Command Center
+    const dwellerNavItem = document.getElementById("navItemDweller");
+    const bnavDweller = document.getElementById("bnavDweller");
+
+    const isDweller = (normalizedRole === "FOREST_DWELLER" || normalizedRole === "DWELLER" || normalizedRole === "COMMUNITY");
+    if (isDweller) {
+      if (dwellerNavItem) dwellerNavItem.style.display = "flex";
+      if (bnavDweller) bnavDweller.style.display = "flex";
+      if (typeof renderCommunityIncidents === "function") {
+        renderCommunityIncidents();
+      }
+      // When forest dweller logs in, automatically land on their dedicated Forest Dweller page
+      switchMainTab("dwellerView", dwellerNavItem);
+    } else {
+      if (dwellerNavItem) dwellerNavItem.style.display = "none";
+      if (bnavDweller) bnavDweller.style.display = "none";
+      const dwellerSection = document.getElementById("viewDwellerPortal");
+      if (dwellerSection) dwellerSection.style.display = "none";
+    }
+
     renderRoleWorkspaceBanner(normalizedRole, user);
     updateOfflineUI();
     renderReviewQueue();
     updateUserProfileMenuContent();
   } else {
-    // Default unauthenticated / guest state
-    if (sideUserName) sideUserName.textContent = "Guest";
-    if (sideUserRole) sideUserRole.textContent = "Public Observer";
-
-    if (roleBadge) {
-      roleBadge.style.display = "none";
-    }
-    if (authBtn) {
-      authBtn.title = "Sign in to authenticate execution actions";
-      authBtn.className = "btn-header primary";
-      authBtn.onclick = openDashboardLoginModal;
-    }
-    if (authBtnText) {
-      authBtnText.textContent = "Sign In";
-    }
-
-    if (ministerName) ministerName.textContent = "State Surveillance";
-    if (ministerRole) ministerRole.textContent = "Dept of Environment & Forest";
-    if (ministerAvatar) {
-      ministerAvatar.textContent = "MH";
-      ministerAvatar.style.background = "var(--brand)";
-    }
-
-    // Hide privileged admin link for unauthenticated visitors
-    if (navAdmin) {
-      navAdmin.style.display = "none";
-    }
-
-    // Check query param for role in test/demo mode (e.g. index.html?role=FIELD_AGENT)
+    // Guest mode removed: All Command Center access requires authentication
     const urlParams = new URLSearchParams(window.location.search);
     const roleParam = urlParams.get("role");
     if (roleParam) {
-      renderRoleWorkspaceBanner(roleParam.toUpperCase(), { name: "Operational User", role: roleParam.toUpperCase() });
+      window.location.replace(`login.html?role=${encodeURIComponent(roleParam)}`);
     } else {
-      const banner = document.getElementById("roleWelcomeBanner");
-      if (banner) banner.style.display = "none";
+      window.location.replace("login.html");
     }
-    updateOfflineUI();
-    renderReviewQueue();
+    return;
   }
 }
 
@@ -379,57 +388,48 @@ function updateUserProfileMenuContent() {
   const roleTagEl = document.getElementById("menuRoleTag");
   const signinWrap = document.getElementById("menuSignInWrap");
   const logoutWrap = document.getElementById("menuLogoutWrap");
-  const logoutBtn = document.getElementById("menuLogoutBtn");
   const avatarCircle = document.getElementById("menuAvatarCircle");
 
-  const activeRole = isAuth && user ? (user.role || "").toUpperCase() : null;
+  if (!isAuth || !user) {
+    window.location.replace("login.html");
+    return;
+  }
 
-  if (nameEl) nameEl.textContent = isAuth && user ? user.name : "Guest";
-  if (emailEl) emailEl.textContent = isAuth && user ? (user.email || "auth@vana.gov.in") : "Sign in to access your role";
+  const activeRole = (user.role || "").toUpperCase();
+
+  if (nameEl) nameEl.textContent = user.name || "Authenticated Official";
+  if (emailEl) emailEl.textContent = user.email || "auth@vana.gov.in";
   if (roleTagEl) {
-    if (isAuth && user) {
-      roleTagEl.textContent = user.roleLabel || activeRole;
-      if (activeRole === "ADMIN" || activeRole === "PLATFORM_ADMIN") {
-        roleTagEl.style.color = "#C4B5FD";
-        roleTagEl.style.borderColor = "rgba(139, 92, 246, 0.4)";
-        roleTagEl.style.background = "rgba(139, 92, 246, 0.15)";
-      } else if (activeRole === "FOREST_OFFICER") {
-        roleTagEl.style.color = "#60A5FA";
-        roleTagEl.style.borderColor = "rgba(59, 130, 246, 0.4)";
-        roleTagEl.style.background = "rgba(59, 130, 246, 0.15)";
-      } else {
-        roleTagEl.style.color = "#4ADE80";
-        roleTagEl.style.borderColor = "rgba(34, 197, 94, 0.4)";
-        roleTagEl.style.background = "rgba(34, 197, 94, 0.15)";
-      }
+    roleTagEl.textContent = user.roleLabel || activeRole;
+    if (activeRole === "ADMIN" || activeRole === "PLATFORM_ADMIN") {
+      roleTagEl.style.color = "#C4B5FD";
+      roleTagEl.style.borderColor = "rgba(139, 92, 246, 0.4)";
+      roleTagEl.style.background = "rgba(139, 92, 246, 0.15)";
+    } else if (activeRole === "FOREST_OFFICER") {
+      roleTagEl.style.color = "#60A5FA";
+      roleTagEl.style.borderColor = "rgba(59, 130, 246, 0.4)";
+      roleTagEl.style.background = "rgba(59, 130, 246, 0.15)";
+    } else if (activeRole === "FOREST_DWELLER" || activeRole === "DWELLER" || activeRole === "COMMUNITY") {
+      roleTagEl.style.color = "#FDE68A";
+      roleTagEl.style.borderColor = "rgba(245, 158, 11, 0.4)";
+      roleTagEl.style.background = "rgba(245, 158, 11, 0.15)";
     } else {
-      roleTagEl.textContent = "Public Observer";
-      roleTagEl.style.color = "#9ca3af";
-      roleTagEl.style.borderColor = "rgba(107, 114, 128, 0.3)";
-      roleTagEl.style.background = "rgba(107, 114, 128, 0.15)";
+      roleTagEl.style.color = "#4ADE80";
+      roleTagEl.style.borderColor = "rgba(34, 197, 94, 0.4)";
+      roleTagEl.style.background = "rgba(34, 197, 94, 0.15)";
     }
   }
 
   if (avatarCircle) {
-    if (isAuth && user && user.name) {
-      const initials = user.name.split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase();
-      avatarCircle.textContent = initials;
-      avatarCircle.style.background = user.roleColor || "rgba(34, 197, 94, 0.2)";
-      avatarCircle.style.color = "#fff";
-      avatarCircle.style.fontWeight = "700";
-    } else {
-      avatarCircle.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>';
-      avatarCircle.style.background = "rgba(107, 114, 128, 0.15)";
-      avatarCircle.style.color = "#9ca3af";
-    }
+    const initials = (user.name || "AU").split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase();
+    avatarCircle.textContent = initials;
+    avatarCircle.style.background = user.roleColor || "rgba(34, 197, 94, 0.2)";
+    avatarCircle.style.color = "#fff";
+    avatarCircle.style.fontWeight = "700";
   }
 
-  if (signinWrap) {
-    signinWrap.style.display = isAuth ? "none" : "block";
-  }
-  if (logoutWrap) {
-    logoutWrap.style.display = isAuth ? "block" : "none";
-  }
+  if (signinWrap) signinWrap.style.display = "none";
+  if (logoutWrap) logoutWrap.style.display = "block";
 }
 
 function openManualLogin(roleKey) {
@@ -2817,16 +2817,12 @@ function renderDecisions(data) {
   const isAuth = auth && auth.isAuthenticated();
 
   if (roleTitle && roleDesc && roleButtons) {
-    if (!isAuth) {
-      roleTitle.textContent = "Public Observer";
-      roleDesc.textContent = "You are currently viewing public environmental monitoring data. Sign in with administrative or auditor credentials to dispatch governed execution or inspect audit logs.";
-      roleButtons.innerHTML = `
-        <button class="btn-header primary" onclick="openDashboardLoginModal()">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
-          <span>Sign In to Authorize Actions</span>
-        </button>
-      `;
-    } else if (user.role === auth.ROLES.PLATFORM_ADMIN) {
+    if (!user) {
+      window.location.replace("login.html");
+      return;
+    }
+    const userRole = (user.role || "").toUpperCase();
+    if (userRole === "PLATFORM_ADMIN" || userRole === "ADMIN") {
       roleTitle.textContent = `Authorized: Platform Administrator (${user.name})`;
       roleDesc.textContent = "You have full administrative execution and governance dispatch privileges. You may trigger deterministic lineage replay verification or review system security configuration.";
       roleButtons.innerHTML = `
@@ -2835,8 +2831,8 @@ function renderDecisions(data) {
           <span>Dispatch Replay Verification</span>
         </button>
       `;
-    } else if (user.role === auth.ROLES.AUDITOR) {
-      roleTitle.textContent = `Authorized: Auditor / Judge (${user.name})`;
+    } else if (userRole === "FOREST_OFFICER" || userRole === "AUDITOR") {
+      roleTitle.textContent = `Authorized: Forest Officer (${user.name})`;
       roleDesc.textContent = "You have audit log review and deterministic invariant verification privileges. You are authorized to audit provenance trails and verify mathematical invariance across replays.";
       roleButtons.innerHTML = `
         <button class="btn-header primary" onclick="triggerReplayVerification()">
@@ -2844,9 +2840,18 @@ function renderDecisions(data) {
           <span>Verify Deterministic Diff</span>
         </button>
       `;
+    } else if (userRole === "FOREST_DWELLER" || userRole === "DWELLER" || userRole === "COMMUNITY") {
+      roleTitle.textContent = `Authorized: Forest Dweller & Community (${user.name})`;
+      roleDesc.textContent = "You have local community safety alerts, dangerous animal proximity notifications, agroforestry scheme access, and incident reporting privileges.";
+      roleButtons.innerHTML = `
+        <button class="btn-header primary" onclick="openIncidentReportModal()" style="background:#F59E0B;color:#05120D;font-weight:700;border:none;">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+          <span>Report Community Incident</span>
+        </button>
+      `;
     } else {
-      roleTitle.textContent = `Role: Approved Consumer / Field Participant (${user.name})`;
-      roleDesc.textContent = "You have read-only observation and telemetry monitoring access. Operational dispatch actions require Platform Administrator privileges under backend security policy.";
+      roleTitle.textContent = `Role: Field Agent (${user.name})`;
+      roleDesc.textContent = "You have ground telemetry and sensor intake privileges. Execution dispatch requires Platform Administrator authorization under backend RBAC policy.";
       roleButtons.innerHTML = `
         <span style="font-size:11.5px;color:var(--text-muted);">Execution dispatch restricted (HTTP 403 enforcement active).</span>
       `;
@@ -3712,7 +3717,13 @@ function switchMainTab(viewKey, navItem) {
     analyticsView: "viewHistory",
     analytics: "viewHistory",
     reportsView: "viewHistory",
-    reports: "viewHistory"
+    reports: "viewHistory",
+
+    dwellerView: "viewDwellerPortal",
+    dweller: "viewDwellerPortal",
+    community: "viewDwellerPortal",
+    forestDweller: "viewDwellerPortal",
+    "forest-dweller": "viewDwellerPortal"
   };
 
   const targetViewId = viewMap[viewKey] || "viewOverview";
@@ -3731,7 +3742,7 @@ function switchMainTab(viewKey, navItem) {
   activeMainView = targetViewId;
 
   // Hide all sections
-  ["viewOverview", "viewMonitoring", "viewMap", "viewDecisions", "viewHistory", "viewFieldOps"].forEach(id => {
+  ["viewOverview", "viewMonitoring", "viewMap", "viewDecisions", "viewHistory", "viewFieldOps", "viewDwellerPortal"].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.style.display = (id === targetViewId) ? "flex" : "none";
   });
@@ -3773,13 +3784,19 @@ function switchMainTab(viewKey, navItem) {
       analyticsView: "navItemAnalytics",
       reports: "navItemAnalytics",
       reportsView: "navItemAnalytics",
-      admin: "navItemAdmin"
+      admin: "navItemAdmin",
+      dwellerView: "navItemDweller",
+      dweller: "navItemDweller",
+      community: "navItemDweller",
+      forestDweller: "navItemDweller"
     };
     const navId = keyToNavId[viewKey] || (
-      targetViewId === "viewHistory" ? "navItemMasterDB" : (
-        targetViewId === "viewMap" ? "navItemMap" : (
-          targetViewId === "viewMonitoring" ? "navItemMonitoring" : (
-            targetViewId === "viewDecisions" ? "navItemDecisions" : "navItemOverview"
+      targetViewId === "viewDwellerPortal" ? "navItemDweller" : (
+        targetViewId === "viewHistory" ? "navItemMasterDB" : (
+          targetViewId === "viewMap" ? "navItemMap" : (
+            targetViewId === "viewMonitoring" ? "navItemMonitoring" : (
+              targetViewId === "viewDecisions" ? "navItemDecisions" : "navItemOverview"
+            )
           )
         )
       )
@@ -3799,7 +3816,8 @@ function switchMainTab(viewKey, navItem) {
     viewMap: "bnavMap",
     viewDecisions: "bnavDecisions",
     viewHistory: "bnavHistory",
-    viewFieldOps: "bnavFieldOps"
+    viewFieldOps: "bnavFieldOps",
+    viewDwellerPortal: "bnavDweller"
   };
   const bnavId = bnavMap[targetViewId];
   if (bnavId) {
@@ -5244,4 +5262,195 @@ window.verifyAllAuditSystems = function(el) {
     }, 3500);
   }, 1000);
 };
+
+// =============================================================================
+// FOREST DWELLER COMMUNITY SAFETY, WILDLIFE NOTIFICATIONS & INCIDENTS
+// =============================================================================
+let COMMUNITY_INCIDENTS = [
+  {
+    id: "INC-MH-2026-0891",
+    category: "Dangerous Animal (Leopard)",
+    zone: "Thane Creek Buffer - Zone 1",
+    landmark: "Culvert #4 near North Buffer",
+    details: "Adult leopard movement detected by CT-04. Visual confirmed at 13:10 IST. Forest Guard alert active.",
+    urgency: "HIGH",
+    time: "10 mins ago",
+    status: "DISPATCHED"
+  },
+  {
+    id: "INC-MH-2026-0888",
+    category: "Wild Boar Sighting",
+    zone: "Tansa Watershed Sector 4",
+    landmark: "Perimeter fence plot 14",
+    details: "Sounder of 6 boars foraging near crop boundary. Night patrol requested.",
+    urgency: "MEDIUM",
+    time: "42 mins ago",
+    status: "ACKNOWLEDGED"
+  },
+  {
+    id: "INC-MH-2026-0879",
+    category: "Sloth Bear Activity",
+    zone: "Bhimashankar Corridor",
+    landmark: "Upper Ridge trail Mahua groves",
+    details: "Claw markings on trunk, fresh pugmarks identified by community patrol.",
+    urgency: "MEDIUM",
+    time: "2 hours ago",
+    status: "PATROL_NOTIFIED"
+  },
+  {
+    id: "INC-MH-2026-0865",
+    category: "Smoke Observation",
+    zone: "Sanjay Gandhi NP Perimeter",
+    landmark: "Boundary Pillar BP-18",
+    details: "Faint smoke plume noticed near dry teak patch. Range QRT dispatched for inspection.",
+    urgency: "LOW",
+    time: "4 hours ago",
+    status: "RESOLVED"
+  },
+  {
+    id: "INC-MH-2026-0852",
+    category: "Injured Wildlife (Chital)",
+    zone: "Karnala Bird Sanctuary East",
+    landmark: "Stream Crossing #3",
+    details: "Young Chital fawn with wire snare abrasion. Wildlife veterinary team attended.",
+    urgency: "MEDIUM",
+    time: "6 hours ago",
+    status: "RESCUED"
+  }
+];
+
+function renderCommunityIncidents() {
+  const tbody = document.getElementById("communityIncidentsTableBody");
+  if (!tbody) return;
+
+  if (COMMUNITY_INCIDENTS.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="6" style="padding:16px;text-align:center;color:var(--text-muted);">No incident reports logged yet.</td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = COMMUNITY_INCIDENTS.map(inc => {
+    let badgeColor = "var(--color-info, #38BDF8)";
+    let badgeBg = "rgba(56,189,248,0.14)";
+    let badgeBorder = "rgba(56,189,248,0.35)";
+    if (inc.urgency === "HIGH") {
+      badgeColor = "var(--color-error, #EF4444)";
+      badgeBg = "rgba(239,68,68,0.14)";
+      badgeBorder = "rgba(239,68,68,0.35)";
+    } else if (inc.urgency === "MEDIUM") {
+      badgeColor = "var(--color-warning, #F59E0B)";
+      badgeBg = "rgba(245,158,11,0.14)";
+      badgeBorder = "rgba(245,158,11,0.35)";
+    } else if (inc.urgency === "LOW") {
+      badgeColor = "var(--primary-green, #20D66B)";
+      badgeBg = "rgba(32,214,107,0.14)";
+      badgeBorder = "rgba(32,214,107,0.35)";
+    }
+
+    // Status badge colors
+    let statusColor = "var(--primary-green, #20D66B)";
+    let statusBg = "rgba(32,214,107,0.14)";
+    let statusBorder = "rgba(32,214,107,0.35)";
+    if (inc.status === "DISPATCHED") {
+      statusColor = "#38BDF8";
+      statusBg = "rgba(56,189,248,0.14)";
+      statusBorder = "rgba(56,189,248,0.35)";
+    } else if (inc.status === "ACKNOWLEDGED") {
+      statusColor = "#F59E0B";
+      statusBg = "rgba(245,158,11,0.14)";
+      statusBorder = "rgba(245,158,11,0.35)";
+    } else if (inc.status === "PATROL_NOTIFIED") {
+      statusColor = "#A855F7";
+      statusBg = "rgba(168,85,247,0.14)";
+      statusBorder = "rgba(168,85,247,0.35)";
+    } else if (inc.status === "RESCUED") {
+      statusColor = "#36E879";
+      statusBg = "rgba(54,232,121,0.14)";
+      statusBorder = "rgba(54,232,121,0.35)";
+    }
+
+    return `
+      <tr>
+        <td style="padding:8.5px 12px;font-family:var(--font-mono, monospace);color:var(--text-muted, #647A71);font-size:11.5px;font-weight:600;white-space:nowrap;">${escapeHtml(inc.id)}</td>
+        <td style="padding:8.5px 12px;font-weight:600;color:var(--text-primary, #E8F0EC);font-size:12px;white-space:nowrap;">
+          <span class="urgency-badge" style="color:${badgeColor};background:${badgeBg};border:1px solid ${badgeBorder};">${escapeHtml(inc.urgency)}</span>
+          ${escapeHtml(inc.category)}
+        </td>
+        <td style="padding:8.5px 12px;color:var(--text-secondary, #9BAFA7);font-size:12px;white-space:nowrap;">${escapeHtml(inc.zone)}</td>
+        <td style="padding:8.5px 12px;color:var(--text-secondary, #9BAFA7);line-height:1.35;font-size:11.5px;">
+          <strong style="color:var(--text-primary, #E8F0EC);">${escapeHtml(inc.landmark)}:</strong> ${escapeHtml(inc.details)}
+        </td>
+        <td style="padding:8.5px 12px;color:var(--text-muted, #647A71);font-size:11px;white-space:nowrap;text-align:right;">${escapeHtml(inc.time)}</td>
+        <td style="padding:8.5px 12px;white-space:nowrap;text-align:center;">
+          <span class="dweller-status-badge" style="color:${statusColor};background:${statusBg};border:1px solid ${statusBorder};">
+            ${escapeHtml(inc.status)}
+          </span>
+        </td>
+      </tr>
+    `;
+  }).join("");
+}
+
+function openIncidentReportModal(defaultCategory) {
+  const modal = document.getElementById("incidentReportModal");
+  if (!modal) return;
+  if (defaultCategory) {
+    const sel = document.getElementById("incTypeSelect");
+    if (sel) sel.value = defaultCategory;
+  }
+  modal.style.display = "flex";
+}
+
+function closeIncidentReportModal() {
+  const modal = document.getElementById("incidentReportModal");
+  if (modal) modal.style.display = "none";
+}
+
+function handleIncidentSubmit(e) {
+  if (e && e.preventDefault) e.preventDefault();
+
+  const typeSel = document.getElementById("incTypeSelect");
+  const zoneSel = document.getElementById("incZoneSelect");
+  const urgencySel = document.getElementById("incUrgencySelect");
+  const landmarkInp = document.getElementById("incLandmarkInput");
+  const descInp = document.getElementById("incDescInput");
+
+  const catVal = typeSel ? typeSel.options[typeSel.selectedIndex].text : "General Sighting";
+  const zoneVal = zoneSel ? zoneSel.value : "Thane Creek Buffer - Zone 1";
+  const urgencyVal = urgencySel ? urgencySel.value : "MEDIUM";
+  const landmarkVal = landmarkInp ? landmarkInp.value.trim() : "Near Buffer Perimeter";
+  const descVal = descInp ? descInp.value.trim() : "Community observation reported.";
+
+  const randomNum = Math.floor(1000 + Math.random() * 9000);
+  const newIncident = {
+    id: `INC-MH-2026-${randomNum}`,
+    category: catVal.replace(/^[^\w]+/, "").trim(),
+    zone: zoneVal,
+    landmark: landmarkVal,
+    details: descVal || "Community report dispatched to Range Forest Office.",
+    urgency: urgencyVal,
+    time: "Just now",
+    status: "DISPATCHED"
+  };
+
+  COMMUNITY_INCIDENTS.unshift(newIncident);
+  renderCommunityIncidents();
+  closeIncidentReportModal();
+
+  if (landmarkInp) landmarkInp.value = "";
+  if (descInp) descInp.value = "";
+
+  if (typeof window.showVanaToast === "function") {
+    window.showVanaToast(`🚨 Incident ${newIncident.id} dispatched to Forest Patrol & QRT!`, "success");
+  } else {
+    alert(`Incident ${newIncident.id} successfully dispatched to Range Forest Office.`);
+  }
+}
+
+function applyForestScheme(schemeName) {
+  if (typeof window.showVanaToast === "function") {
+    window.showVanaToast(`Application initiated for: "${schemeName}". Van Dhan Kendra / Tribal Dept notified!`, "success");
+  } else {
+    alert(`Application initiated for: "${schemeName}". Van Dhan Kendra / Tribal Dept notified!`);
+  }
+}
 

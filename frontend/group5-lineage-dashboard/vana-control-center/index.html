@@ -11,7 +11,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;family=JetBrains+Mono:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
   <!-- Leaflet CSS for accurate geographic tile mapping -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
-  <link rel="stylesheet" href="styles.css?v=55">
+  <link rel="stylesheet" href="styles.css?v=59">
   <link rel="stylesheet" href="geospatial.css?v=49">
   <!-- Official VANA Brand Favicons -->
   <link rel="icon" type="image/svg+xml" href="assets/vana-logo.svg">
@@ -82,8 +82,8 @@
         <select id="headerObservationSelect" onchange="handleObservationSelect(this.value)"><option value="TC-Z03-EXT-OPENMETEO-OBS001">Thane Creek</option></select>
         <button class="btn-header" onclick="fetchLive()"><span id="btnHeaderRefreshText">Refresh</span></button>
         <div class="user-auth-pill" id="dashUserAuthPill">
-          <div class="auth-role-badge" id="dashRoleBadge">Guest</div>
-          <button class="btn-header primary" id="dashAuthBtn" onclick="openDashboardLoginModal()"><span id="dashAuthBtnText">Sign In</span></button>
+          <div class="auth-role-badge" id="dashRoleBadge" style="display:none;"></div>
+          <button class="btn-header" id="dashAuthBtn" onclick="handleDashboardLogout()"><span id="dashAuthBtnText">Sign Out</span></button>
         </div>
       </div>
     </div>
@@ -139,6 +139,12 @@
           <span>Field Operations</span>
         </a>
 
+        <!-- 8. Forest Dweller Community Portal (Visible exclusively for Forest Dweller role) -->
+        <a class="nav-item" id="navItemDweller" href="#dweller" onclick="switchMainTab('dwellerView', this); return false;" style="display:none;" title="Forest Dweller Community Safety &amp; Farming">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:#F59E0B;"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+          <span id="navItemDwellerLabel">Forest Dweller</span>
+        </a>
+
         <!-- Administration (Administrative Section) -->
         <div class="nav-divider" id="adminNavDivider" style="height:1px;background:rgba(34,197,94,0.18);margin:6px 8px;display:none;"></div>
         <a class="nav-item" id="navItemAdmin" href="#overview" onclick="switchMainTab('overviewView', this); return false;" style="display:none;" title="Command Center Overview Dashboard">
@@ -150,20 +156,20 @@
         <a id="navItemHistory" style="display:none;" onclick="switchMainTab('historyView', this); return false;"></a>
       </nav>
 
-      <!-- User Profile Card matching reference exactly at bottom -->
+      <!-- User Profile Card at bottom (Authenticated Only) -->
       <div class="sidebar-footer" style="position:relative;">
-        <div class="user-profile-card" id="sidebarUserProfileBtn" onclick="toggleUserProfileMenu(event)" title="Account &amp; Role Login">
+        <div class="user-profile-card" id="sidebarUserProfileBtn" onclick="toggleUserProfileMenu(event)" title="Account Profile">
           <div class="user-avatar-circle" id="sidebarAvatarCircle">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
           </div>
           <div class="user-info">
-            <div class="user-name" id="sidebarUserName">Guest</div>
-            <div class="user-role" id="sidebarUserRole">Public Observer</div>
+            <div class="user-name" id="sidebarUserName">Authenticated User</div>
+            <div class="user-role" id="sidebarUserRole">Active Session</div>
           </div>
           <svg class="user-caret" id="sidebarUserCaret" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
         </div>
 
-        <!-- Account Profile & Sign In / Log Out Popover Menu -->
+        <!-- Account Profile & Log Out Popover Menu -->
         <div class="user-profile-menu" id="userProfileMenu" style="display:none;" onclick="event.stopPropagation()">
           <div class="profile-menu-header">
             <div class="profile-menu-user-row">
@@ -171,25 +177,17 @@
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
               </div>
               <div class="profile-menu-names">
-                <div class="profile-menu-name" id="menuUserName">Guest</div>
-                <div class="profile-menu-email" id="menuUserEmail">Sign in to access your role</div>
+                <div class="profile-menu-name" id="menuUserName">Authenticated User</div>
+                <div class="profile-menu-email" id="menuUserEmail">auth@vana.gov.in</div>
               </div>
             </div>
-            <div class="profile-menu-role-tag" id="menuRoleTag">Public Observer</div>
+            <div class="profile-menu-role-tag" id="menuRoleTag">Active Role</div>
           </div>
 
           <div class="profile-menu-divider"></div>
 
-          <!-- Unauthenticated: Direct Sign In action -->
-          <div class="profile-signin-wrap" id="menuSignInWrap">
-            <button type="button" class="profile-action-btn signin-action" id="menuSignInBtn" onclick="openManualLogin()" title="Sign In to Command Center">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
-              <span>Sign In</span>
-            </button>
-          </div>
-
           <!-- Authenticated: Log Out and Role Change -->
-          <div class="profile-logout-wrap" id="menuLogoutWrap" style="display:none;">
+          <div class="profile-logout-wrap" id="menuLogoutWrap">
             <button type="button" class="profile-action-btn logout-action" id="menuLogoutBtn" onclick="handleUserProfileLogout()" title="Log out of current session">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
               <span>Log Out Current Account</span>
@@ -1893,6 +1891,215 @@
         </div>
       </section>
 
+      <!-- =========================================================================
+           VIEW 7: FOREST DWELLER COMMUNITY SAFETY & AGROFORESTRY WORKSPACE
+           (Visible exclusively when logged in as Forest Dweller)
+           ========================================================================= -->
+      <section class="view-section" id="viewDwellerPortal" style="display:none;">
+        
+        <!-- Emergency Wildlife Safety Banner -->
+        <div class="community-banner">
+          <div class="community-banner-left">
+            <div class="community-banner-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+            </div>
+            <div class="community-banner-text">
+              <div class="community-banner-title-line">
+                <span class="community-banner-title">LIVE WILDLIFE SAFETY ALERT · THANE CREEK BUFFER ZONE</span>
+                <span class="community-banner-badge">Active Warning</span>
+              </div>
+              <div class="community-banner-desc">
+                Adult Leopard movement detected ~1.2 km from village perimeter. Camera Trap CT-04 confirmed visual at 13:10 IST. Keep livestock indoors and avoid solitary buffer transit.
+              </div>
+            </div>
+          </div>
+          <button type="button" class="community-banner-btn" onclick="openIncidentReportModal('DANGEROUS_ANIMAL')">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            <span>Report Sighting / Emergency</span>
+          </button>
+        </div>
+
+        <!-- Symmetrical 2-Column Grid: Left: Dangerous Animals | Right: Local Forest Farming -->
+        <div class="dweller-grid-row">
+          
+          <!-- CARD 1: DANGEROUS ANIMALS IN VICINITY -->
+          <div class="dweller-panel-card animal-card">
+            <div>
+              <div class="dweller-panel-header">
+                <div class="title-wrap">
+                  <span class="panel-icon">🐾</span>
+                  <span class="panel-title animal-title">Dangerous Animals In Vicinity</span>
+                </div>
+                <span class="status-pill active" style="background:rgba(245,158,11,0.15);color:#F59E0B;border:1px solid rgba(245,158,11,0.35);font-size:11px;">4 Local Feeds</span>
+              </div>
+              <div class="dweller-feed-list" id="wildlifeAlertsList">
+                <!-- Item 1: Leopard -->
+                <div class="dweller-feed-item feed-danger">
+                  <div class="dweller-feed-top">
+                    <span class="dweller-feed-title" style="color:#FCA5A5;">🐆 Adult Leopard (Panthera pardus)</span>
+                    <span class="dweller-feed-tag" style="color:#f87171;">1.2 km away · 18m ago</span>
+                  </div>
+                  <div class="dweller-feed-desc">
+                    Spotted moving towards Eastern Mangrove creek buffer. Verified by Camera Trap CT-04. Forest Guard patrol team alerted.
+                  </div>
+                </div>
+                <!-- Item 2: Wild Boar -->
+                <div class="dweller-feed-item feed-warning">
+                  <div class="dweller-feed-top">
+                    <span class="dweller-feed-title" style="color:#FDE68A;">🐗 Wild Boar Sounder (6 individuals)</span>
+                    <span class="dweller-feed-tag" style="color:#fbbf24;">3.4 km away · 42m ago</span>
+                  </div>
+                  <div class="dweller-feed-desc">
+                    Foraging near southern agricultural perimeter fence plot 14. Caution advised for night farming and crop fields.
+                  </div>
+                </div>
+                <!-- Item 3: Sloth Bear -->
+                <div class="dweller-feed-item feed-info">
+                  <div class="dweller-feed-top">
+                    <span class="dweller-feed-title" style="color:#93C5FD;">🐻 Sloth Bear Trace (Melursus ursinus)</span>
+                    <span class="dweller-feed-tag" style="color:#60a5fa;">4.8 km away · 2h ago</span>
+                  </div>
+                  <div class="dweller-feed-desc">
+                    Pugmarks and claw marks verified on Mahua trees along upper ridge trail. Patrol team actively monitoring corridor.
+                  </div>
+                </div>
+                <!-- Item 4: Elephant Movement -->
+                <div class="dweller-feed-item feed-purple">
+                  <div class="dweller-feed-top">
+                    <span class="dweller-feed-title" style="color:#D8B4FE;">🐘 Elephant Herd Corridor Movement</span>
+                    <span class="dweller-feed-tag" style="color:#c084fc;">7.2 km away · 3h ago</span>
+                  </div>
+                  <div class="dweller-feed-desc">
+                    Sub-adult herd moving through northern forest boundary corridor. Forest acoustic repellers active along buffer.
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="dweller-panel-footer">
+              <span>📞 <strong>24x7 Toll-Free Wildlife Helpline:</strong> <span style="color:#FDE68A;font-weight:700;">1926</span></span>
+              <span>Range Response Team (QRT): <strong style="color:#20D66B;">Standby (~8 mins)</strong></span>
+            </div>
+          </div>
+
+          <!-- CARD 2: LOCAL FOREST FARMING OPPORTUNITIES -->
+          <div class="dweller-panel-card farming-card">
+            <div>
+              <div class="dweller-panel-header">
+                <div class="title-wrap">
+                  <span class="panel-icon">🌾</span>
+                  <span class="panel-title farming-title">Local Forest Farming &amp; Dept. Opportunities</span>
+                </div>
+                <span class="status-pill active" style="font-size:11px;">4 Active Schemes</span>
+              </div>
+              <div class="dweller-feed-list">
+                <!-- Scheme 1: Bamboo -->
+                <div class="dweller-feed-item scheme-green">
+                  <div class="dweller-feed-top">
+                    <div>
+                      <div class="dweller-feed-title" style="color:#E8F0EC;">Maharashtra Bamboo Cultivation Mission</div>
+                      <div class="dweller-feed-subtitle" style="color:#86EFAC;">Dept. of Forest &amp; Climate Change · CFR Entitlement</div>
+                    </div>
+                    <button type="button" class="dweller-scheme-btn" onclick="applyForestScheme('Bamboo Cultivation Mission 2026')" style="background:#20D66B;color:#05120D;">Apply</button>
+                  </div>
+                  <div class="dweller-feed-desc">
+                    80% seedling subsidy for tissue-culture bamboo with guaranteed minimum support price buyback.
+                  </div>
+                </div>
+                <!-- Scheme 2: NTFP -->
+                <div class="dweller-feed-item scheme-amber">
+                  <div class="dweller-feed-top">
+                    <div>
+                      <div class="dweller-feed-title" style="color:#E8F0EC;">NTFP Minor Forest Produce Collection Window</div>
+                      <div class="dweller-feed-subtitle" style="color:#FDE68A;">Tribal Development &amp; Van Dhan Kendra</div>
+                    </div>
+                    <button type="button" class="dweller-scheme-btn" onclick="applyForestScheme('NTFP Mahua &amp; Honey Collection Permit')" style="background:#F59E0B;color:#05120D;">Register</button>
+                  </div>
+                  <div class="dweller-feed-desc">
+                    Mahua, Wild Honey &amp; Hirda collection permits active. Direct payment at Forest Depot @ ₹48/kg.
+                  </div>
+                </div>
+                <!-- Scheme 3: Medicinal -->
+                <div class="dweller-feed-item scheme-sky">
+                  <div class="dweller-feed-top">
+                    <div>
+                      <div class="dweller-feed-title" style="color:#E8F0EC;">Medicinal Plants Canopy Co-Farming Grant</div>
+                      <div class="dweller-feed-subtitle" style="color:#BAE6FD;">State Medicinal Plants Board (SMPB)</div>
+                    </div>
+                    <button type="button" class="dweller-scheme-btn" onclick="applyForestScheme('Medicinal Plants Co-Farming Grant')" style="background:#38BDF8;color:#05120D;">Apply</button>
+                  </div>
+                  <div class="dweller-feed-desc">
+                    ₹25,000/hectare direct grant for intercropping Ashwagandha &amp; Shatavari under forest canopy.
+                  </div>
+                </div>
+                <!-- Scheme 4: Solar Fence Subsidy -->
+                <div class="dweller-feed-item scheme-purple">
+                  <div class="dweller-feed-top">
+                    <div>
+                      <div class="dweller-feed-title" style="color:#E8F0EC;">Solar Agricultural Fencing Grant (Crop Protection)</div>
+                      <div class="dweller-feed-subtitle" style="color:#D8B4FE;">Dr. Shyama Prasad Mukherjee Scheme</div>
+                    </div>
+                    <button type="button" class="dweller-scheme-btn" onclick="applyForestScheme('Solar Agricultural Fencing Grant')" style="background:#A855F7;color:#fff;">Apply</button>
+                  </div>
+                  <div class="dweller-feed-desc">
+                    90% state grant for community solar power energizers to prevent crop depredation by boars and herbivores.
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="dweller-panel-footer">
+              <span>Van Dhan Kendra Scheme 2026-27</span>
+              <span>Subsidies Disbursed: <strong style="color:#20D66B;">Direct to Bank (DBT)</strong></span>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- CARD 3: COMMUNITY INCIDENT DISPATCH TRACKER -->
+        <div class="dweller-table-card">
+          <div>
+            <div class="dweller-table-header-row">
+              <div class="dweller-table-title-group">
+                <span class="icon">📋</span>
+                <div>
+                  <div class="dweller-table-title">Community Incident &amp; Sighting Reports</div>
+                  <div class="dweller-table-subtitle">Real-time field incident telemetry dispatched to Range Forest Office</div>
+                </div>
+              </div>
+              <div class="dweller-stats-cluster">
+                <div class="dweller-stat-chip">🐾 <span class="val">4</span> Sightings</div>
+                <div class="dweller-stat-chip">🚨 <span class="val">2</span> QRT Active</div>
+                <div class="dweller-stat-chip">🌾 <span class="val">4</span> Schemes Open</div>
+                <div class="dweller-stat-chip">🛡️ <span class="val">100%</span> Patrol Coverage</div>
+                <button type="button" class="btn-header primary" onclick="openIncidentReportModal()" style="font-size:12px;padding:6px 14px;display:inline-flex;align-items:center;gap:6px;cursor:pointer;background:var(--primary-green, #20D66B);color:#05120D;font-weight:700;border:none;border-radius:6px;">
+                  <span>+ Report New Incident</span>
+                </button>
+              </div>
+            </div>
+            <div class="dweller-table-wrap">
+              <table class="dweller-table">
+                <thead>
+                  <tr>
+                    <th class="col-id">ID</th>
+                    <th class="col-cat">Category</th>
+                    <th class="col-zone">Zone</th>
+                    <th class="col-details">Details</th>
+                    <th class="col-time">Reported Time</th>
+                    <th class="col-status">Status</th>
+                  </tr>
+                </thead>
+                <tbody id="communityIncidentsTableBody">
+                  <!-- Populated dynamically by app.js -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+          <div class="dweller-panel-footer">
+            <span>Authoritative Community Registry · Synced with Maharashtra Forest Department Quick Response System</span>
+            <span style="color:var(--primary-green, #20D66B);font-weight:600;">● Real-Time Gateway Operational</span>
+          </div>
+        </div>
+      </section>
+
     </div>
 
     <!-- =========================================================================
@@ -1922,6 +2129,11 @@
       <button class="bottom-nav-item" id="bnavHistory" onclick="switchMainTab('historyView', this)">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path></svg>
         <span>History</span>
+      </button>
+
+      <button class="bottom-nav-item" id="bnavDweller" onclick="switchMainTab('dwellerView', this)" style="display:none;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+        <span>Dweller</span>
       </button>
     </nav>
 
@@ -2204,12 +2416,81 @@
   </div>
 </div>
 
+<!-- =========================================================================
+     INCIDENT REPORT MODAL (FOREST DWELLER / COMMUNITY SAFETY)
+     ========================================================================= -->
+<div class="modal-backdrop" id="incidentReportModal" style="display:none;" role="dialog" aria-modal="true" aria-labelledby="incidentReportTitle">
+  <div class="modal-card" style="max-width:540px;width:95%;">
+    <div class="modal-card-header" style="display:flex;align-items:flex-start;justify-content:space-between;">
+      <div>
+        <div class="modal-card-title" id="incidentReportTitle">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" style="color:#F59E0B;"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+          <span>Forest Incident &amp; Wildlife Sighting Report</span>
+        </div>
+        <div class="modal-card-sub">Immediate dispatch to Range Forest Office &amp; Quick Response Unit</div>
+      </div>
+      <button type="button" class="btn-header" onclick="closeIncidentReportModal()" style="padding:4px 8px;font-size:16px;border:none;background:transparent;cursor:pointer;" title="Close">×</button>
+    </div>
+
+    <form id="incidentReportForm" onsubmit="handleIncidentSubmit(event)" style="padding:16px 20px;">
+      <div style="display:flex;flex-direction:column;gap:14px;">
+        <div>
+          <label style="display:block;font-size:12px;font-weight:600;color:#CBD5E1;margin-bottom:5px;">Incident Category *</label>
+          <select id="incTypeSelect" required style="width:100%;background:#0B1A15;border:1px solid rgba(255,255,255,0.15);border-radius:6px;padding:8px 10px;color:#fff;font-size:12.5px;">
+            <option value="DANGEROUS_ANIMAL">🐾 Dangerous Animal Sighting (Leopard, Bear, Boar)</option>
+            <option value="FOREST_FIRE">🔥 Forest Fire / Smoke Observation</option>
+            <option value="ILLEGAL_LOGGING">🪓 Illegal Tree Felling / Encroachment</option>
+            <option value="INJURED_WILDLIFE">🩹 Injured or Trapped Wildlife</option>
+            <option value="CROP_DAMAGE">🌾 Crop / Livestock Damage Incident</option>
+          </select>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+          <div>
+            <label style="display:block;font-size:12px;font-weight:600;color:#CBD5E1;margin-bottom:5px;">Forest Zone / Village *</label>
+            <select id="incZoneSelect" required style="width:100%;background:#0B1A15;border:1px solid rgba(255,255,255,0.15);border-radius:6px;padding:8px 10px;color:#fff;font-size:12.5px;">
+              <option value="Thane Creek Buffer - Zone 1">Thane Creek Buffer - Zone 1</option>
+              <option value="Sanjay Gandhi NP Perimeter">Sanjay Gandhi NP Perimeter</option>
+              <option value="Tansa Watershed Sector 4">Tansa Watershed Sector 4</option>
+              <option value="Bhimashankar Wildlife Corridor">Bhimashankar Wildlife Corridor</option>
+              <option value="Karnala Bird Sanctuary East">Karnala Bird Sanctuary East</option>
+            </select>
+          </div>
+          <div>
+            <label style="display:block;font-size:12px;font-weight:600;color:#CBD5E1;margin-bottom:5px;">Urgency Level *</label>
+            <select id="incUrgencySelect" required style="width:100%;background:#0B1A15;border:1px solid rgba(255,255,255,0.15);border-radius:6px;padding:8px 10px;color:#fff;font-size:12.5px;">
+              <option value="HIGH" style="color:#EF4444;">High (Immediate Danger / Live Animal)</option>
+              <option value="MEDIUM" selected style="color:#F59E0B;">Medium (Fresh Tracks / Sighting)</option>
+              <option value="LOW" style="color:#34D399;">Low (Information / Historical)</option>
+            </select>
+          </div>
+        </div>
+
+        <div>
+          <label style="display:block;font-size:12px;font-weight:600;color:#CBD5E1;margin-bottom:5px;">Exact Landmark / Sighting Spot *</label>
+          <input type="text" id="incLandmarkInput" required placeholder="e.g., Near Check dam #2, 200m from north boundary wall" style="width:100%;background:#0B1A15;border:1px solid rgba(255,255,255,0.15);border-radius:6px;padding:8px 10px;color:#fff;font-size:12.5px;" />
+        </div>
+
+        <div>
+          <label style="display:block;font-size:12px;font-weight:600;color:#CBD5E1;margin-bottom:5px;">Observations &amp; Description</label>
+          <textarea id="incDescInput" rows="3" placeholder="Provide any details on animal behavior, direction of movement, number of individuals, or damages..." style="width:100%;background:#0B1A15;border:1px solid rgba(255,255,255,0.15);border-radius:6px;padding:8px 10px;color:#fff;font-size:12.5px;font-family:inherit;resize:vertical;"></textarea>
+        </div>
+      </div>
+
+      <div class="modal-card-footer" style="display:flex;justify-content:flex-end;gap:10px;padding:14px 0 0;margin-top:14px;border-top:1px solid rgba(255,255,255,0.08);">
+        <button type="button" class="btn-form secondary" onclick="closeIncidentReportModal()">Cancel</button>
+        <button type="submit" id="btnSubmitIncident" class="btn-form primary" style="background:#F59E0B;color:#05120D;font-weight:700;border:none;">Transmit Incident to Forest Dept</button>
+      </div>
+    </form>
+  </div>
+</div>
+
 <!-- Scripts loaded in dependency order: Leaflet → config → auth → geospatial → app -->
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 <script src="config.js?v=25"></script>
 <script src="admin-auth.js?v=26"></script>
 <script src="geospatial.js?v=49"></script>
-<script src="app.js?v=60"></script>
+<script src="app.js?v=67"></script>
 <!-- =========================================================================
      VANA GUIDANCE ASSISTANT (CONTEXTUAL CLIENT-SIDE RULE EXPLAINER)
      ========================================================================= -->

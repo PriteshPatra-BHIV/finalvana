@@ -65,6 +65,10 @@
     JUDGE:              "FOREST_OFFICER",
     ANALYST:            "FOREST_OFFICER",
     STEWARD:            "FOREST_OFFICER",
+    FOREST_DWELLER:     "FOREST_DWELLER",
+    DWELLER:            "FOREST_DWELLER",
+    VANVASI:            "FOREST_DWELLER",
+    COMMUNITY:          "FOREST_DWELLER",
   });
 
   // ── ROLE PRESENTATION METADATA ─────────────────────────────────────────
@@ -83,6 +87,11 @@
       label: "Forest Officer",
       description: "Statutory forest cover monitoring, scientific context, and lineage audit",
       color: "#0284C7",
+    },
+    FOREST_DWELLER: {
+      label: "Forest Dweller",
+      description: "Community safety alerts, dangerous animal proximity, local agroforestry opportunities, and incident reporting",
+      color: "#F59E0B",
     },
   });
 
@@ -123,6 +132,11 @@
     VIEW_FOREST_COVER:          "VIEW_FOREST_COVER",
     VIEW_STATUTORY_BENCHMARKS:  "VIEW_STATUTORY_BENCHMARKS",
     VIEW_GOVERNANCE_DECISIONS:  "VIEW_GOVERNANCE_DECISIONS",
+
+    // Forest Dweller Community & Safety
+    VIEW_WILDLIFE_ALERTS:       "VIEW_WILDLIFE_ALERTS",
+    VIEW_FOREST_FARMING:        "VIEW_FOREST_FARMING",
+    SUBMIT_INCIDENT_REPORT:     "SUBMIT_INCIDENT_REPORT",
   });
 
   // ── ROLE PERMISSIONS MATRIX (BYTE-FOR-BYTE ALIGNED WITH BACKEND) ──────
@@ -206,6 +220,22 @@
       "VIEW_GOVERNANCE_DECISIONS",
       "VIEW_AUDIT_LOG",
     ]),
+    FOREST_DWELLER: Object.freeze([
+      "VIEW_DASHBOARD",
+      "VIEW_MAP",
+      "VIEW_ALERTS",
+      "VIEW_WILDLIFE_ALERTS",
+      "VIEW_FOREST_FARMING",
+      "SUBMIT_INCIDENT_REPORT",
+    ]),
+    DWELLER: Object.freeze([
+      "VIEW_DASHBOARD",
+      "VIEW_MAP",
+      "VIEW_ALERTS",
+      "VIEW_WILDLIFE_ALERTS",
+      "VIEW_FOREST_FARMING",
+      "SUBMIT_INCIDENT_REPORT",
+    ]),
   });
 
   // ── ROLE NORMALIZATION ─────────────────────────────────────────────────
@@ -237,6 +267,13 @@
       case "steward":
       case "governance_steward":
         return ROLES.FOREST_OFFICER;
+      case "forest_dweller":
+      case "dweller":
+      case "vanvasi":
+      case "community":
+      case "forest_community":
+      case "village_head":
+        return ROLES.FOREST_DWELLER;
       default:
         return rawRole.toUpperCase();
     }
@@ -489,6 +526,9 @@
           (permission === PERMISSIONS.MANAGE_USERS || permission === PERMISSIONS.MANAGE_SYSTEM_CONFIG || permission === PERMISSIONS.EXECUTE_WORKFLOW)) {
         return false;
       }
+      if ((role === ROLES.FOREST_DWELLER || role === "DWELLER" || role === "VANVASI") && privilegedPermissions.indexOf(permission) !== -1) {
+        return false;
+      }
 
       // 1. Backend-provided permissions object check (primary authority)
       if (_currentUser._permsHelper && _currentUser._permsHelper.list.length > 0) {
@@ -509,6 +549,11 @@
       if (role === ROLES.FIELD_AGENT || role === "APPROVED_CONSUMER") {
         var fieldPerms = ROLE_PERMISSIONS.FIELD_AGENT || [];
         return fieldPerms.indexOf(permission) !== -1;
+      }
+
+      if (role === ROLES.FOREST_DWELLER || role === "DWELLER" || role === "VANVASI") {
+        var dwellerPerms = ROLE_PERMISSIONS.FOREST_DWELLER || [];
+        return dwellerPerms.indexOf(permission) !== -1;
       }
 
       // Fail-closed for all unknown, tampered, or unassigned roles

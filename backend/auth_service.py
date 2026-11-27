@@ -170,8 +170,9 @@ def _open_connection(db_path: Optional[str] = None) -> _AuthConn:
 ROLE_ADMIN = "ADMIN"
 ROLE_FIELD_AGENT = "FIELD_AGENT"
 ROLE_FOREST_OFFICER = "FOREST_OFFICER"
+ROLE_FOREST_DWELLER = "FOREST_DWELLER"
 
-VALID_ROLES = {ROLE_ADMIN, ROLE_FIELD_AGENT, ROLE_FOREST_OFFICER}
+VALID_ROLES = {ROLE_ADMIN, ROLE_FIELD_AGENT, ROLE_FOREST_OFFICER, ROLE_FOREST_DWELLER}
 
 ROLE_PERMISSIONS: Dict[str, List[str]] = {
     ROLE_ADMIN: [
@@ -218,6 +219,14 @@ ROLE_PERMISSIONS: Dict[str, List[str]] = {
         "VIEW_GOVERNANCE_DECISIONS",
         "VIEW_AUDIT_LOG",
     ],
+    ROLE_FOREST_DWELLER: [
+        "VIEW_DASHBOARD",
+        "VIEW_MAP",
+        "VIEW_ALERTS",
+        "VIEW_WILDLIFE_ALERTS",
+        "VIEW_FOREST_FARMING",
+        "SUBMIT_INCIDENT_REPORT",
+    ],
 }
 
 _DISALLOWED_PROD_PASSWORDS = {"", "vana", "admin123", "password", "changeme"}
@@ -234,6 +243,7 @@ def get_predefined_users() -> List[Dict[str, str]]:
         ("usr-admin-001", "VANA_ADMIN_EMAIL", "VANA_ADMIN_PASSWORD", "vana@gmail.com", "vana", ROLE_ADMIN, "VANA Administrator"),
         ("usr-field-002", "VANA_FIELD_EMAIL", "VANA_FIELD_PASSWORD", "feild@gmail.com", "vana", ROLE_FIELD_AGENT, "Field Operations Agent"),
         ("usr-forest-003", "VANA_FOREST_EMAIL", "VANA_FOREST_PASSWORD", "forest@gmail.com", "vana", ROLE_FOREST_OFFICER, "Statutory Forest Officer"),
+        ("usr-dweller-004", "VANA_DWELLER_EMAIL", "VANA_DWELLER_PASSWORD", "dweller@gmail.com", "vana", ROLE_FOREST_DWELLER, "Forest Dweller & Community Member"),
     ]
     users: List[Dict[str, str]] = []
     for uid, email_var, pw_var, dev_email, dev_pw, role, name in specs:
@@ -290,6 +300,8 @@ def normalize_role(role_str: Optional[str]) -> Optional[str]:
         return ROLE_FIELD_AGENT
     if cleaned in ("FOREST_OFFICER", "FOREST", "OFFICER", "AUDITOR", "JUDGE", "STEWARD", "GOVERNANCE_STEWARD"):
         return ROLE_FOREST_OFFICER
+    if cleaned in ("FOREST_DWELLER", "DWELLER", "VANVASI", "COMMUNITY", "FOREST_COMMUNITY", "VILLAGE_HEAD"):
+        return ROLE_FOREST_DWELLER
     return cleaned
 
 

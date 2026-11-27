@@ -137,8 +137,14 @@
 
     .role-cards-grid {
       display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 12px;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+    }
+
+    @media (max-width: 580px) {
+      .role-cards-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
     }
 
     .role-choice-card {
@@ -166,10 +172,18 @@
 
     .role-choice-card.role-admin.active,
     .role-choice-card.role-field.active,
-    .role-choice-card.role-forest.active {
+    .role-choice-card.role-forest.active,
+    .role-choice-card.role-dweller.active {
       background: rgba(14, 30, 25, 0.9);
       border-color: #20D66B;
       box-shadow: 0 0 16px rgba(32, 214, 107, 0.22);
+    }
+    .role-choice-card.role-dweller.active {
+      border-color: #F59E0B;
+      box-shadow: 0 0 16px rgba(245, 158, 11, 0.25);
+    }
+    .role-choice-card.role-dweller.active .role-icon {
+      color: #F59E0B;
     }
 
     .role-icon {
@@ -397,6 +411,15 @@
             <div class="role-desc">Statutory Cover</div>
           </div>
 
+          <!-- Forest Dweller Card -->
+          <div class="role-choice-card role-dweller" id="roleCardDweller" onclick="selectRole('FOREST_DWELLER')" role="button" tabindex="0">
+            <div class="role-icon">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M12 8v4"/><circle cx="12" cy="16" r="1"/></svg>
+            </div>
+            <div class="role-name">Forest Dweller</div>
+            <div class="role-desc">Community Safety</div>
+          </div>
+
         </div>
         <!-- Hidden input storing selected role -->
         <input type="hidden" id="selectedRoleInput" name="role" value="FIELD_AGENT">
@@ -467,6 +490,8 @@
     document.getElementById("roleCardAdmin").classList.remove("active");
     document.getElementById("roleCardField").classList.remove("active");
     document.getElementById("roleCardForest").classList.remove("active");
+    const dwellerCard = document.getElementById("roleCardDweller");
+    if (dwellerCard) dwellerCard.classList.remove("active");
 
     // Add active class to clicked card & update placeholder suggestion
     const emailInput = document.getElementById("loginEmail");
@@ -484,6 +509,11 @@
       document.getElementById("roleCardForest").classList.add("active");
       if (!emailInput.value) {
         emailInput.placeholder = "forest@vana.gov.in";
+      }
+    } else if (role === "FOREST_DWELLER") {
+      if (dwellerCard) dwellerCard.classList.add("active");
+      if (!emailInput.value) {
+        emailInput.placeholder = "dweller@vana.gov.in";
       }
     }
     clearError();
@@ -582,6 +612,8 @@
           window.location.href = "index.html?role=FIELD_AGENT";
         } else if (verifiedRole === "FOREST_OFFICER") {
           window.location.href = "index.html?role=FOREST_OFFICER";
+        } else if (verifiedRole === "FOREST_DWELLER") {
+          window.location.href = "index.html?role=FOREST_DWELLER";
         } else {
           // Fallback to operational dashboard
           window.location.href = "index.html";
@@ -605,8 +637,9 @@
     if (roleParam) {
       const up = roleParam.toUpperCase();
       if (up === "ADMIN") selectRole("ADMIN");
+      else if (up.includes("DWELLER") || up.includes("COMMUNITY") || up.includes("VANVASI")) selectRole("FOREST_DWELLER");
       else if (up.includes("FIELD") || up.includes("FEILD")) selectRole("FIELD_AGENT");
-      else if (up.includes("FOREST")) selectRole("FOREST_OFFICER");
+      else if (up.includes("FOREST") || up.includes("OFFICER")) selectRole("FOREST_OFFICER");
     }
   });
 </script>

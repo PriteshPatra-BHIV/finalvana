@@ -5124,3 +5124,496 @@ pre, code, .code-block, .json-box {
   color: #fff;
   box-shadow: 0 4px 18px rgba(34, 197, 94, 0.25);
 }
+
+/* =============================================================================
+   VIEW 7: FOREST DWELLER PORTAL & COMMUNITY SAFETY WORKSPACE
+   (Standardized with VANA Command Center Color Tokens & Typography System)
+   ============================================================================= */
+#viewDwellerPortal.view-section {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-height: 100%;
+  width: 100%;
+  box-sizing: border-box;
+  padding-bottom: 96px; /* Generous clearance preventing any collision with floating VANA Assistant */
+}
+
+/* ── Emergency Wildlife Safety Banner ── */
+.community-banner {
+  background: linear-gradient(90deg, rgba(239, 68, 68, 0.16) 0%, rgba(245, 158, 11, 0.12) 100%);
+  border: 1px solid rgba(239, 68, 68, 0.45);
+  border-radius: 12px;
+  padding: 10px 18px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  box-shadow: 0 4px 18px rgba(239, 68, 68, 0.12);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+}
+
+.community-banner-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+  min-width: 0;
+}
+
+.community-banner-icon {
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  background: rgba(239, 68, 68, 0.22);
+  border: 1px solid rgba(239, 68, 68, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #EF4444;
+  flex-shrink: 0;
+}
+
+.community-banner-icon svg {
+  width: 18px;
+  height: 18px;
+}
+
+.community-banner-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.community-banner-title-line {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.community-banner-title {
+  font-size: 12.5px;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+  color: #FCA5A5;
+}
+
+.community-banner-badge {
+  font-size: 9.5px;
+  padding: 2px 7px;
+  border-radius: 4px;
+  background: #EF4444;
+  color: #FFFFFF;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  display: inline-block;
+}
+
+.community-banner-desc {
+  font-size: 12px;
+  color: var(--text-primary, #E8F0EC);
+  line-height: 1.35;
+  margin-top: 2px;
+}
+
+.community-banner-btn {
+  background: #EF4444;
+  color: #FFFFFF;
+  border: none;
+  font-weight: 700;
+  padding: 7px 15px;
+  border-radius: 6px;
+  font-size: 12px;
+  box-shadow: 0 2px 10px rgba(239, 68, 68, 0.35);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: all 0.18s ease;
+}
+
+.community-banner-btn:hover {
+  background: #DC2626;
+  box-shadow: 0 4px 16px rgba(239, 68, 68, 0.55);
+  transform: translateY(-1px);
+}
+
+/* ── Symmetrical 2-Column Grid Row ── */
+.dweller-grid-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  align-items: stretch;
+}
+
+@media (max-width: 1100px) {
+  .dweller-grid-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ── Panel Cards (Dangerous Animals & Agroforestry) ── */
+.dweller-panel-card {
+  background: rgba(3, 25, 18, 0.82) !important;
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid rgba(34, 197, 94, 0.28) !important;
+  border-radius: 13px;
+  padding: 14px 18px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  height: 100%;
+  box-sizing: border-box;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.45);
+  transition: border-color var(--transition-fast, 0.14s ease), box-shadow var(--transition-fast, 0.14s ease);
+}
+
+.dweller-panel-card:hover {
+  border-color: rgba(34, 197, 94, 0.42) !important;
+  box-shadow: 0 10px 32px rgba(0, 0, 0, 0.55);
+}
+
+.dweller-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid rgba(34, 197, 94, 0.2);
+}
+
+.dweller-panel-header .title-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.dweller-panel-header .panel-icon {
+  font-size: 16px;
+  line-height: 1;
+}
+
+.dweller-panel-header .panel-title {
+  font-size: 13.5px;
+  font-weight: 700;
+  letter-spacing: 0.2px;
+  color: var(--text-primary, #E8F0EC);
+}
+
+.dweller-panel-header .panel-title.animal-title {
+  color: #FDE68A;
+}
+
+.dweller-panel-header .panel-title.farming-title {
+  color: #86EFAC;
+}
+
+/* ── Feed List & Feed Items ── */
+.dweller-feed-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.dweller-feed-item {
+  border-radius: 6px;
+  padding: 8px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(25, 51, 46, 0.7);
+  transition: all 0.15s ease;
+  box-sizing: border-box;
+}
+
+.dweller-feed-item:hover {
+  transform: translateY(-1px);
+  background: rgba(13, 28, 26, 0.65);
+  border-color: rgba(34, 197, 94, 0.35);
+}
+
+.dweller-feed-item.feed-danger {
+  background: rgba(239, 68, 68, 0.08);
+  border-left: 3px solid #EF4444;
+  border-color: rgba(239, 68, 68, 0.2) rgba(239, 68, 68, 0.2) rgba(239, 68, 68, 0.2) #EF4444;
+}
+
+.dweller-feed-item.feed-warning {
+  background: rgba(245, 158, 11, 0.08);
+  border-left: 3px solid #F59E0B;
+  border-color: rgba(245, 158, 11, 0.2) rgba(245, 158, 11, 0.2) rgba(245, 158, 11, 0.2) #F59E0B;
+}
+
+.dweller-feed-item.feed-info {
+  background: rgba(56, 189, 248, 0.08);
+  border-left: 3px solid #38BDF8;
+  border-color: rgba(56, 189, 248, 0.2) rgba(56, 189, 248, 0.2) rgba(56, 189, 248, 0.2) #38BDF8;
+}
+
+.dweller-feed-item.feed-purple {
+  background: rgba(168, 85, 247, 0.08);
+  border-left: 3px solid #A855F7;
+  border-color: rgba(168, 85, 247, 0.2) rgba(168, 85, 247, 0.2) rgba(168, 85, 247, 0.2) #A855F7;
+}
+
+.dweller-feed-item.scheme-green {
+  background: rgba(34, 197, 94, 0.06);
+  border: 1px solid rgba(34, 197, 94, 0.22);
+}
+
+.dweller-feed-item.scheme-amber {
+  background: rgba(245, 158, 11, 0.06);
+  border: 1px solid rgba(245, 158, 11, 0.22);
+}
+
+.dweller-feed-item.scheme-sky {
+  background: rgba(56, 189, 248, 0.06);
+  border: 1px solid rgba(56, 189, 248, 0.22);
+}
+
+.dweller-feed-item.scheme-purple {
+  background: rgba(168, 85, 247, 0.06);
+  border: 1px solid rgba(168, 85, 247, 0.22);
+}
+
+.dweller-feed-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+
+.dweller-feed-title {
+  font-size: 12px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--text-primary, #E8F0EC);
+}
+
+.dweller-feed-subtitle {
+  font-size: 11px;
+  color: var(--text-secondary, #9BAFA7);
+  line-height: 1.2;
+}
+
+.dweller-feed-tag {
+  font-size: 11px;
+  font-weight: 600;
+  font-family: var(--font-mono, monospace);
+  white-space: nowrap;
+}
+
+.dweller-feed-desc {
+  font-size: 11.5px;
+  color: var(--text-secondary, #9BAFA7);
+  line-height: 1.35;
+  margin-top: 1px;
+}
+
+.dweller-scheme-btn {
+  padding: 3px 11px;
+  font-size: 11px;
+  font-weight: 700;
+  border-radius: 4px;
+  border: none;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s ease;
+}
+
+.dweller-scheme-btn:hover {
+  transform: translateY(-1px);
+  filter: brightness(1.12);
+}
+
+/* ── Panel Footers ── */
+.dweller-panel-footer {
+  margin-top: 10px;
+  padding-top: 8px;
+  border-top: 1px solid rgba(34, 197, 94, 0.18);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 11px;
+  color: var(--text-secondary, #9BAFA7);
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+/* ── Community Incident Table Section (Standardized with VANA Command Center Theme) ── */
+.dweller-table-card {
+  background: rgba(3, 25, 18, 0.82) !important;
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid rgba(34, 197, 94, 0.28) !important;
+  border-radius: 13px;
+  padding: 16px 18px 14px;
+  min-height: 346px; /* Exactly 5% height increase per user specification */
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.45);
+  box-sizing: border-box;
+  margin-bottom: 24px;
+}
+
+.dweller-table-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid rgba(34, 197, 94, 0.2);
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.dweller-table-title-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.dweller-table-title-group .icon {
+  font-size: 18px;
+  line-height: 1;
+}
+
+.dweller-table-title {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--text-primary, #E8F0EC);
+  letter-spacing: 0.2px;
+}
+
+.dweller-table-subtitle {
+  font-size: 11px;
+  color: var(--text-secondary, #9BAFA7);
+  margin-top: 1px;
+}
+
+.dweller-stats-cluster {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.dweller-stat-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 9px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 500;
+  background: rgba(10, 23, 22, 0.7);
+  border: 1px solid rgba(25, 51, 46, 0.85);
+  color: var(--text-secondary, #9BAFA7);
+}
+
+.dweller-stat-chip .val {
+  font-weight: 700;
+  color: var(--primary-green, #20D66B);
+}
+
+.dweller-table-wrap {
+  overflow-x: auto;
+  overflow-y: visible;
+  border: 1px solid rgba(34, 197, 94, 0.2);
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.25);
+}
+
+.dweller-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+  color: var(--text-primary, #E8F0EC);
+  text-align: left;
+  min-width: 900px;
+}
+
+.dweller-table thead tr {
+  background: rgba(0, 0, 0, 0.35);
+  border-bottom: 1px solid rgba(34, 197, 94, 0.22);
+}
+
+.dweller-table th {
+  padding: 8px 12px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-secondary, #9BAFA7);
+  white-space: nowrap;
+}
+
+/* Explicit single-line column widths preventing text wrapping & double row height */
+.dweller-table th.col-id { width: 140px; }
+.dweller-table th.col-cat { width: 235px; }
+.dweller-table th.col-zone { width: 215px; }
+.dweller-table th.col-details { min-width: 260px; }
+.dweller-table th.col-time { width: 110px; text-align: right; }
+.dweller-table th.col-status { width: 140px; text-align: center; }
+
+.dweller-table td {
+  padding: 8.5px 12px;
+  vertical-align: middle;
+  border-bottom: 1px solid rgba(25, 51, 46, 0.65);
+  color: var(--text-primary, #E8F0EC);
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+.dweller-table tbody tr {
+  transition: background var(--transition-fast, 0.14s ease);
+}
+
+.dweller-table tbody tr:hover td {
+  background: rgba(13, 28, 26, 0.65);
+}
+
+.dweller-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+/* Status & Urgency Badges matching VANA Design System */
+.urgency-badge {
+  display: inline-block;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 700;
+  margin-right: 6px;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+}
+
+.dweller-status-badge {
+  display: inline-block;
+  padding: 2.5px 10px;
+  border-radius: 12px;
+  font-size: 10.5px;
+  font-weight: 700;
+  text-align: center;
+  letter-spacing: 0.3px;
+  white-space: nowrap;
+}
+
+/* Generous right-padding on table card footer so footer text never collides with floating VANA Assistant */
+.dweller-table-card .dweller-panel-footer {
+  padding-right: 180px;
+  border-top: 1px solid rgba(34, 197, 94, 0.18);
+  margin-top: 8px;
+  padding-top: 8px;
+}
