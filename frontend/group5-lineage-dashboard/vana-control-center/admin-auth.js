@@ -87,7 +87,9 @@
   });
 
   // ── PERMISSION CONSTANTS ───────────────────────────────────────────────
+  // Byte-for-byte aligned with backend auth_service.py:ROLE_PERMISSIONS (BLK-VANA-04)
   var PERMISSIONS = Object.freeze({
+    // Core Navigation & Observability
     VIEW_DASHBOARD:             "VIEW_DASHBOARD",
     VIEW_MAP:                   "VIEW_MAP",
     VIEW_ALERTS:                "VIEW_ALERTS",
@@ -96,6 +98,13 @@
     RUN_REPLAY:                 "RUN_REPLAY",
     ACKNOWLEDGE_ALERT:          "ACKNOWLEDGE_ALERT",
     VIEW_AUDIT_LOG:             "VIEW_AUDIT_LOG",
+
+    // Admin & System Control
+    DISPATCH_EXECUTION:         "DISPATCH_EXECUTION",
+    RUN_HEALTH_CHECK:           "RUN_HEALTH_CHECK",
+    VIEW_SERVICES:              "VIEW_SERVICES",
+    EDIT_GEO_CONFIG:            "EDIT_GEO_CONFIG",
+    VIEW_POLICIES:              "VIEW_POLICIES",
     MANAGE_USERS:               "MANAGE_USERS",
     MANAGE_ROLES:               "MANAGE_ROLES",
     MANAGE_MAP_CONFIG:          "MANAGE_MAP_CONFIG",
@@ -103,6 +112,100 @@
     MANAGE_GOVERNANCE_POLICIES: "MANAGE_GOVERNANCE_POLICIES",
     MANAGE_SYSTEM_CONFIG:       "MANAGE_SYSTEM_CONFIG",
     EXECUTE_WORKFLOW:           "EXECUTE_WORKFLOW",
+
+    // Field Agent Intake & Sensors
+    SUBMIT_OBSERVATION:         "SUBMIT_OBSERVATION",
+    INTAKE_SENSOR_DATA:         "INTAKE_SENSOR_DATA",
+    REGISTER_SENSOR:            "REGISTER_SENSOR",
+    VIEW_TELEMETRY:             "VIEW_TELEMETRY",
+
+    // Forest Officer Statutory & Governance
+    VIEW_FOREST_COVER:          "VIEW_FOREST_COVER",
+    VIEW_STATUTORY_BENCHMARKS:  "VIEW_STATUTORY_BENCHMARKS",
+    VIEW_GOVERNANCE_DECISIONS:  "VIEW_GOVERNANCE_DECISIONS",
+  });
+
+  // ── ROLE PERMISSIONS MATRIX (BYTE-FOR-BYTE ALIGNED WITH BACKEND) ──────
+  var ROLE_PERMISSIONS = Object.freeze({
+    PLATFORM_ADMIN: Object.freeze([
+      "VIEW_DASHBOARD",
+      "VIEW_MAP",
+      "VIEW_ALERTS",
+      "VIEW_LINEAGE",
+      "VIEW_EVIDENCE",
+      "RUN_REPLAY",
+      "ACKNOWLEDGE_ALERT",
+      "DISPATCH_EXECUTION",
+      "RUN_HEALTH_CHECK",
+      "VIEW_SERVICES",
+      "EDIT_GEO_CONFIG",
+      "VIEW_AUDIT_LOG",
+      "VIEW_POLICIES",
+      "MANAGE_USERS",
+      "MANAGE_ROLES",
+      "MANAGE_MAP_CONFIG",
+      "MANAGE_ALERT_RULES",
+      "MANAGE_GOVERNANCE_POLICIES",
+      "MANAGE_SYSTEM_CONFIG",
+      "EXECUTE_WORKFLOW",
+    ]),
+    FIELD_AGENT: Object.freeze([
+      "VIEW_DASHBOARD",
+      "VIEW_MAP",
+      "VIEW_ALERTS",
+      "VIEW_LINEAGE",
+      "SUBMIT_OBSERVATION",
+      "INTAKE_SENSOR_DATA",
+      "REGISTER_SENSOR",
+      "VIEW_TELEMETRY",
+    ]),
+    FOREST_OFFICER: Object.freeze([
+      "VIEW_DASHBOARD",
+      "VIEW_MAP",
+      "VIEW_ALERTS",
+      "VIEW_LINEAGE",
+      "VIEW_EVIDENCE",
+      "RUN_REPLAY",
+      "VIEW_FOREST_COVER",
+      "VIEW_STATUTORY_BENCHMARKS",
+      "VIEW_GOVERNANCE_DECISIONS",
+      "VIEW_AUDIT_LOG",
+    ]),
+    // Backward compatibility aliases
+    APPROVED_CONSUMER: Object.freeze([
+      "VIEW_DASHBOARD",
+      "VIEW_MAP",
+      "VIEW_ALERTS",
+      "VIEW_LINEAGE",
+      "SUBMIT_OBSERVATION",
+      "INTAKE_SENSOR_DATA",
+      "REGISTER_SENSOR",
+      "VIEW_TELEMETRY",
+    ]),
+    AUDITOR: Object.freeze([
+      "VIEW_DASHBOARD",
+      "VIEW_MAP",
+      "VIEW_ALERTS",
+      "VIEW_LINEAGE",
+      "VIEW_EVIDENCE",
+      "RUN_REPLAY",
+      "VIEW_FOREST_COVER",
+      "VIEW_STATUTORY_BENCHMARKS",
+      "VIEW_GOVERNANCE_DECISIONS",
+      "VIEW_AUDIT_LOG",
+    ]),
+    GOVERNANCE_STEWARD: Object.freeze([
+      "VIEW_DASHBOARD",
+      "VIEW_MAP",
+      "VIEW_ALERTS",
+      "VIEW_LINEAGE",
+      "VIEW_EVIDENCE",
+      "RUN_REPLAY",
+      "VIEW_FOREST_COVER",
+      "VIEW_STATUTORY_BENCHMARKS",
+      "VIEW_GOVERNANCE_DECISIONS",
+      "VIEW_AUDIT_LOG",
+    ]),
   });
 
   // ── ROLE NORMALIZATION ─────────────────────────────────────────────────
@@ -307,6 +410,7 @@
     ROLES: ROLES,
     ROLE_META: ROLE_META,
     PERMISSIONS: PERMISSIONS,
+    ROLE_PERMISSIONS: ROLE_PERMISSIONS,
     DEV_MODE: DEV_MODE,
 
     // Export helpers for testability and normalization
@@ -398,31 +502,12 @@
       }
 
       if (role === ROLES.FOREST_OFFICER || role === "AUDITOR" || role === "GOVERNANCE_STEWARD") {
-        var officerPerms = [
-          PERMISSIONS.VIEW_DASHBOARD,
-          PERMISSIONS.VIEW_MAP,
-          PERMISSIONS.VIEW_ALERTS,
-          PERMISSIONS.VIEW_LINEAGE,
-          PERMISSIONS.VIEW_EVIDENCE,
-          PERMISSIONS.RUN_REPLAY,
-          PERMISSIONS.ACKNOWLEDGE_ALERT,
-          PERMISSIONS.VIEW_AUDIT_LOG,
-          PERMISSIONS.MANAGE_GOVERNANCE_POLICIES,
-        ];
+        var officerPerms = ROLE_PERMISSIONS.FOREST_OFFICER || [];
         return officerPerms.indexOf(permission) !== -1;
       }
 
       if (role === ROLES.FIELD_AGENT || role === "APPROVED_CONSUMER") {
-        var fieldPerms = [
-          PERMISSIONS.VIEW_DASHBOARD,
-          PERMISSIONS.VIEW_MAP,
-          PERMISSIONS.VIEW_ALERTS,
-          PERMISSIONS.VIEW_LINEAGE,
-          "SUBMIT_OBSERVATION",
-          "INTAKE_SENSOR_DATA",
-          "REGISTER_SENSOR",
-          "VIEW_TELEMETRY",
-        ];
+        var fieldPerms = ROLE_PERMISSIONS.FIELD_AGENT || [];
         return fieldPerms.indexOf(permission) !== -1;
       }
 

@@ -189,7 +189,7 @@ class VANAHandler(http.server.SimpleHTTPRequestHandler):
         if clean_path in ("/login", "login"):
             self.path = "/login.html" + (("?" + parsed.query) if parsed.query else "")
         elif clean_path in ("/admin", "admin"):
-            self.path = "/admin.html" + (("?" + parsed.query) if parsed.query else "")
+            self.path = "/index.html" + (("?" + parsed.query) if parsed.query else "")
         elif clean_path in ("/field-agent", "/forest-officer"):
             role_param = "FIELD_AGENT" if "field" in clean_path else "FOREST_OFFICER"
             query = f"role={role_param}" + (("&" + parsed.query) if parsed.query else "")

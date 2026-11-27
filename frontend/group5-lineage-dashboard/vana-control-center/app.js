@@ -1,3 +1,17 @@
+// =============================================================================
+// DEF-03: DOM XSS HARDENING & CENTRALIZED HTML ESCAPING UTILITY
+// =============================================================================
+function escapeHtml(str) {
+  if (str === null || str === undefined) return "";
+  return String(str)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+window.escapeHtml = escapeHtml;
+
 /**
  * VANA: Environmental Governance Platform
  * User-Centric Frontend Runtime Integration & Executive Engine
@@ -212,7 +226,7 @@ function initDashboardAuthUI() {
       authBtnText.textContent = "Sign Out";
     }
 
-    if (sideUserName) sideUserName.textContent = user.name || "Pratik Bhuwad";
+    if (sideUserName) sideUserName.textContent = user.name || "Authenticated Official";
     if (sideUserRole) sideUserRole.textContent = user.roleLabel || normalizedRole;
 
     if (ministerName) ministerName.textContent = user.name || "Authenticated Official";
@@ -223,18 +237,19 @@ function initDashboardAuthUI() {
       ministerAvatar.style.background = user.roleColor || "var(--brand)";
     }
 
-    // Role-based sidebar menu gating: ADMIN sees administration nav item, others hidden
+    // Keep privileged admin link hidden from sidebar to stay on main Command Center
     if (navAdmin) {
-      navAdmin.style.display = (normalizedRole === "ADMIN" || normalizedRole === "PLATFORM_ADMIN") ? "flex" : "none";
+      navAdmin.style.display = "none";
     }
 
     renderRoleWorkspaceBanner(normalizedRole, user);
     updateOfflineUI();
     renderReviewQueue();
+    updateUserProfileMenuContent();
   } else {
-    // Default reference state
-    if (sideUserName) sideUserName.textContent = "Pratik Bhuwad";
-    if (sideUserRole) sideUserRole.textContent = "System Analyst";
+    // Default unauthenticated / guest state
+    if (sideUserName) sideUserName.textContent = "Guest";
+    if (sideUserRole) sideUserRole.textContent = "Public Observer";
 
     if (roleBadge) {
       roleBadge.style.display = "none";
@@ -326,6 +341,125 @@ async function handleDashboardLogout() {
   }
   window.location.href = "login.html";
 }
+
+// =============================================================================
+// USER PROFILE POPUP MENU, ROLE SWITCHING & LOGOUT
+// =============================================================================
+function toggleUserProfileMenu(event) {
+  if (event) event.stopPropagation();
+  const menu = document.getElementById("userProfileMenu");
+  const card = document.getElementById("sidebarUserProfileBtn");
+  if (!menu) return;
+
+  const isHidden = menu.style.display === "none" || !menu.style.display;
+  if (isHidden) {
+    updateUserProfileMenuContent();
+    menu.style.display = "flex";
+    if (card) card.classList.add("open");
+  } else {
+    menu.style.display = "none";
+    if (card) card.classList.remove("open");
+  }
+}
+
+function closeUserProfileMenu() {
+  const menu = document.getElementById("userProfileMenu");
+  const card = document.getElementById("sidebarUserProfileBtn");
+  if (menu) menu.style.display = "none";
+  if (card) card.classList.remove("open");
+}
+
+function updateUserProfileMenuContent() {
+  const auth = window.VANA_AUTH;
+  const user = auth ? auth.getCurrentUser() : null;
+  const isAuth = auth && auth.isAuthenticated();
+
+  const nameEl = document.getElementById("menuUserName");
+  const emailEl = document.getElementById("menuUserEmail");
+  const roleTagEl = document.getElementById("menuRoleTag");
+  const signinWrap = document.getElementById("menuSignInWrap");
+  const logoutWrap = document.getElementById("menuLogoutWrap");
+  const logoutBtn = document.getElementById("menuLogoutBtn");
+  const avatarCircle = document.getElementById("menuAvatarCircle");
+
+  const activeRole = isAuth && user ? (user.role || "").toUpperCase() : null;
+
+  if (nameEl) nameEl.textContent = isAuth && user ? user.name : "Guest";
+  if (emailEl) emailEl.textContent = isAuth && user ? (user.email || "auth@vana.gov.in") : "Sign in to access your role";
+  if (roleTagEl) {
+    if (isAuth && user) {
+      roleTagEl.textContent = user.roleLabel || activeRole;
+      if (activeRole === "ADMIN" || activeRole === "PLATFORM_ADMIN") {
+        roleTagEl.style.color = "#C4B5FD";
+        roleTagEl.style.borderColor = "rgba(139, 92, 246, 0.4)";
+        roleTagEl.style.background = "rgba(139, 92, 246, 0.15)";
+      } else if (activeRole === "FOREST_OFFICER") {
+        roleTagEl.style.color = "#60A5FA";
+        roleTagEl.style.borderColor = "rgba(59, 130, 246, 0.4)";
+        roleTagEl.style.background = "rgba(59, 130, 246, 0.15)";
+      } else {
+        roleTagEl.style.color = "#4ADE80";
+        roleTagEl.style.borderColor = "rgba(34, 197, 94, 0.4)";
+        roleTagEl.style.background = "rgba(34, 197, 94, 0.15)";
+      }
+    } else {
+      roleTagEl.textContent = "Public Observer";
+      roleTagEl.style.color = "#9ca3af";
+      roleTagEl.style.borderColor = "rgba(107, 114, 128, 0.3)";
+      roleTagEl.style.background = "rgba(107, 114, 128, 0.15)";
+    }
+  }
+
+  if (avatarCircle) {
+    if (isAuth && user && user.name) {
+      const initials = user.name.split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase();
+      avatarCircle.textContent = initials;
+      avatarCircle.style.background = user.roleColor || "rgba(34, 197, 94, 0.2)";
+      avatarCircle.style.color = "#fff";
+      avatarCircle.style.fontWeight = "700";
+    } else {
+      avatarCircle.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>';
+      avatarCircle.style.background = "rgba(107, 114, 128, 0.15)";
+      avatarCircle.style.color = "#9ca3af";
+    }
+  }
+
+  if (signinWrap) {
+    signinWrap.style.display = isAuth ? "none" : "block";
+  }
+  if (logoutWrap) {
+    logoutWrap.style.display = isAuth ? "block" : "none";
+  }
+}
+
+function openManualLogin(roleKey) {
+  closeUserProfileMenu();
+  if (roleKey) {
+    window.location.href = `login.html?role=${encodeURIComponent(roleKey)}`;
+  } else {
+    window.location.href = "login.html";
+  }
+}
+
+async function handleUserProfileLogout() {
+  if (window.VANA_AUTH) {
+    await window.VANA_AUTH.logout();
+  }
+  closeUserProfileMenu();
+  initDashboardAuthUI();
+  window.location.href = "login.html";
+}
+
+// Global outside-click handler to dismiss profile menu
+document.addEventListener("click", function(event) {
+  const menu = document.getElementById("userProfileMenu");
+  const btn = document.getElementById("sidebarUserProfileBtn");
+  if (menu && menu.style.display !== "none") {
+    if (!menu.contains(event.target) && (!btn || !btn.contains(event.target))) {
+      closeUserProfileMenu();
+    }
+  }
+});
 
 // =============================================================================
 // REAL-TIME CLOCK (IST & UTC)
@@ -1038,14 +1172,14 @@ function renderOverviewAlerts(data) {
 
     return `
       <div class="alert-feed-row">
-        <span class="alert-pill-badge ${badgeClass}">${statusLabel}</span>
+        <span class="alert-pill-badge ${escapeHtml(badgeClass)}">${escapeHtml(statusLabel)}</span>
         <div class="alert-content">
-          <div class="alert-title">${title}</div>
-          <div class="alert-sub">${desc}</div>
+          <div class="alert-title">${escapeHtml(title)}</div>
+          <div class="alert-sub">${escapeHtml(desc)}</div>
         </div>
         <div class="alert-time">
-          <span>${timeDisplay}</span>
-          <span class="alert-dot ${dotClass}"></span>
+          <span>${escapeHtml(timeDisplay)}</span>
+          <span class="alert-dot ${escapeHtml(dotClass)}"></span>
         </div>
       </div>
     `;
@@ -1125,17 +1259,17 @@ function renderOverviewLocations(data) {
   ];
 
   listEl.innerHTML = locations.map(loc => `
-    <div class="overview-location-row ${loc.statusClass}" onclick="focusOverviewLocation('${loc.key}')" title="Click to inspect ${loc.name} on map">
+    <div class="overview-location-row ${escapeHtml(loc.statusClass)}" onclick="focusOverviewLocation('${escapeHtml(loc.key)}')" title="Click to inspect ${escapeHtml(loc.name)} on map">
       <div class="location-row-indicator"></div>
       <div class="location-row-content">
         <div class="location-row-header">
           <div class="location-row-title-wrap">
-            <span class="location-row-name">${loc.name}</span>
-            <span class="location-zone-id">${loc.zoneId}</span>
+            <span class="location-row-name">${escapeHtml(loc.name)}</span>
+            <span class="location-zone-id">${escapeHtml(loc.zoneId)}</span>
           </div>
-          <span class="${loc.badgeClass}">${loc.statusText}</span>
+          <span class="${escapeHtml(loc.badgeClass)}">${escapeHtml(loc.statusText)}</span>
         </div>
-        <div class="location-row-desc">${loc.desc}</div>
+        <div class="location-row-desc">${escapeHtml(loc.desc)}</div>
       </div>
     </div>
   `).join("");
@@ -1179,18 +1313,18 @@ function renderOverviewLatestObservation(data) {
             </div>
           </div>
           <div class="latest-obs-value-box">
-            <div class="latest-obs-val" id="latestObsVal">${val}</div>
-            <div class="latest-obs-param" id="latestObsParam">${param}</div>
+            <div class="latest-obs-val" id="latestObsVal">${escapeHtml(val)}</div>
+            <div class="latest-obs-param" id="latestObsParam">${escapeHtml(param)}</div>
           </div>
         </div>
 
         <div class="latest-obs-explanation" id="latestObsExplanation">
-          Measurement: ${val} ${param.toLowerCase()} recorded for the operational surveillance window.
+          Measurement: ${escapeHtml(val)} ${escapeHtml(param.toLowerCase())} recorded for the operational surveillance window.
         </div>
 
         <div class="latest-obs-footer">
-          <span id="latestObsSource">${source}</span>
-          <span id="latestObsTimestamp">${timestamp}</span>
+          <span id="latestObsSource">${escapeHtml(source)}</span>
+          <span id="latestObsTimestamp">${escapeHtml(timestamp)}</span>
         </div>
 
         <div class="latest-obs-actions">
@@ -1219,7 +1353,7 @@ function renderOverviewLatestObservation(data) {
         <div class="latest-obs-header">
           <div>
             <div class="latest-obs-station" style="color:var(--color-danger)">No MasterDB Observation Available</div>
-            <div class="latest-obs-coords">Observation ID: ${data.observation_id || "None"}</div>
+            <div class="latest-obs-coords">Observation ID: ${escapeHtml(data.observation_id || "None")}</div>
           </div>
           <div class="latest-obs-value-box">
             <div class="latest-obs-val" style="color:var(--color-danger)">--</div>
@@ -1228,7 +1362,7 @@ function renderOverviewLatestObservation(data) {
         </div>
 
         <div class="latest-obs-explanation" style="border-left:3px solid var(--color-danger);background:var(--color-danger-light);">
-          <strong>Intake halted under fail-closed governance:</strong> ${failureReason}. Downstream automated actions prevented.
+          <strong>Intake halted under fail-closed governance:</strong> ${escapeHtml(failureReason)}. Downstream automated actions prevented.
         </div>
 
         <div class="latest-obs-footer">
@@ -1377,18 +1511,18 @@ function renderAttentionLocationsFeed() {
     <div class="attention-row">
       <div class="attention-main">
         <div class="attention-location-title">
-          <span>${loc.name}</span>
-          <span class="status-pill ${loc.statusClass}">${loc.statusText}</span>
+          <span>${escapeHtml(loc.name)}</span>
+          <span class="status-pill ${escapeHtml(loc.statusClass)}">${escapeHtml(loc.statusText)}</span>
         </div>
-        <div class="attention-issue-desc">${loc.concern}</div>
+        <div class="attention-issue-desc">${escapeHtml(loc.concern)}</div>
         <div class="attention-meta">
-          <span><strong>Last update:</strong> ${loc.lastUpdated}</span>
-          <span><strong>Next step:</strong> ${loc.nextStep}</span>
+          <span><strong>Last update:</strong> ${escapeHtml(loc.lastUpdated)}</span>
+          <span><strong>Next step:</strong> ${escapeHtml(loc.nextStep)}</span>
         </div>
       </div>
       <div class="attention-action">
-        <button class="btn-header" style="font-size:11.5px;padding:4px 8px;" onclick="${loc.actionFn}">
-          ${loc.actionLabel}
+        <button class="btn-header" style="font-size:11.5px;padding:4px 8px;" onclick="${escapeHtml(loc.actionFn)}">
+          ${escapeHtml(loc.actionLabel)}
         </button>
       </div>
     </div>
@@ -1554,27 +1688,27 @@ function applyMonitoringFilters() {
     return `
       <tr>
         <td>
-          <div style="font-weight:600;color:var(--color-text);">${item.location_name}</div>
-          <div class="mono" style="font-size:10.5px;color:var(--color-muted);margin-top:1px;">${item.observation_id}</div>
+          <div style="font-weight:600;color:var(--color-text);">${escapeHtml(item.location_name)}</div>
+          <div class="mono" style="font-size:10.5px;color:var(--color-muted);margin-top:1px;">${escapeHtml(item.observation_id)}</div>
         </td>
         <td>
           <span style="font-size:12px;font-weight:600;color:var(--color-text);">
-            ${item.display_type}
+            ${escapeHtml(item.display_type)}
           </span>
         </td>
         <td>
           <span class="mono" style="font-weight:700;color:var(--color-success);font-size:13px;">
-            ${item.measurement}
+            ${escapeHtml(item.measurement)}
           </span>
         </td>
         <td>
           <span class="mono" style="color:var(--color-text);font-size:11.5px;">
-            ${item.unit}
+            ${escapeHtml(item.unit)}
           </span>
         </td>
         <td>
           <span style="font-size:11.5px;color:var(--color-text);">
-            ${item.display_date}
+            ${escapeHtml(item.display_date)}
           </span>
         </td>
         <td>
@@ -1584,7 +1718,7 @@ function applyMonitoringFilters() {
           </span>
         </td>
         <td style="text-align:right;">
-          <button type="button" class="btn-header primary" style="padding:2px 10px;font-size:11px;height:26px;" onclick="openObservationDetailsModal('${item.observation_id}')" title="Inspect observation details">
+          <button type="button" class="btn-header primary" style="padding:2px 10px;font-size:11px;height:26px;" onclick="openObservationDetailsModal('${escapeHtml(item.observation_id)}')" title="Inspect observation details">
             <span>Details</span>
           </button>
         </td>
@@ -1649,11 +1783,11 @@ function renderAwaitingLocations() {
     return `
       <tr>
         <td>
-          <div style="font-weight:600;color:var(--color-text);">${z.name}</div>
+          <div style="font-weight:600;color:var(--color-text);">${escapeHtml(z.name)}</div>
           <div style="font-size:11px;color:var(--color-muted);margin-top:1px;">Surveillance Zone</div>
         </td>
         <td>
-          <span class="mono" style="font-size:11.5px;color:var(--color-text-secondary);">${coordsStr}</span>
+          <span class="mono" style="font-size:11.5px;color:var(--color-text-secondary);">${escapeHtml(coordsStr)}</span>
         </td>
         <td>
           <span class="status-pill waiting" style="font-size:11px;">
@@ -1867,9 +2001,9 @@ async function openObservationDetailsModal(obsId) {
   if (contractVer) techItemsHtml += `<div class="tech-kv-item"><div class="tech-k">Contract Version</div><div class="tech-v mono">${contractVer}</div></div>`;
   if (deviceId) techItemsHtml += `<div class="tech-kv-item"><div class="tech-k">Device ID</div><div class="tech-v mono">${deviceId}</div></div>`;
   if (missionId) techItemsHtml += `<div class="tech-kv-item"><div class="tech-k">Mission ID</div><div class="tech-v mono">${missionId}</div></div>`;
-  if (captureMethod) techItemsHtml += `<div class="tech-kv-item"><div class="tech-k">Capture Method</div><div class="tech-v mono">${captureMethod}</div></div>`;
-  if (rawArtifactPath) techItemsHtml += `<div class="tech-kv-item"><div class="tech-k">Raw Artifact</div><div class="tech-v mono" style="font-size:10.5px;overflow-wrap:anywhere;">${rawArtifactPath}</div></div>`;
-  if (rawSha) techItemsHtml += `<div class="tech-kv-item" style="grid-column:1 / -1;"><div class="tech-k">SHA-256 Checksum</div><div class="tech-v mono" style="font-size:10.5px;overflow-wrap:anywhere;">${rawSha}</div></div>`;
+  if (captureMethod) techItemsHtml += `<div class="tech-kv-item"><div class="tech-k">Capture Method</div><div class="tech-v mono">${escapeHtml(captureMethod)}</div></div>`;
+  if (rawArtifactPath) techItemsHtml += `<div class="tech-kv-item"><div class="tech-k">Raw Artifact</div><div class="tech-v mono" style="font-size:10.5px;overflow-wrap:anywhere;">${escapeHtml(rawArtifactPath)}</div></div>`;
+  if (rawSha) techItemsHtml += `<div class="tech-kv-item" style="grid-column:1 / -1;"><div class="tech-k">SHA-256 Checksum</div><div class="tech-v mono" style="font-size:10.5px;overflow-wrap:anywhere;">${escapeHtml(rawSha)}</div></div>`;
 
   body.innerHTML = `
     <!-- Primary non-technical hero card -->
@@ -2684,7 +2818,7 @@ function renderDecisions(data) {
 
   if (roleTitle && roleDesc && roleButtons) {
     if (!isAuth) {
-      roleTitle.textContent = "Public Observer (Unauthenticated)";
+      roleTitle.textContent = "Public Observer";
       roleDesc.textContent = "You are currently viewing public environmental monitoring data. Sign in with administrative or auditor credentials to dispatch governed execution or inspect audit logs.";
       roleButtons.innerHTML = `
         <button class="btn-header primary" onclick="openDashboardLoginModal()">
@@ -2700,10 +2834,6 @@ function renderDecisions(data) {
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"></polyline><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg>
           <span>Dispatch Replay Verification</span>
         </button>
-        <a class="btn-header" href="admin.html">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
-          <span>Open Administration</span>
-        </a>
       `;
     } else if (user.role === auth.ROLES.AUDITOR) {
       roleTitle.textContent = `Authorized: Auditor / Judge (${user.name})`;
@@ -3333,9 +3463,9 @@ function renderReplayDiff(data) {
 
   tbody.innerHTML = invariants.map(inv => `
     <tr>
-      <td class="mono" style="font-weight:700;color:var(--text-primary)">${inv.field}</td>
-      <td class="mono" style="color:var(--text-secondary)">${inv.base}</td>
-      <td class="mono" style="color:${inv.match ? 'var(--status-ok)' : 'var(--status-critical)'}">${inv.curr}</td>
+      <td class="mono" style="font-weight:700;color:var(--text-primary)">${escapeHtml(inv.field)}</td>
+      <td class="mono" style="color:var(--text-secondary)">${escapeHtml(inv.base)}</td>
+      <td class="mono" style="color:${inv.match ? 'var(--status-ok)' : 'var(--status-critical)'}">${escapeHtml(inv.curr)}</td>
       <td>
         <span class="badge ${inv.match ? 'LIVE' : 'BLOCKED'}">
           ${inv.match ? '✓ PRESERVED' : 'MISMATCH'}
@@ -3553,10 +3683,10 @@ function switchMainTab(viewKey, navItem) {
     spatialView: "viewMap",
     spatialIntelligence: "viewMap",
     regionalView: "viewMap",
-    fieldOps: "viewMap",
-    fieldOpsView: "viewMap",
-    fieldOperations: "viewMap",
-    fieldops: "viewMap",
+    fieldOps: "viewFieldOps",
+    fieldOpsView: "viewFieldOps",
+    fieldOperations: "viewFieldOps",
+    fieldops: "viewFieldOps",
 
     decisionsView: "viewDecisions",
     decisions: "viewDecisions",
@@ -3601,7 +3731,7 @@ function switchMainTab(viewKey, navItem) {
   activeMainView = targetViewId;
 
   // Hide all sections
-  ["viewOverview", "viewMonitoring", "viewMap", "viewDecisions", "viewHistory"].forEach(id => {
+  ["viewOverview", "viewMonitoring", "viewMap", "viewDecisions", "viewHistory", "viewFieldOps"].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.style.display = (id === targetViewId) ? "flex" : "none";
   });
@@ -3668,7 +3798,8 @@ function switchMainTab(viewKey, navItem) {
     viewMonitoring: "bnavMonitoring",
     viewMap: "bnavMap",
     viewDecisions: "bnavDecisions",
-    viewHistory: "bnavHistory"
+    viewHistory: "bnavHistory",
+    viewFieldOps: "bnavFieldOps"
   };
   const bnavId = bnavMap[targetViewId];
   if (bnavId) {
@@ -3696,6 +3827,8 @@ function switchMainTab(viewKey, navItem) {
     if (typeof renderMonitoring === "function") {
       renderMonitoring(currentRuntimeData);
     }
+  } else if (targetViewId === "viewFieldOps") {
+    updateOfflineUI();
   }
 
   // If specific history alias was clicked, auto-switch subtab
@@ -4158,84 +4291,9 @@ const SAMPLE_INVALID_PAYLOAD = {
 // PHASE 1: ROLE WORKSPACE BANNERS & NOTIFICATIONS
 // =============================================================================
 function renderRoleWorkspaceBanner(role, user) {
+  // Role workspace banner suppressed from dashboard per UI specification
   const banner = document.getElementById("roleWelcomeBanner");
-  if (!banner) return;
-
-  const titleEl = document.getElementById("roleBannerTitle");
-  const subEl = document.getElementById("roleBannerSub");
-  const pillEl = document.getElementById("roleBannerPill");
-  const actionsEl = document.getElementById("roleBannerActions");
-  const iconBox = document.getElementById("roleBannerIconBox");
-
-  const cleanRole = (role || "").toUpperCase();
-  banner.className = "role-banner-card";
-
-  if (cleanRole === "FIELD_AGENT") {
-    banner.classList.add("field-agent");
-    banner.style.display = "flex";
-    if (titleEl) titleEl.textContent = `Field Agent Workspace · ${user ? (user.name || "Field Agent") : "Active"}`;
-    if (subEl) subEl.textContent = "Capture field observations, verify spatial coordinates, and synchronize edge telemetry with MasterDB.";
-    if (pillEl) {
-      pillEl.textContent = "Field Operations Active";
-      pillEl.className = "status-pill active";
-    }
-    if (iconBox) iconBox.className = "kpi-icon-box green";
-    if (actionsEl) {
-      actionsEl.innerHTML = `
-        <button type="button" class="btn-header primary" onclick="openObservationSubmitModal('form')" style="font-weight:700;gap:6px;">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-          <span>+ Start Field Observation</span>
-        </button>
-        <button type="button" class="btn-header" onclick="switchMainTab('monitoringView', document.getElementById('navItemMonitoring'))">
-          <span>View Intake Ledger</span>
-        </button>
-      `;
-    }
-  } else if (cleanRole === "FOREST_OFFICER") {
-    banner.classList.add("forest-officer");
-    banner.style.display = "flex";
-    if (titleEl) titleEl.textContent = `Forest Officer Workspace · ${user ? (user.name || "Forest Officer") : "Active"}`;
-    if (subEl) subEl.textContent = "Statutory review queue, Pravah ecological context verification, and SANSKAR governance compliance.";
-    if (pillEl) {
-      pillEl.textContent = "Statutory Review Mode";
-      pillEl.className = "status-pill neutral";
-    }
-    if (iconBox) iconBox.className = "kpi-icon-box blue";
-    if (actionsEl) {
-      actionsEl.innerHTML = `
-        <button type="button" class="btn-header primary" onclick="switchMainTab('decisionsView', document.getElementById('navItemDecisions'))" style="font-weight:700;gap:6px;">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-          <span>Review Observations Queue</span>
-        </button>
-        <button type="button" class="btn-header" onclick="switchMainTab('historyView', document.getElementById('navItemHistory')); switchHistorySubTab('forestCover');">
-          <span>Statutory Benchmarks</span>
-        </button>
-      `;
-    }
-  } else if (cleanRole === "ADMIN" || cleanRole === "PLATFORM_ADMIN") {
-    banner.classList.add("admin");
-    banner.style.display = "flex";
-    if (titleEl) titleEl.textContent = `Platform Admin Workspace · ${user ? (user.name || "Admin") : "Active"}`;
-    if (subEl) subEl.textContent = "Full platform administration, real-time service orchestration, and governed enforcement dispatch.";
-    if (pillEl) {
-      pillEl.textContent = "Platform Administrator";
-      pillEl.className = "status-pill active";
-      pillEl.style.borderColor = "#8B5CF6";
-      pillEl.style.color = "#C4B5FD";
-    }
-    if (iconBox) iconBox.className = "kpi-icon-box purple";
-    if (actionsEl) {
-      actionsEl.innerHTML = `
-        <a href="admin.html" class="btn-header primary" style="font-weight:700;gap:6px;text-decoration:none;">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
-          <span>Open Administration Plane</span>
-        </a>
-        <button type="button" class="btn-header" onclick="switchMainTab('historyView', document.getElementById('navItemHistory'))">
-          <span>Audit Ledger</span>
-        </button>
-      `;
-    }
-  } else {
+  if (banner) {
     banner.style.display = "none";
   }
 }
@@ -4322,6 +4380,12 @@ function updateOfflineUI() {
     } else {
       monOfflineBar.style.display = "none";
     }
+  }
+
+  // 3. Update Field Operations View Offline Stat
+  const foOfflineVal = document.getElementById("foOfflineQueueVal");
+  if (foOfflineVal) {
+    foOfflineVal.textContent = `${pendingCount} Queued`;
   }
 }
 
@@ -4979,7 +5043,7 @@ window.showVanaToast = function(msg, type = "success") {
   const icon = type === "success" 
     ? `<span style="color:#22c55e;font-weight:800;">✔</span>` 
     : `<span style="color:#38bdf8;font-weight:800;">ℹ</span>`;
-  toast.innerHTML = `${icon}<span>${msg}</span>`;
+  toast.innerHTML = `${icon}<span>${escapeHtml(msg)}</span>`;
   container.appendChild(toast);
 
   setTimeout(() => {
