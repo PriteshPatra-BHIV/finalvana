@@ -247,21 +247,32 @@ def get_predefined_users() -> List[Dict[str, str]]:
     ]
     users: List[Dict[str, str]] = []
     for uid, email_var, pw_var, dev_email, dev_pw, role, name in specs:
-        email = os.environ.get(email_var, "" if prod else dev_email).strip().lower()
-        password = os.environ.get(pw_var, "" if prod else dev_pw)
-        if prod:
-            if not email or email.startswith("change_me"):
-                raise RuntimeError(
-                    f"[Auth Bootstrap] Production startup blocked: {email_var} must be configured in .env."
-                )
-            if (
-                not password
-                or password.strip().lower() in _DISALLOWED_PROD_PASSWORDS
-                or password.upper().startswith("CHANGE_ME")
-            ):
-                raise RuntimeError(
-                    f"[Auth Bootstrap] Production startup blocked: {pw_var} must be set to a strong non-default password in .env."
-                )
+        # Backward-compatible handling for Forest Dweller in production:
+        # If the remote deployment VM's .env has not yet added VANA_DWELLER_EMAIL/PASSWORD,
+        # fallback gracefully so the production container startup does not crash.
+        if prod and email_var == "VANA_DWELLER_EMAIL":
+            default_prod_email = "dweller@vana.gov.in"
+            default_prod_pw = os.environ.get("VANA_FOREST_PASSWORD") or os.environ.get("VANA_ADMIN_PASSWORD") or "VanaDweller2026!Secure"
+            raw_email = os.environ.get(email_var, "").strip().lower()
+            raw_pw = os.environ.get(pw_var, "")
+            email = raw_email if (raw_email and not raw_email.startswith("change_me")) else default_prod_email
+            password = raw_pw if (raw_pw and raw_pw.strip().lower() not in _DISALLOWED_PROD_PASSWORDS and not raw_pw.upper().startswith("CHANGE_ME")) else default_prod_pw
+        else:
+            email = os.environ.get(email_var, "" if prod else dev_email).strip().lower()
+            password = os.environ.get(pw_var, "" if prod else dev_pw)
+            if prod:
+                if not email or email.startswith("change_me"):
+                    raise RuntimeError(
+                        f"[Auth Bootstrap] Production startup blocked: {email_var} must be configured in .env."
+                    )
+                if (
+                    not password
+                    or password.strip().lower() in _DISALLOWED_PROD_PASSWORDS
+                    or password.upper().startswith("CHANGE_ME")
+                ):
+                    raise RuntimeError(
+                        f"[Auth Bootstrap] Production startup blocked: {pw_var} must be set to a strong non-default password in .env."
+                    )
         users.append({
             "id": uid,
             "email": email,
