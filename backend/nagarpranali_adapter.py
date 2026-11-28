@@ -17,6 +17,11 @@ import sqlite3
 from datetime import datetime, timezone
 from typing import Any, Dict, Optional, Tuple
 
+try:
+    import bucket_client
+except ImportError:
+    from backend import bucket_client
+
 BACKEND_DIR = os.path.dirname(os.path.abspath(__file__))
 MASTERDB_PATH = os.path.join(BACKEND_DIR, "group1-masterdb", "vana_api.db")
 
@@ -169,6 +174,23 @@ def enrich_nagarpranali_incident(incident_data: Dict[str, Any]) -> Dict[str, Any
         location_name=location,
     )
 
+    trace_id = env_ctx.get("trace_id") or f"VANA-NP-{uuid.uuid4().hex[:12]}"
+    
+    # Generate BIQOS Bucket cryptographic envelope
+    envelope = bucket_client.build_bucket_envelope(
+        trace_id=trace_id,
+        input_payload={
+            "signal_type": signal_type,
+            "location": location,
+            "incident_type": incident_type,
+            "severity": severity,
+            "lat": lat,
+            "lon": lon,
+        },
+        output_payload=env_ctx,
+        parent_hash=incident_data.get("parent_hash"),
+    )
+
     enriched_decision = {
         "signal_type": signal_type,
         "location": location,
@@ -176,6 +198,7 @@ def enrich_nagarpranali_incident(incident_data: Dict[str, Any]) -> Dict[str, Any
         "original_severity": severity,
         "environmental_intelligence": env_ctx,
         "is_environmentally_sensitive": env_ctx.get("status") == "success",
+        "bucket_envelope": envelope,
         "recommended_escalation": (
             "Joint Municipal Ward & Forest Department Dispatch"
             if env_ctx.get("status") == "success"
@@ -190,6 +213,41 @@ def enrich_nagarpranali_incident(incident_data: Dict[str, Any]) -> Dict[str, Any
     }
 
     return enriched_decision
+
+
+def seal_incident_to_bucket(
+    incident_data: Dict[str, Any],
+    bucket_url: Optional[str] = None,
+    auth_token: Optional[str] = None,
+) -> Dict[str, Any]:
+    """
+    Executes the full 3-step BIQOS Bucket sealing protocol for Nagarpranali:
+    1. Fetch latest parent hash via GET /bucket/latest-hash.
+    2. Build compliant envelope (zero schema drift, payload isolation).
+    3. Submit to POST /bucket/artifact.
+    """
+    url = bucket_url or bucket_client.BUCKET_BASE_URL_DEFAULT
+    last_hash, artifact_count = bucket_client.fetch_latest_hash(url)
+    
+    enriched = enrich_nagarpranali_incident(incident_data)
+    envelope = enriched.get("bucket_envelope")
+    
+    # Ensure correct parent_hash according to chaining rules
+    if artifact_count == 0:
+        envelope["parent_hash"] = None
+    else:
+        envelope["parent_hash"] = last_hash
+
+    # Validate before submission
+    bucket_client.validate_envelope_structure(envelope, last_hash=last_hash, artifact_count=artifact_count)
+    
+    # Submit to bucket
+    result = bucket_client.submit_artifact_to_bucket(envelope, base_url=url, auth_token=auth_token)
+    return {
+        "status": "SEALED",
+        "envelope": envelope,
+        "bucket_result": result,
+    }
 
 
 def simulate_nagarpranali_lifecycle(

@@ -305,8 +305,36 @@ def enrich_nagarpranali(req: NagarpranaliEnrichRequest):
     """
     Enriches a Nagarpranali civic incident payload with authoritative VANA
     environmental context, canopy density, and governance status.
+    Automatically generates a BIQOS Bucket compliant envelope in 'bucket_envelope'.
     """
     return nagarpranali_adapter.enrich_nagarpranali_incident(req.model_dump())
+
+
+class NagarpranaliBucketSealRequest(BaseModel):
+    signal_type: Optional[str] = "Flood Alert"
+    signalType: Optional[str] = None
+    location: Optional[str] = "Thane Creek Zone A"
+    location_name: Optional[str] = None
+    incident_type: Optional[str] = "Mangrove Encroachment"
+    incidentType: Optional[str] = None
+    severity: Optional[str] = "HIGH"
+    lat: Optional[float] = None
+    lon: Optional[float] = None
+    bucket_url: Optional[str] = None
+
+
+@app.post("/api/nagarpranali/bucket/seal")
+def seal_nagarpranali_bucket(req: NagarpranaliBucketSealRequest):
+    """
+    Executes the 3-step BIQOS Bucket cryptographic sealing protocol:
+    1. GET /bucket/latest-hash
+    2. Build strict envelope with payload isolation
+    3. POST /bucket/artifact
+    """
+    return nagarpranali_adapter.seal_incident_to_bucket(
+        incident_data=req.model_dump(),
+        bucket_url=req.bucket_url,
+    )
 
 
 @app.get("/api/nagarpranali/contract")

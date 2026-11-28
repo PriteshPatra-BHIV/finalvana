@@ -1,0 +1,111 @@
+{
+  "execution_timestamp_utc": "2026-11-28T06:17:10Z",
+  "total_execution_ms": 3.51,
+  "scenario_a_verified": {
+    "status": "success",
+    "zone_id": "TC-Z03-F02",
+    "protection_class": "Eco-Sensitive Coastal Zone 1",
+    "tree_canopy_density": 0.65,
+    "canonical_record_id": "CR-e95e9174-969b-46ff-9ba3-cbff085150b4",
+    "statutory_action": "ALLOW",
+    "recommended_escalation": "Joint Municipal Ward & Forest Department Dispatch",
+    "plain_language_action": "Incident in Thane Creek Mangrove Reserve. Ecological protection active. Forest Guard & Ward Disaster Response alerted.",
+    "bucket_envelope": {
+      "artifact_id": "9441d3a2-a18a-4861-b6cc-92b3c6dce0b0",
+      "trace_id": "VANA-NP-0868cabd49d9",
+      "timestamp_utc": "2026-11-28T06:17:10Z",
+      "schema_version": "1.0.0",
+      "source_module_id": "vana.nagarpranali",
+      "artifact_type": "nagarpranali_enrichment",
+      "parent_hash": null,
+      "payload": {
+        "endpoint": "POST /api/nagarpranali/enrich",
+        "input": {
+          "signal_type": "Flood Alert",
+          "location": "Thane Creek Zone A",
+          "incident_type": "Mangrove Buffer Siltation & Waterlogging",
+          "severity": "HIGH",
+          "lat": 19.12,
+          "lon": 72.99
+        },
+        "output": {
+          "status": "success",
+          "zone_id": "TC-Z03-F02",
+          "zone_name": "Thane Creek Mangrove Reserve",
+          "district": "Thane / Mumbai Suburban",
+          "protection_class": "Eco-Sensitive Coastal Zone 1",
+          "tree_canopy_density": 0.65,
+          "flood_mitigation_rating": "CRITICAL_BARRIER",
+          "canonical_record_id": "CR-e95e9174-969b-46ff-9ba3-cbff085150b4",
+          "governance_status": "governed_verified",
+          "statutory_action": "ALLOW",
+          "plain_language_summary": "Verified Thane Creek Mangrove Reserve. Critical ecological zone (Eco-Sensitive Coastal Zone 1) with 65% canopy density. High flood retention barrier.",
+          "trace_id": "VANA-NP-0868cabd49d9",
+          "timestamp": "2026-11-28T06:17:10.437726+00:00"
+        }
+      }
+    }
+  },
+  "scenario_b_fail_closed": {
+    "status": "abstain",
+    "governance_status": "governed_abstention",
+    "statutory_action": "noop",
+    "abstention_id": "ABS-C1FE61A51329",
+    "reason": "Location outside verified forest / mangrove surveillance boundary. Failing closed to ABSTAIN."
+  },
+  "scenario_c_negative_input": {
+    "success": false,
+    "governance_ruling": "ABSTAIN",
+    "decision_text": "No operational dispatch authorized. Location outside verified surveillance envelope. Failing closed to ABSTAIN (noop)."
+  },
+  "scenario_d_lifecycle": {
+    "success": true,
+    "signalId": "SIG-NP-24848",
+    "telemetryId": "TEL-NP-24848",
+    "incidentId": "INC-NP-24848",
+    "decisionId": "DEC-NP-24848",
+    "replayId": "REP-NP-24848",
+    "governance_ruling": "ALLOW",
+    "ai_guidance": "VANA Guidance Assistant: Verified Thane Creek Mangrove Reserve. Critical ecological zone (Eco-Sensitive Coastal Zone 1) with 65% canopy density. High flood retention barrier. Municipal teams and forest guards have received synchronized alert tokens.",
+    "replay_timeline": [
+      "Stage 1 [Signal]: Created civic Flood Alert at Thane Creek Zone A (ID: SIG-NP-24848)",
+      "Stage 2 [Telemetry]: VANA MasterDB query matched TC-Z03-F02 with 65% canopy density (ID: TEL-NP-24848)",
+      "Stage 3 [Incident]: Enriched incident Mangrove Siltation & Waterlogging with canonical ID CR-e95e9174-969b-46ff-9ba3-cbff085150b4 (ID: INC-NP-24848)",
+      "Stage 4 [Governance]: SANSKAR evaluated ruling -> ALLOW (ID: DEC-NP-24848)",
+      "Stage 5 [Lineage & Replay]: Immutable trace VANA-NP-2f7921af7feb sealed in audit log (ID: REP-NP-24848)"
+    ]
+  },
+  "citizen_ux_card": {
+    "screen_title": "Area Environmental Check",
+    "primary_action": "View Full Details",
+    "badge": {
+      "text": "Protected Green Zone",
+      "type": "ecological_protected",
+      "color": "green"
+    },
+    "headline": "Your area is inside Thane Creek Mangrove Reserve",
+    "plain_explanation": "This zone is officially recognized as an Eco-Sensitive Coastal Zone 1. It has 65% dense tree/mangrove cover which naturally protects neighboring homes against coastal flooding and monsoon waterlogging.",
+    "what_system_understood": {
+      "location_recognized": "Thane Creek Mangrove Reserve",
+      "district": "Thane / Mumbai Suburban",
+      "report_category": "Citizen Waterlogging Report"
+    },
+    "what_happens_next": "Your report has been shared directly with the local Forest Officer and Municipal Ward Cell. A verification team will inspect this location.",
+    "receipt_id": "CR-e95e9174-969b-46ff-9ba3-cbff085150b4",
+    "assistance_note": "No technical knowledge required. We have recorded your submission safely.",
+    "language_options": [
+      {
+        "code": "en",
+        "label": "English"
+      },
+      {
+        "code": "hi",
+        "label": "\u0939\u093f\u0928\u094d\u0926\u0940 (Hindi)"
+      },
+      {
+        "code": "mr",
+        "label": "\u092e\u0930\u093e\u0920\u0940 (Marathi)"
+      }
+    ]
+  }
+}

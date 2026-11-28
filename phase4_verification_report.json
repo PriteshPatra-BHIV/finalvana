@@ -1,0 +1,12 @@
+{
+  "exit_code": 0,
+  "success": true,
+  "elapsed_seconds": 1.151,
+  "test_modules": [
+    "C:\\Pratik_Bhuwad\\VANA\\finalvana-main\\tests\\test_phase1_nagarpranali_alignment.py",
+    "C:\\Pratik_Bhuwad\\VANA\\finalvana-main\\tests\\test_phase2_nagarpranali_build.py",
+    "C:\\Pratik_Bhuwad\\VANA\\finalvana-main\\tests\\test_phase3_nagarpranali_integration.py",
+    "C:\\Pratik_Bhuwad\\VANA\\finalvana-main\\tests\\test_phase4_nagarpranali_ux.py",
+    "C:\\Pratik_Bhuwad\\VANA\\finalvana-main\\tests\\test_phase2_bucket_integration.py"
+  ]
+}
