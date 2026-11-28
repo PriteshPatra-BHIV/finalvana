@@ -1,14 +1,18 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <meta name="vite-api-url" content="">
   <title>Sign In · VANA Environmental Intelligence Command Center</title>
-  <meta name="description" content="Role-based authentication portal for the VANA Environmental Intelligence Command Center.">
+  <meta name="description"
+    content="Role-based authentication portal for the VANA Environmental Intelligence Command Center.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+    rel="stylesheet">
   <link rel="stylesheet" href="styles.css?v=21">
   <link rel="icon" type="image/png" sizes="64x64" href="assets/vana-favicon.png">
   <link rel="icon" type="image/png" sizes="32x32" href="assets/vana-favicon-32.png">
@@ -17,7 +21,7 @@
   <style>
     /* Dedicated Page-Level Styling for Standalone Sign In */
     body.login-body {
-      background-image: 
+      background-image:
         radial-gradient(circle at center, rgba(0, 15, 11, 0.42), rgba(0, 10, 8, 0.72)),
         url('assets/vana-forest-background.png');
       background-size: cover;
@@ -77,28 +81,18 @@
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      gap: 12px;
       margin-bottom: 14px;
       text-decoration: none;
       user-select: none;
     }
 
-    .login-brand-leaf-svg {
-      width: 36px;
-      height: 36px;
-      flex-shrink: 0;
-      filter: drop-shadow(0 0 14px rgba(32, 214, 107, 0.75));
-    }
-
-    .login-brand-name {
-      font-size: 2.15rem;
-      font-weight: 800;
-      letter-spacing: 0.04em;
-      color: #20D66B;
-      text-transform: uppercase;
-      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-      line-height: 1;
-      text-shadow: 0 0 18px rgba(32, 214, 107, 0.65), 0 0 32px rgba(32, 214, 107, 0.3);
+    .login-brand-logo-img {
+      height: 40px;
+      width: auto;
+      max-width: 170px;
+      display: block;
+      object-fit: contain;
+      filter: drop-shadow(0 0 16px rgba(32, 214, 107, 0.55));
     }
 
     .login-title {
@@ -178,10 +172,12 @@
       border-color: #20D66B;
       box-shadow: 0 0 16px rgba(32, 214, 107, 0.22);
     }
+
     .role-choice-card.role-dweller.active {
       border-color: #F59E0B;
       box-shadow: 0 0 16px rgba(245, 158, 11, 0.25);
     }
+
     .role-choice-card.role-dweller.active .role-icon {
       color: #F59E0B;
     }
@@ -299,9 +295,21 @@
     }
 
     @keyframes alertShake {
-      0%, 100% { transform: translateX(0); }
-      20%, 60% { transform: translateX(-4px); }
-      40%, 80% { transform: translateX(4px); }
+
+      0%,
+      100% {
+        transform: translateX(0);
+      }
+
+      20%,
+      60% {
+        transform: translateX(-4px);
+      }
+
+      40%,
+      80% {
+        transform: translateX(4px);
+      }
     }
 
     .btn-submit {
@@ -347,304 +355,315 @@
     }
 
     @keyframes spin {
-      to { transform: rotate(360deg); }
+      to {
+        transform: rotate(360deg);
+      }
     }
-
-
-
   </style>
 </head>
+
 <body class="login-body">
 
-<div class="login-container">
-  <div class="login-card">
-    
-    <!-- Branding Header -->
-    <div class="login-header">
-      <!-- Official VANA Brand Logo -->
-      <div class="login-brand-wrap" title="VANA: Forest Intelligence Command Center">
-        <svg class="login-brand-leaf-svg" width="34" height="34" viewBox="0 0 24 24" fill="none">
-          <path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z" fill="#20D66B"/>
-          <path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12" stroke="#05120D" stroke-width="1.8" stroke-linecap="round"/>
-        </svg>
-        <span class="login-brand-name">VANA</span>
+  <div class="login-container">
+    <div class="login-card">
+
+      <!-- Branding Header -->
+      <div class="login-header">
+        <!-- Official VANA Brand Logo -->
+        <div class="login-brand-wrap" title="VANA: Forest Intelligence Command Center">
+          <img src="assets/vana-logo.svg" alt="VANA Logo" class="login-brand-logo-img">
+        </div>
+        <h1 class="login-title">Sign In</h1>
+        <div class="login-subtitle">ENVIRONMENTAL INTELLIGENCE COMMAND CENTER</div>
       </div>
-      <h1 class="login-title">Sign In</h1>
-      <div class="login-subtitle">ENVIRONMENTAL INTELLIGENCE COMMAND CENTER</div>
+
+      <!-- Error Alert Banner -->
+      <div id="loginErrorAlert" class="login-error-alert" role="alert"></div>
+
+      <!-- Sign In Form -->
+      <form id="vanaLoginForm" onsubmit="handleVanaLogin(event)" novalidate autocomplete="off">
+
+        <!-- Role Selection Options (Admin, Field Agent, Forest Officer) -->
+        <div class="role-selection-section">
+          <label class="role-selection-label">SELECT DESIGNATED ROLE</label>
+          <div class="role-cards-grid">
+
+            <!-- Admin Card -->
+            <div class="role-choice-card role-admin" id="roleCardAdmin" onclick="selectRole('ADMIN')" role="button"
+              tabindex="0">
+              <div class="role-icon">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                  <polygon
+                    points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                </svg>
+              </div>
+              <div class="role-name">Admin</div>
+              <div class="role-desc">System Control</div>
+            </div>
+
+            <!-- Field Agent Card (Default) -->
+            <div class="role-choice-card role-field active" id="roleCardField" onclick="selectRole('FIELD_AGENT')"
+              role="button" tabindex="0">
+              <div class="role-icon">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                  <circle cx="12" cy="12" r="9" />
+                  <circle cx="12" cy="12" r="3.5" />
+                  <line x1="12" y1="2" x2="12" y2="5" />
+                  <line x1="12" y1="19" x2="12" y2="22" />
+                  <line x1="2" y1="12" x2="5" y2="12" />
+                  <line x1="19" y1="12" x2="22" y2="12" />
+                </svg>
+              </div>
+              <div class="role-name">Field Agent</div>
+              <div class="role-desc">Sensor Intake</div>
+            </div>
+
+            <!-- Forest Officer Card -->
+            <div class="role-choice-card role-forest" id="roleCardForest" onclick="selectRole('FOREST_OFFICER')"
+              role="button" tabindex="0">
+              <div class="role-icon">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                  <circle cx="12" cy="7" r="4" />
+                  <path d="M8 3.5h8l1 1.8H7z" />
+                </svg>
+              </div>
+              <div class="role-name">Forest Officer</div>
+              <div class="role-desc">Statutory Cover</div>
+            </div>
+
+            <!-- Forest Dweller Card -->
+            <div class="role-choice-card role-dweller" id="roleCardDweller" onclick="selectRole('FOREST_DWELLER')"
+              role="button" tabindex="0">
+              <div class="role-icon">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                  <path d="M12 8v4" />
+                  <circle cx="12" cy="16" r="1" />
+                </svg>
+              </div>
+              <div class="role-name">Forest Dweller</div>
+              <div class="role-desc">Community Safety</div>
+            </div>
+
+          </div>
+          <!-- Hidden input storing selected role -->
+          <input type="hidden" id="selectedRoleInput" name="role" value="FIELD_AGENT">
+        </div>
+
+        <!-- Email Field -->
+        <div class="form-group">
+          <label for="loginEmail" class="form-label">AUTHORIZED EMAIL ADDRESS</label>
+          <div class="input-wrapper">
+            <input type="email" id="loginEmail" class="login-input" placeholder="Enter authorized email" required
+              autocomplete="off" autofocus>
+          </div>
+        </div>
+
+        <!-- Password Field with Toggle -->
+        <div class="form-group">
+          <label for="loginPassword" class="form-label">PASSWORD</label>
+          <div class="input-wrapper">
+            <input type="password" id="loginPassword" class="login-input has-toggle" placeholder="Enter password"
+              required autocomplete="new-password">
+            <button type="button" id="passwordToggleBtn" class="password-toggle-btn"
+              onclick="togglePasswordVisibility()" aria-label="Toggle password visibility" title="Show password">
+              <svg id="eyeIconOpen" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                stroke-width="2">
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                <circle cx="12" cy="12" r="3" />
+              </svg>
+              <svg id="eyeIconClosed" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                stroke-width="2" style="display:none;">
+                <path
+                  d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" />
+                <line x1="1" y1="1" x2="23" y2="23" />
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- Submit Button -->
+        <button type="submit" id="loginSubmitBtn" class="btn-submit">
+          <span class="login-spinner" id="loginSpinner"></span>
+          <span id="loginBtnText">Sign In</span>
+        </button>
+
+      </form>
     </div>
-
-    <!-- Error Alert Banner -->
-    <div id="loginErrorAlert" class="login-error-alert" role="alert"></div>
-
-    <!-- Sign In Form -->
-    <form id="vanaLoginForm" onsubmit="handleVanaLogin(event)" novalidate autocomplete="off">
-      
-      <!-- Role Selection Options (Admin, Field Agent, Forest Officer) -->
-      <div class="role-selection-section">
-        <label class="role-selection-label">SELECT DESIGNATED ROLE</label>
-        <div class="role-cards-grid">
-          
-          <!-- Admin Card -->
-          <div class="role-choice-card role-admin" id="roleCardAdmin" onclick="selectRole('ADMIN')" role="button" tabindex="0">
-            <div class="role-icon">
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-            </div>
-            <div class="role-name">Admin</div>
-            <div class="role-desc">System Control</div>
-          </div>
-
-          <!-- Field Agent Card (Default) -->
-          <div class="role-choice-card role-field active" id="roleCardField" onclick="selectRole('FIELD_AGENT')" role="button" tabindex="0">
-            <div class="role-icon">
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3.5"/><line x1="12" y1="2" x2="12" y2="5"/><line x1="12" y1="19" x2="12" y2="22"/><line x1="2" y1="12" x2="5" y2="12"/><line x1="19" y1="12" x2="22" y2="12"/></svg>
-            </div>
-            <div class="role-name">Field Agent</div>
-            <div class="role-desc">Sensor Intake</div>
-          </div>
-
-          <!-- Forest Officer Card -->
-          <div class="role-choice-card role-forest" id="roleCardForest" onclick="selectRole('FOREST_OFFICER')" role="button" tabindex="0">
-            <div class="role-icon">
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/><path d="M8 3.5h8l1 1.8H7z"/></svg>
-            </div>
-            <div class="role-name">Forest Officer</div>
-            <div class="role-desc">Statutory Cover</div>
-          </div>
-
-          <!-- Forest Dweller Card -->
-          <div class="role-choice-card role-dweller" id="roleCardDweller" onclick="selectRole('FOREST_DWELLER')" role="button" tabindex="0">
-            <div class="role-icon">
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M12 8v4"/><circle cx="12" cy="16" r="1"/></svg>
-            </div>
-            <div class="role-name">Forest Dweller</div>
-            <div class="role-desc">Community Safety</div>
-          </div>
-
-        </div>
-        <!-- Hidden input storing selected role -->
-        <input type="hidden" id="selectedRoleInput" name="role" value="FIELD_AGENT">
-      </div>
-
-      <!-- Email Field -->
-      <div class="form-group">
-        <label for="loginEmail" class="form-label">AUTHORIZED EMAIL ADDRESS</label>
-        <div class="input-wrapper">
-          <input 
-            type="email" 
-            id="loginEmail" 
-            class="login-input" 
-            placeholder="Enter authorized email" 
-            required 
-            autocomplete="off"
-            autofocus>
-        </div>
-      </div>
-
-      <!-- Password Field with Toggle -->
-      <div class="form-group">
-        <label for="loginPassword" class="form-label">PASSWORD</label>
-        <div class="input-wrapper">
-          <input 
-            type="password" 
-            id="loginPassword" 
-            class="login-input has-toggle" 
-            placeholder="Enter password" 
-            required 
-            autocomplete="new-password">
-          <button 
-            type="button" 
-            id="passwordToggleBtn" 
-            class="password-toggle-btn" 
-            onclick="togglePasswordVisibility()" 
-            aria-label="Toggle password visibility"
-            title="Show password">
-            <svg id="eyeIconOpen" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-            <svg id="eyeIconClosed" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:none;"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
-          </button>
-        </div>
-      </div>
-
-      <!-- Submit Button -->
-      <button type="submit" id="loginSubmitBtn" class="btn-submit">
-        <span class="login-spinner" id="loginSpinner"></span>
-        <span id="loginBtnText">Sign In</span>
-      </button>
-
-    </form>
   </div>
-</div>
 
-<!-- Load Scripts in Correct Dependency Order -->
-<script src="config.js?v=21"></script>
-<script src="admin-auth.js?v=21"></script>
+  <!-- Load Scripts in Correct Dependency Order -->
+  <script src="config.js?v=21"></script>
+  <script src="admin-auth.js?v=21"></script>
 
-<script>
-  // ── ROLE SELECTION INTERACTIVITY ─────────────────────────────────────────
-  let currentSelectedRole = "FIELD_AGENT";
+  <script>
+    // ── ROLE SELECTION INTERACTIVITY ─────────────────────────────────────────
+    let currentSelectedRole = "FIELD_AGENT";
 
-  function selectRole(role) {
-    currentSelectedRole = role;
-    document.getElementById("selectedRoleInput").value = role;
+    function selectRole(role) {
+      currentSelectedRole = role;
+      document.getElementById("selectedRoleInput").value = role;
 
-    // Remove active class from all cards
-    document.getElementById("roleCardAdmin").classList.remove("active");
-    document.getElementById("roleCardField").classList.remove("active");
-    document.getElementById("roleCardForest").classList.remove("active");
-    const dwellerCard = document.getElementById("roleCardDweller");
-    if (dwellerCard) dwellerCard.classList.remove("active");
+      // Remove active class from all cards
+      document.getElementById("roleCardAdmin").classList.remove("active");
+      document.getElementById("roleCardField").classList.remove("active");
+      document.getElementById("roleCardForest").classList.remove("active");
+      const dwellerCard = document.getElementById("roleCardDweller");
+      if (dwellerCard) dwellerCard.classList.remove("active");
 
-    // Add active class to clicked card
-    if (role === "ADMIN") {
-      document.getElementById("roleCardAdmin").classList.add("active");
-    } else if (role === "FIELD_AGENT") {
-      document.getElementById("roleCardField").classList.add("active");
-    } else if (role === "FOREST_OFFICER") {
-      document.getElementById("roleCardForest").classList.add("active");
-    } else if (role === "FOREST_DWELLER") {
-      if (dwellerCard) dwellerCard.classList.add("active");
-    }
-    clearError();
-  }
-
-  // ── PASSWORD VISIBILITY TOGGLE ─────────────────────────────────────────
-  let isPasswordVisible = false;
-
-  function togglePasswordVisibility() {
-    const passInput = document.getElementById("loginPassword");
-    const eyeOpen = document.getElementById("eyeIconOpen");
-    const eyeClosed = document.getElementById("eyeIconClosed");
-    const toggleBtn = document.getElementById("passwordToggleBtn");
-
-    isPasswordVisible = !isPasswordVisible;
-    if (isPasswordVisible) {
-      passInput.type = "text";
-      eyeOpen.style.display = "none";
-      eyeClosed.style.display = "block";
-      toggleBtn.title = "Hide password";
-    } else {
-      passInput.type = "password";
-      eyeOpen.style.display = "block";
-      eyeClosed.style.display = "none";
-      toggleBtn.title = "Show password";
-    }
-  }
-
-  // ── ERROR HANDLING ─────────────────────────────────────────────────────
-  function showError(msg) {
-    const errEl = document.getElementById("loginErrorAlert");
-    errEl.textContent = msg;
-    errEl.style.display = "block";
-    errEl.scrollIntoView({ behavior: "smooth", block: "nearest" });
-  }
-
-  function clearError() {
-    const errEl = document.getElementById("loginErrorAlert");
-    errEl.textContent = "";
-    errEl.style.display = "none";
-  }
-
-  // ── FORM SUBMISSION & ROLE-BASED REDIRECTION ───────────────────────────
-  async function handleVanaLogin(e) {
-    if (e) e.preventDefault();
-    clearError();
-
-    const emailInput = document.getElementById("loginEmail");
-    const passInput = document.getElementById("loginPassword");
-    const submitBtn = document.getElementById("loginSubmitBtn");
-    const spinner = document.getElementById("loginSpinner");
-    const btnText = document.getElementById("loginBtnText");
-
-    const email = emailInput.value.trim();
-    const password = passInput.value;
-    const selectedRole = currentSelectedRole;
-
-    if (!email) {
-      showError("Please enter your authorized email address.");
-      emailInput.focus();
-      return;
-    }
-    if (!password) {
-      showError("Please enter your password.");
-      passInput.focus();
-      return;
+      // Add active class to clicked card
+      if (role === "ADMIN") {
+        document.getElementById("roleCardAdmin").classList.add("active");
+      } else if (role === "FIELD_AGENT") {
+        document.getElementById("roleCardField").classList.add("active");
+      } else if (role === "FOREST_OFFICER") {
+        document.getElementById("roleCardForest").classList.add("active");
+      } else if (role === "FOREST_DWELLER") {
+        if (dwellerCard) dwellerCard.classList.add("active");
+      }
+      clearError();
     }
 
-    // Set Loading State
-    submitBtn.disabled = true;
-    spinner.style.display = "inline-block";
-    btnText.textContent = "Authenticating...";
+    // ── PASSWORD VISIBILITY TOGGLE ─────────────────────────────────────────
+    let isPasswordVisible = false;
 
-    try {
-      if (!window.VANA_AUTH) {
-        showError("Authentication subsystem unavailable. Please refresh the page.");
+    function togglePasswordVisibility() {
+      const passInput = document.getElementById("loginPassword");
+      const eyeOpen = document.getElementById("eyeIconOpen");
+      const eyeClosed = document.getElementById("eyeIconClosed");
+      const toggleBtn = document.getElementById("passwordToggleBtn");
+
+      isPasswordVisible = !isPasswordVisible;
+      if (isPasswordVisible) {
+        passInput.type = "text";
+        eyeOpen.style.display = "none";
+        eyeClosed.style.display = "block";
+        toggleBtn.title = "Hide password";
+      } else {
+        passInput.type = "password";
+        eyeOpen.style.display = "block";
+        eyeClosed.style.display = "none";
+        toggleBtn.title = "Show password";
+      }
+    }
+
+    // ── ERROR HANDLING ─────────────────────────────────────────────────────
+    function showError(msg) {
+      const errEl = document.getElementById("loginErrorAlert");
+      errEl.textContent = msg;
+      errEl.style.display = "block";
+      errEl.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    }
+
+    function clearError() {
+      const errEl = document.getElementById("loginErrorAlert");
+      errEl.textContent = "";
+      errEl.style.display = "none";
+    }
+
+    // ── FORM SUBMISSION & ROLE-BASED REDIRECTION ───────────────────────────
+    async function handleVanaLogin(e) {
+      if (e) e.preventDefault();
+      clearError();
+
+      const emailInput = document.getElementById("loginEmail");
+      const passInput = document.getElementById("loginPassword");
+      const submitBtn = document.getElementById("loginSubmitBtn");
+      const spinner = document.getElementById("loginSpinner");
+      const btnText = document.getElementById("loginBtnText");
+
+      const email = emailInput.value.trim();
+      const password = passInput.value;
+      const selectedRole = currentSelectedRole;
+
+      if (!email) {
+        showError("Please enter your authorized email address.");
+        emailInput.focus();
+        return;
+      }
+      if (!password) {
+        showError("Please enter your password.");
+        passInput.focus();
         return;
       }
 
-      const res = await window.VANA_AUTH.login(email, password, selectedRole);
+      // Set Loading State
+      submitBtn.disabled = true;
+      spinner.style.display = "inline-block";
+      btnText.textContent = "Authenticating...";
 
-      if (res.success && res.user) {
-        btnText.textContent = "Redirecting...";
-        passInput.value = "";
-
-        // Check if there is a specific redirect query parameter
-        const urlParams = new URLSearchParams(window.location.search);
-        const redirectParam = urlParams.get("redirect");
-
-        const verifiedRole = (res.user.role || "").toUpperCase();
-
-        // Role-Based Redirection: Admin lands directly on MAIN OPERATIONAL DASHBOARD (index.html)
-        if (verifiedRole === "ADMIN" || verifiedRole === "PLATFORM_ADMIN") {
-          window.location.href = "index.html";
-        } else if (verifiedRole === "FIELD_AGENT") {
-          window.location.href = "index.html?role=FIELD_AGENT";
-        } else if (verifiedRole === "FOREST_OFFICER") {
-          window.location.href = "index.html?role=FOREST_OFFICER";
-        } else if (verifiedRole === "FOREST_DWELLER") {
-          window.location.href = "index.html?role=FOREST_DWELLER";
-        } else {
-          // Fallback to operational dashboard
-          window.location.href = "index.html";
+      try {
+        if (!window.VANA_AUTH) {
+          showError("Authentication subsystem unavailable. Please refresh the page.");
+          return;
         }
-      } else {
-        showError(res.error || "Authentication failed. Please verify your credentials and selected role.");
+
+        const res = await window.VANA_AUTH.login(email, password, selectedRole);
+
+        if (res.success && res.user) {
+          btnText.textContent = "Redirecting...";
+          passInput.value = "";
+
+          // Check if there is a specific redirect query parameter
+          const urlParams = new URLSearchParams(window.location.search);
+          const redirectParam = urlParams.get("redirect");
+
+          const verifiedRole = (res.user.role || "").toUpperCase();
+
+          // Role-Based Redirection: Admin lands directly on MAIN OPERATIONAL DASHBOARD (index.html)
+          if (verifiedRole === "ADMIN" || verifiedRole === "PLATFORM_ADMIN") {
+            window.location.href = "index.html";
+          } else if (verifiedRole === "FIELD_AGENT") {
+            window.location.href = "index.html?role=FIELD_AGENT";
+          } else if (verifiedRole === "FOREST_OFFICER") {
+            window.location.href = "index.html?role=FOREST_OFFICER";
+          } else if (verifiedRole === "FOREST_DWELLER") {
+            window.location.href = "index.html?role=FOREST_DWELLER";
+          } else {
+            // Fallback to operational dashboard
+            window.location.href = "index.html";
+          }
+        } else {
+          showError(res.error || "Authentication failed. Please verify your credentials and selected role.");
+        }
+      } catch (err) {
+        showError("Connection error reaching authentication service: " + err.message);
+      } finally {
+        submitBtn.disabled = false;
+        spinner.style.display = "none";
+        btnText.textContent = "Sign In";
       }
-    } catch (err) {
-      showError("Connection error reaching authentication service: " + err.message);
-    } finally {
-      submitBtn.disabled = false;
-      spinner.style.display = "none";
-      btnText.textContent = "Sign In";
     }
-  }
 
-  function clearCredentialsFields() {
-    const emailInput = document.getElementById("loginEmail");
-    const passInput = document.getElementById("loginPassword");
-    if (emailInput) emailInput.value = "";
-    if (passInput) passInput.value = "";
-  }
-
-  // Pre-select role if specified in query param (e.g. login.html?role=ADMIN)
-  window.addEventListener("DOMContentLoaded", () => {
-    clearCredentialsFields();
-    // Slightly delayed clearing to override aggressive browser autofill
-    setTimeout(clearCredentialsFields, 50);
-    setTimeout(clearCredentialsFields, 200);
-
-    const urlParams = new URLSearchParams(window.location.search);
-    const roleParam = urlParams.get("role");
-    if (roleParam) {
-      const up = roleParam.toUpperCase();
-      if (up === "ADMIN") selectRole("ADMIN");
-      else if (up.includes("DWELLER") || up.includes("COMMUNITY") || up.includes("VANVASI")) selectRole("FOREST_DWELLER");
-      else if (up.includes("FIELD") || up.includes("FEILD")) selectRole("FIELD_AGENT");
-      else if (up.includes("FOREST") || up.includes("OFFICER")) selectRole("FOREST_OFFICER");
+    function clearCredentialsFields() {
+      const emailInput = document.getElementById("loginEmail");
+      const passInput = document.getElementById("loginPassword");
+      if (emailInput) emailInput.value = "";
+      if (passInput) passInput.value = "";
     }
-  });
 
-  window.addEventListener("pageshow", clearCredentialsFields);
-</script>
+    // Pre-select role if specified in query param (e.g. login.html?role=ADMIN)
+    window.addEventListener("DOMContentLoaded", () => {
+      clearCredentialsFields();
+      // Slightly delayed clearing to override aggressive browser autofill
+      setTimeout(clearCredentialsFields, 50);
+      setTimeout(clearCredentialsFields, 200);
+
+      const urlParams = new URLSearchParams(window.location.search);
+      const roleParam = urlParams.get("role");
+      if (roleParam) {
+        const up = roleParam.toUpperCase();
+        if (up === "ADMIN") selectRole("ADMIN");
+        else if (up.includes("DWELLER") || up.includes("COMMUNITY") || up.includes("VANVASI")) selectRole("FOREST_DWELLER");
+        else if (up.includes("FIELD") || up.includes("FEILD")) selectRole("FIELD_AGENT");
+        else if (up.includes("FOREST") || up.includes("OFFICER")) selectRole("FOREST_OFFICER");
+      }
+    });
+
+    window.addEventListener("pageshow", clearCredentialsFields);
+  </script>
 
 </body>
-</html>
 
+</html>
