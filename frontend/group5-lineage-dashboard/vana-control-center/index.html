@@ -2155,15 +2155,15 @@
       </div>
       <div class="modal-card-sub">Environmental Governance &amp; Execution Authorization</div>
     </div>
-    <form id="dashLoginForm" onsubmit="handleDashboardLogin(event)">
+    <form id="dashLoginForm" onsubmit="handleDashboardLogin(event)" autocomplete="off">
       <div id="dashLoginError" class="login-error-alert" style="display:none;"></div>
       <div class="form-field">
         <label for="dashEmailInput">Email Address</label>
-        <input type="email" id="dashEmailInput" class="form-input" placeholder="user@vana.gov.in" required autocomplete="username">
+        <input type="email" id="dashEmailInput" class="form-input" placeholder="Enter authorized email" required autocomplete="off">
       </div>
       <div class="form-field">
         <label for="dashPasswordInput">Password</label>
-        <input type="password" id="dashPasswordInput" class="form-input" placeholder="••••••••••••" required autocomplete="current-password">
+        <input type="password" id="dashPasswordInput" class="form-input" placeholder="Enter password" required autocomplete="new-password">
       </div>
       <div class="form-actions">
         <button type="button" class="btn-form secondary" onclick="closeDashboardLoginModal()">Cancel</button>

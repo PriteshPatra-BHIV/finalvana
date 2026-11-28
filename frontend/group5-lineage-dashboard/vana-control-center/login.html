@@ -253,7 +253,7 @@
     }
 
     .login-input::placeholder {
-      color: #4E655C;
+      color: rgba(255, 255, 255, 0.28);
       opacity: 1;
     }
 
@@ -377,7 +377,7 @@
     <div id="loginErrorAlert" class="login-error-alert" role="alert"></div>
 
     <!-- Sign In Form -->
-    <form id="vanaLoginForm" onsubmit="handleVanaLogin(event)" novalidate>
+    <form id="vanaLoginForm" onsubmit="handleVanaLogin(event)" novalidate autocomplete="off">
       
       <!-- Role Selection Options (Admin, Field Agent, Forest Officer) -->
       <div class="role-selection-section">
@@ -433,9 +433,9 @@
             type="email" 
             id="loginEmail" 
             class="login-input" 
-            placeholder="field@vana.gov.in" 
+            placeholder="Enter authorized email" 
             required 
-            autocomplete="username"
+            autocomplete="off"
             autofocus>
         </div>
       </div>
@@ -448,9 +448,9 @@
             type="password" 
             id="loginPassword" 
             class="login-input has-toggle" 
-            placeholder="••••••••" 
+            placeholder="Enter password" 
             required 
-            autocomplete="current-password">
+            autocomplete="new-password">
           <button 
             type="button" 
             id="passwordToggleBtn" 
@@ -493,28 +493,15 @@
     const dwellerCard = document.getElementById("roleCardDweller");
     if (dwellerCard) dwellerCard.classList.remove("active");
 
-    // Add active class to clicked card & update placeholder suggestion
-    const emailInput = document.getElementById("loginEmail");
+    // Add active class to clicked card
     if (role === "ADMIN") {
       document.getElementById("roleCardAdmin").classList.add("active");
-      if (!emailInput.value) {
-        emailInput.placeholder = "admin@vana.gov.in";
-      }
     } else if (role === "FIELD_AGENT") {
       document.getElementById("roleCardField").classList.add("active");
-      if (!emailInput.value) {
-        emailInput.placeholder = "field@vana.gov.in";
-      }
     } else if (role === "FOREST_OFFICER") {
       document.getElementById("roleCardForest").classList.add("active");
-      if (!emailInput.value) {
-        emailInput.placeholder = "forest@vana.gov.in";
-      }
     } else if (role === "FOREST_DWELLER") {
       if (dwellerCard) dwellerCard.classList.add("active");
-      if (!emailInput.value) {
-        emailInput.placeholder = "dweller@vana.gov.in";
-      }
     }
     clearError();
   }
@@ -630,8 +617,20 @@
     }
   }
 
+  function clearCredentialsFields() {
+    const emailInput = document.getElementById("loginEmail");
+    const passInput = document.getElementById("loginPassword");
+    if (emailInput) emailInput.value = "";
+    if (passInput) passInput.value = "";
+  }
+
   // Pre-select role if specified in query param (e.g. login.html?role=ADMIN)
   window.addEventListener("DOMContentLoaded", () => {
+    clearCredentialsFields();
+    // Slightly delayed clearing to override aggressive browser autofill
+    setTimeout(clearCredentialsFields, 50);
+    setTimeout(clearCredentialsFields, 200);
+
     const urlParams = new URLSearchParams(window.location.search);
     const roleParam = urlParams.get("role");
     if (roleParam) {
@@ -642,6 +641,8 @@
       else if (up.includes("FOREST") || up.includes("OFFICER")) selectRole("FOREST_OFFICER");
     }
   });
+
+  window.addEventListener("pageshow", clearCredentialsFields);
 </script>
 
 </body>

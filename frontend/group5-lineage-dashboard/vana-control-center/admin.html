@@ -212,15 +212,15 @@
       </div>
       <div class="admin-modal-subtitle">Forest Intelligence Command Center · Control Plane</div>
     </div>
-    <form id="adminLoginForm" onsubmit="adminSubmitLogin(event)">
+    <form id="adminLoginForm" onsubmit="adminSubmitLogin(event)" autocomplete="off">
       <div id="adminLoginError" class="admin-login-error" style="display:none;"></div>
       <div class="admin-form-group">
         <label for="adminEmailInput">Email Address</label>
-        <input type="email" id="adminEmailInput" class="admin-form-input" placeholder="admin@vana.gov.in" required autocomplete="username">
+        <input type="email" id="adminEmailInput" class="admin-form-input" placeholder="Enter authorized email" required autocomplete="off">
       </div>
       <div class="admin-form-group">
         <label for="adminPasswordInput">Password</label>
-        <input type="password" id="adminPasswordInput" class="admin-form-input" placeholder="••••••••••••" required autocomplete="current-password">
+        <input type="password" id="adminPasswordInput" class="admin-form-input" placeholder="Enter password" required autocomplete="new-password">
       </div>
       <div class="admin-form-actions">
         <button type="button" class="admin-header-btn" onclick="adminCloseLoginModal()">Cancel</button>
